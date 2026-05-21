@@ -1,6 +1,6 @@
 "use client";
 
-import { projects, tasks, siteUpdates, workers, payments } from "@/lib/dummy-data";
+import { siteUpdates, workers, payments } from "@/lib/dummy-data";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -21,33 +21,57 @@ import {
   DollarSign,
   AlertCircle,
   ArrowUpRight,
-  Plus
+  Plus,
+  PenTool,
+  Hammer
 } from "lucide-react";
 import Link from "next/link";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useProjects } from "@/lib/projects-store";
+import { useTasks } from "@/lib/tasks-store";
 import { Button } from "@/components/ui/Button";
+import { DesignModule } from "@/components/projects/DesignModule";
+import { ExecutionModule } from "@/components/projects/ExecutionModule";
 
-type Tab = "overview" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
+type Tab = "overview" | "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
-  const project = projects.find(p => p.id === id) || projects[0];
+  const { getProjectById, updateStageStatus } = useProjects();
+  const { tasks } = useTasks();
+  
+  const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [stages, setStages] = useState(project.stages);
+  const [stages, setStages] = useState(project?.stages ?? []);
 
-  const canEdit = user?.role === "architect" || user?.role === "supervisor";
+  useEffect(() => {
+    if (project) {
+      setStages(project.stages);
+    }
+  }, [project]);
 
-  const updateStageStatus = (stageName: string, newStatus: string) => {
-    setStages(prev => prev.map(s => s.name === stageName ? { ...s, status: newStatus } : s));
+  if (!project) {
+    return (
+      <div className="p-10 text-center">
+        <h2 className="text-2xl font-bold">Project not found</h2>
+        <Link href="/projects" className="text-indigo-600 hover:underline mt-4 inline-block">Back to Projects</Link>
+      </div>
+    );
+  }
+
+  const handleUpdateStageStatus = (stageName: string, newStatus: any) => {
+    updateStageStatus(project.id, stageName, newStatus);
   };
 
-  const projectTasks = tasks.filter(t => t.project === project.name);
+  const projectTasks = tasks.filter(t => t.projectId === project.id || t.project === project.name);
   const projectUpdates = siteUpdates.filter(u => u.project === project.name);
   const projectWorkers = workers.filter(w => w.assignedProjects.includes(project.name));
   const projectPayments = payments.filter(p => p.project === project.name);
+
+  const canEdit = user?.role === "architect" || user?.role === "super-admin" || user?.role === "supervisor";
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -92,6 +116,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       <div className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-x-auto scrollbar-hide sticky top-20 z-10">
         {[
           { id: "overview", label: "Overview", icon: Construction },
+          { id: "office-work", label: "Office Work", icon: PenTool },
+          { id: "site-work", label: "Site Work", icon: Hammer },
           { id: "tasks", label: "Tasks", icon: CheckCircle2 },
           { id: "workers", label: "Team", icon: Users },
           { id: "updates", label: "Logs", icon: ClipboardList },
@@ -162,7 +188,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                           {canEdit ? (
                             <select
                               value={stage.status}
-                              onChange={(e) => updateStageStatus(stage.name, e.target.value)}
+                              onChange={(e) => handleUpdateStageStatus(stage.name, e.target.value)}
                               className={cn(
                                 "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm border cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
                                 stage.status === "Completed" ? "bg-white text-green-600 border-green-100" :
@@ -223,6 +249,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === "office-work" && project.flow && (
+          <DesignModule data={project.flow.officeWork} projectId={project.id} />
+        )}
+
+        {activeTab === "site-work" && project.flow && (
+          <ExecutionModule data={project.flow.siteWork} projectId={project.id} />
         )}
 
         {activeTab === "tasks" && (

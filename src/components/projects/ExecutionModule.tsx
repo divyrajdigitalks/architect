@@ -1,0 +1,115 @@
+"use client";
+
+import { SiteExecutionTask, CivilExecution, InteriorExecution } from "@/lib/types/project-flow";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+import { HardHat, Camera, Hammer, CheckCircle2, AlertCircle, ChevronRight, MapPin } from "lucide-react";
+import { useState } from "react";
+
+interface ExecutionModuleProps {
+  data: {
+    civil: CivilExecution;
+    interior: InteriorExecution;
+  };
+  projectId: string;
+}
+
+export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
+  const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
+
+  const civilStages = Object.entries(data.civil);
+  const interiorStages = Object.entries(data.interior);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 w-fit">
+        <button
+          onClick={() => setActiveSubTab("civil")}
+          className={cn(
+            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            activeSubTab === "civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
+          )}
+        >
+          Civil Work (40%)
+        </button>
+        <button
+          onClick={() => setActiveSubTab("interior")}
+          className={cn(
+            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            activeSubTab === "interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
+          )}
+        >
+          Interior Work (50%)
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {(activeSubTab === "civil" ? civilStages : interiorStages).map(([key, stage]) => (
+          <ExecutionStageCard key={key} stage={stage as SiteExecutionTask} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
+  const statusColors = {
+    "Pending": "bg-slate-100 text-slate-500 border-slate-200",
+    "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
+    "Completed": "bg-green-50 text-green-600 border-green-200",
+  };
+
+  return (
+    <Card className="p-6 hover:shadow-md transition-all border-slate-200">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5 flex-1">
+          <div className={cn(
+            "w-12 h-12 rounded-2xl flex items-center justify-center border transition-all",
+            stage.status === "Completed" ? "bg-green-50 border-green-100 text-green-600" :
+            stage.status === "In Progress" ? "bg-indigo-50 border-indigo-100 text-indigo-600" :
+            "bg-slate-50 border-slate-100 text-slate-400"
+          )}>
+            {stage.status === "Completed" ? <CheckCircle2 className="w-6 h-6" /> : <HardHat className="w-6 h-6" />}
+          </div>
+          <div>
+            <h4 className="text-base font-bold text-slate-900">{stage.stage}</h4>
+            <div className="flex items-center gap-3 mt-1">
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest", statusColors[stage.status])}>
+                {stage.status}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                <Camera className="w-3 h-3" />
+                {stage.images.length} Photos
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-8 w-full md:w-auto">
+          <div className="flex-1 md:w-48 space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <span>Progress</span>
+              <span>{stage.progress}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-600 transition-all duration-500" 
+                style={{ width: `${stage.progress}%` }} 
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
+              Update Log
+            </Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-indigo-600">
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Briefcase, CheckSquare, Users, ClipboardList,
   CreditCard, Building2, UserCircle2, Calendar, BarChart3,
-  Settings, LogOut, MessageSquare, Camera, X, HardHat, BookOpen
+  Settings, LogOut, MessageSquare, Camera, X, HardHat, BookOpen,
+  PenTool, Hammer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -15,6 +16,8 @@ import { Button } from "@/components/ui/Button";
 const PAGE_ICONS: Record<string, React.ElementType> = {
   dashboard:    LayoutDashboard,
   projects:     Briefcase,
+  "office-work": PenTool,
+  "site-work":   Hammer,
   tasks:        CheckSquare,
   workers:      Users,
   supervisors:  HardHat,
@@ -34,6 +37,8 @@ const PAGE_ICONS: Record<string, React.ElementType> = {
 const PAGE_LABELS: Record<string, string> = {
   dashboard:      "Dashboard",
   projects:       "Projects",
+  "office-work":  "Office Work",
+  "site-work":    "Site Work",
   tasks:          "Tasks",
   workers:        "OFFICE TEAM",
   supervisors:    "SITE TEAM",

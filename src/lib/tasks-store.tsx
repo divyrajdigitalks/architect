@@ -11,9 +11,13 @@ export type Task = {
   projectId?: string;
   project: string;
   stage: string;
-  worker: string;
+  officeTeam: string;
+  officeStatus: TaskStatus;
+  siteTeam: string;
+  siteStatus: TaskStatus;
+  worker?: string; // for backward compatibility
   deadline: string;
-  status: TaskStatus;
+  status?: TaskStatus; // for backward compatibility
   createdAt?: string;
 };
 
@@ -84,9 +88,13 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         projectId: input.projectId,
         project: input.project,
         stage: input.stage,
-        worker: input.worker,
+        officeTeam: input.officeTeam,
+        officeStatus: input.officeStatus ?? "Pending",
+        siteTeam: input.siteTeam,
+        siteStatus: input.siteStatus ?? "Pending",
+        worker: input.worker ?? input.siteTeam,
         deadline: input.deadline,
-        status: input.status ?? "Pending",
+        status: input.status ?? input.officeStatus ?? "Pending",
         createdAt: new Date().toISOString(),
       };
       setTasks((prev) => [created, ...prev]);

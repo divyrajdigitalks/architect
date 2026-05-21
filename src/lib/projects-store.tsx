@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { projects as seedProjects } from "@/lib/dummy-data";
+import { ProjectManagementFlow, DesignTask, SiteExecutionTask } from "./types/project-flow";
 
 export type StageStatus = "Pending" | "In Progress" | "Completed";
 export type LifecycleStatus = "Pending" | "In Progress" | "Completed";
@@ -34,6 +35,7 @@ export type Project = {
   phase?: string;
   lifecycle?: ProjectLifecyclePhase[];
   stages: ProjectStage[];
+  flow?: ProjectManagementFlow;
 };
 
 type CreateProjectInput = Omit<
@@ -71,11 +73,96 @@ function safeParse<T>(raw: string | null): T | undefined {
   }
 }
 
+function createDesignTask(title: string): DesignTask {
+  return {
+    id: "dt_" + Math.random().toString(36).substr(2, 9),
+    title,
+    assignedTo: [],
+    status: "Pending",
+    progress: 0,
+    deadline: "",
+    documents: [],
+    comments: [],
+    activityLogs: [],
+  };
+}
+
+function createExecutionTask(stage: string): SiteExecutionTask {
+  return {
+    id: "et_" + Math.random().toString(36).substr(2, 9),
+    stage,
+    status: "Pending",
+    progress: 0,
+    images: [],
+    materials: [],
+    labourAttendance: [],
+    notes: [],
+    delays: [],
+  };
+}
+
+function initializeFlow(): ProjectManagementFlow {
+  return {
+    officeWork: {
+      civil: {
+        layoutPlan: createDesignTask("Layout Plan Management"),
+        detailedLayout: createDesignTask("Detailed Layout Plan"),
+        elevationExterior: createDesignTask("Elevation & Exterior Design"),
+        columnFooting: createDesignTask("Column & Footing Drawings"),
+        groundPlinthBeam: createDesignTask("Ground Beam & Plinth Beam Drawings"),
+        boringUGT: createDesignTask("Boring & UGT Tank Details"),
+        slabBeamColumn: createDesignTask("Slab / Beam / Column Details"),
+        workingDrawings: createDesignTask("Working Drawings"),
+        elevationWorking: createDesignTask("Elevation Working"),
+        drainageLayout: createDesignTask("Drainage Layout"),
+      },
+      interior: {
+        furnitureLayout: createDesignTask("Furniture Layout"),
+        soLayout: createDesignTask("SO Layout"),
+        electricLayout: createDesignTask("Electric Layout"),
+        loopingLayout: createDesignTask("Looping Layout"),
+        acLayout: createDesignTask("AC Layout"),
+        ceilingLayout: createDesignTask("Ceiling Layout"),
+        plumbingLayout: createDesignTask("Plumbing Layout"),
+        machineWorking: createDesignTask("Machine Working"),
+        cncDrawings: createDesignTask("CNC Drawings"),
+        softFurnishing: createDesignTask("Soft Furnishing Details"),
+        model3D: createDesignTask("3D Model & Rendering"),
+      },
+    },
+    siteWork: {
+      civil: {
+        boring: createExecutionTask("Boring"),
+        foundation: createExecutionTask("Foundation"),
+        plinthWork: createExecutionTask("Plinth Work"),
+        drainageLine: createExecutionTask("Drainage Line"),
+        structuralWork: createExecutionTask("Column, Beam & Slab Work"),
+        brickWork: createExecutionTask("Brick Work"),
+        plasterWork: createExecutionTask("Plaster Work"),
+      },
+      interior: {
+        plumbing: createExecutionTask("Plumbing Work"),
+        electric: createExecutionTask("Electric Work"),
+        acPiping: createExecutionTask("AC Piping"),
+        pestControl: createExecutionTask("Pest Control"),
+        tilesStone: createExecutionTask("Tiles & Stone Work"),
+        furniture: createExecutionTask("Furniture Work"),
+        paint: createExecutionTask("Color/Paint Work"),
+        cleaning: createExecutionTask("Cleaning Work"),
+        lightingSurface: createExecutionTask("Surface Lighting & Headboard"),
+        lightingDecoration: createExecutionTask("Lighting & Decoration"),
+        appliances: createExecutionTask("Appliances & Accessories Installation"),
+      },
+    },
+  };
+}
+
 function normalizeSeed(): Project[] {
   return (seedProjects as unknown as Project[]).map((p) => ({
     ...p,
     workerIds: p.workerIds ?? [],
     stages: p.stages ?? [],
+    flow: p.flow ?? initializeFlow(),
   }));
 }
 
@@ -149,6 +236,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
         phase,
         lifecycle: input.lifecycle ?? [],
         stages: input.stages ?? [],
+        flow: input.flow ?? initializeFlow(),
       };
 
       setProjects((prev) => [...prev, created]);

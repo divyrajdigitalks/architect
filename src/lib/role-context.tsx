@@ -15,6 +15,8 @@ export type RoleConfig = {
 export const ALL_PAGES = [
   { key: "dashboard",    label: "Dashboard" },
   { key: "projects",     label: "Projects" },
+  { key: "office-work",  label: "Office Work" },
+  { key: "site-work",    label: "Site Work" },
   { key: "tasks",        label: "Tasks" },
   { key: "workers",      label: "Workers" },
   { key: "supervisors",  label: "Supervisors" },
@@ -35,40 +37,32 @@ export const ALL_PAGES = [
 
 export const DEFAULT_ROLES: RoleConfig[] = [
   {
-    id: "architect", name: "DIRECTOR", color: "indigo", canDelete: false,
+    id: "super-admin", name: "SUPER ADMIN", color: "slate", canDelete: false,
     pages: ALL_PAGES.map(p => p.key),
   },
   {
-    id: "client", name: "OFFICE TEAM", color: "blue", canDelete: false,
-    pages: ["dashboard", "site-photos", "payments", "messages"],
-  },
-  {
-    id: "supervisor", name: "CLIENTS", color: "orange", canDelete: false,
-    pages: ["dashboard", "projects", "tasks", "site-team", "attendance", "site-updates", "site-photos", "messages"],
-  },
-  {
-    id: "worker", name: "AGENCY", color: "green", canDelete: false,
-    pages: ["dashboard", "site-photos", "messages"],
-  },
-  {
-    id: "office-admin", name: "ACADEMY", color: "teal", canDelete: false,
-    pages: ["dashboard", "office-team", "projects", "tasks", "messages", "attendance"],
-  },
-  {
-    id: "accountant", name: "ACADEMY", color: "purple", canDelete: false,
-    pages: ["dashboard", "payments", "projects", "reports", "clients"],
-  },
-  {
-    id: "site-engineer", name: "GUEST", color: "rose", canDelete: false,
-    pages: ["dashboard", "arkiton", "working-sop"],
-  },
-  {
-    id: "guest", name: "GUEST", color: "slate", canDelete: false,
-    pages: ["dashboard", "arkiton", "working-sop"],
-  },
-  {
-    id: "director", name: "DIRECTOR", color: "indigo", canDelete: false,
+    id: "architect", name: "ARCHITECT", color: "indigo", canDelete: false,
     pages: ALL_PAGES.map(p => p.key),
+  },
+  {
+    id: "supervisor", name: "SITE SUPERVISOR", color: "orange", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "site-work", "tasks", "site-team", "attendance", "site-updates", "site-photos", "messages"],
+  },
+  {
+    id: "designer", name: "INTERIOR DESIGNER", color: "purple", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "tasks", "messages"],
+  },
+  {
+    id: "contractor", name: "CONTRACTOR", color: "rose", canDelete: false,
+    pages: ["dashboard", "projects", "site-work", "tasks", "site-updates"],
+  },
+  {
+    id: "client", name: "CLIENT", color: "blue", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "site-work", "site-photos", "payments", "messages"],
+  },
+  {
+    id: "office-staff", name: "OFFICE STAFF", color: "teal", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "site-work", "office-team", "tasks", "messages", "attendance"],
   },
 ];
 
