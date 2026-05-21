@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ArchiSite | Architect Construction Management",
-  description: "Modern SaaS dashboard for architects and site management.",
+  title: "ArchiSite | Director Construction Management",
+  description: "Modern SaaS dashboard for directors and site management.",
 };
 
 export default function RootLayout({

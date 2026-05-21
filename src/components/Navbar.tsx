@@ -11,8 +11,9 @@ const getPageTitle = (pathname: string) => {
   if (pathname === "/") return "Dashboard Overview";
   if (pathname.startsWith("/projects")) return "Project Portfolio";
   if (pathname === "/tasks") return "Task Tracker";
-  if (pathname === "/workers") return "Worker Directory";
-  if (pathname === "/clients") return "Client Directory";
+  if (pathname === "/workers") return "Agency Directory";
+  if (pathname === "/supervisors") return "Client Directory";
+  if (pathname === "/clients") return "Office Team Directory";
   if (pathname === "/site-updates") return "Recent Site Updates";
   if (pathname === "/payments") return "Financial Overview";
   if (pathname === "/calendar") return "Project Schedule";

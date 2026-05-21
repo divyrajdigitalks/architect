@@ -30,15 +30,20 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { roles } = useRoles();
   const [selectedRole, setSelectedRole] = useState(roles[0]?.id ?? "architect");
+  const [mobile, setMobile] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(selectedRole);
+    if (selectedRole === "site-engineer") {
+      login(selectedRole, { name: "Guest User", mobile });
+    } else {
+      login(selectedRole);
+    }
   };
 
   const selected = roles.find(r => r.id === selectedRole);
   const selColors = COLOR_SELECTED[selected?.color ?? "indigo"];
-  const isGuest = selectedRole === "guest";
+  const isGuest = selectedRole === "site-engineer";
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
@@ -59,7 +64,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Select Your Role</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-1">
-              {roles.map((r) => {
+              {roles.filter(r => r.id !== "super-admin").map((r) => {
                 const isSelected = selectedRole === r.id;
                 const c = COLOR_SELECTED[r.color] ?? COLOR_SELECTED.slate;
                 const dot = COLOR_DOT[r.color] ?? COLOR_DOT.slate;
@@ -92,7 +97,7 @@ export default function LoginPage() {
             {isGuest ? (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Mobile Number</label>
-                <Input type="tel" placeholder="+91 00000 00000" icon={Phone} required />
+                <Input type="tel" placeholder="+91 00000 00000" icon={Phone} value={mobile} onChange={(e) => setMobile(e.target.value)} required />
                 <p className="text-[10px] font-medium text-slate-400 ml-1 uppercase tracking-widest">Guest login mate mobile number jaruri che</p>
               </div>
             ) : (

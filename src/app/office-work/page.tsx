@@ -1,93 +1,150 @@
 "use client";
 
-import { useProjects } from "@/lib/projects-store";
-import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { PenTool, ChevronRight, Briefcase } from "lucide-react";
-import Link from "next/link";
-import { DesignModule } from "@/components/projects/DesignModule";
-import { useState } from "react";
+import { 
+  PenTool, 
+  FileText, 
+  Layers, 
+  Clock, 
+  CheckCircle2, 
+  Plus, 
+  Search,
+  Filter,
+  ArrowRight
+} from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 
 export default function OfficeWorkPage() {
-  const { projects } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const categories = [
+    { title: "Design Phase", count: 12, icon: PenTool, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { title: "Documentation", count: 8, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Approvals", count: 5, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
+    { title: "Revisions", count: 3, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
+  ];
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const recentTasks = [
+    { id: "OW-101", title: "Modern Villa - Interior Layout", project: "Modern Villa", priority: "High", status: "In Design", deadine: "2024-05-25" },
+    { id: "OW-102", title: "City Heights - Structural Review", project: "City Heights Apartment", priority: "Medium", status: "Review", deadine: "2024-05-28" },
+    { id: "OW-103", title: "Lakeview - Electrical Mapping", project: "Lakeview Residence", priority: "High", status: "In Design", deadine: "2024-06-02" },
+  ];
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Office Designing Hub</h2>
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Manage Civil & Interior Designing across projects</p>
-        </div>
-        <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 flex items-center gap-3">
-          <PenTool className="w-5 h-5 text-indigo-600" />
-          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{projects.length} Active Projects</span>
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <PageHeader 
+        title="OFFICE WORK" 
+        description="Manage designs, documentation, and office-side project coordination."
+      >
+        <Button className="rounded-xl font-bold gap-2">
+          <Plus className="w-4 h-4" /> New Office Task
+        </Button>
+      </PageHeader>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {categories.map((cat) => (
+          <Card key={cat.title} className="p-6 border-slate-100 hover:shadow-lg transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", cat.bg)}>
+                <cat.icon className={cn("w-6 h-6", cat.color)} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{cat.title}</p>
+                <h3 className="text-2xl font-black text-slate-900">{cat.count}</h3>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Project List Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] px-2">Select Project</h3>
-          <div className="space-y-2">
-            {projects.map(project => (
-              <button
-                key={project.id}
-                onClick={() => setSelectedProjectId(project.id)}
-                className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 group ${
-                  selectedProjectId === project.id 
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                    : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Briefcase className={`w-4 h-4 ${selectedProjectId === project.id ? "text-indigo-200" : "text-slate-400"}`} />
-                  <div>
-                    <p className="text-sm font-bold truncate">{project.name}</p>
-                    <p className={`text-[10px] font-medium uppercase tracking-wider ${selectedProjectId === project.id ? "text-indigo-200" : "text-slate-400"}`}>
-                      {project.progress}% Complete
-                    </p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Active Tasks Table */}
+        <Card className="lg:col-span-2 border-slate-100 shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">
+            <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-widest">Active Office Tasks</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                <Search className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                <Filter className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  <tr>
+                    <th className="px-6 py-4">Task ID</th>
+                    <th className="px-6 py-4">Task Detail</th>
+                    <th className="px-6 py-4">Project</th>
+                    <th className="px-6 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentTasks.map((task) => (
+                    <tr key={task.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                          {task.id}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-slate-900">{task.title}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={task.priority === "High" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
+                              {task.priority}
+                            </Badge>
+                            <span className="text-[10px] text-slate-400 font-medium">Due: {task.deadine}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-xs font-bold text-slate-600">{task.project}</p>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600">
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Content Area */}
-        <div className="lg:col-span-3">
-          {selectedProject ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-slate-200">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">{selectedProject.name}</h3>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedProject.location}</p>
-                </div>
-                <Link href={`/projects/${selectedProject.id}`}>
-                  <Button variant="outline" size="sm" className="gap-2 text-[10px] font-black uppercase tracking-widest">
-                    Go to Project
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </div>
-              
-              {selectedProject.flow && (
-                <DesignModule data={selectedProject.flow.officeWork} projectId={selectedProject.id} />
-              )}
+        {/* Modules/Quick Access */}
+        <div className="space-y-6">
+          <Card className="p-6 bg-slate-900 text-white border-slate-800 shadow-xl overflow-hidden relative group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-indigo-600/30 transition-all" />
+            <div className="relative z-10 space-y-4">
+              <Layers className="w-8 h-8 text-indigo-400" />
+              <h3 className="text-lg font-black tracking-tight">Design Library</h3>
+              <p className="text-sm text-slate-400 font-medium">Access master blocks, previous project layouts, and design standards.</p>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-500 border-none rounded-xl font-bold h-10 mt-2">Open Library</Button>
             </div>
-          ) : (
-            <div className="h-[400px] bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-10">
-              <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6">
-                <PenTool className="w-8 h-8 text-slate-300" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">No Project Selected</h3>
-              <p className="text-sm text-slate-500 max-w-xs mt-2 font-medium">Please select a project from the left sidebar to view and manage its designing work.</p>
+          </Card>
+
+          <Card className="p-6 border-slate-100">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">Quick Documentation</h3>
+            <div className="space-y-3">
+              {["Material Specification", "Client Quotation", "Structural NOC", "Interior BOQ"].map((doc) => (
+                <button key={doc} className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group text-left">
+                  <span className="text-xs font-bold text-slate-600 group-hover:text-indigo-600">{doc}</span>
+                  <Plus className="w-3 h-3 text-slate-300 group-hover:text-indigo-400" />
+                </button>
+              ))}
             </div>
-          )}
+          </Card>
         </div>
       </div>
     </div>
   );
 }
+
+import { cn } from "@/lib/utils";

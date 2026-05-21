@@ -99,22 +99,22 @@ export const tasks = [
 ];
 
 export const supervisors = [
-  { id: "s1", name: "Mike Ross", phone: "555-2001", email: "mike@archisite.pro", experience: "8 years", assignedProjects: ["1", "2"], joinDate: "2022-03-10" },
-  { id: "s2", name: "Priya Sharma", phone: "555-2002", email: "priya@archisite.pro", experience: "5 years", assignedProjects: ["3"], joinDate: "2023-01-15" },
-  { id: "s3", name: "David Khan", phone: "555-2003", email: "david@archisite.pro", experience: "10 years", assignedProjects: [], joinDate: "2021-06-20" },
+  { id: "s1", name: "Mike Ross", type: "Client", phone: "555-2001", email: "mike@archisite.pro", experience: "8 years", assignedProjects: ["1", "2"], joinDate: "2022-03-10" },
+  { id: "s2", name: "Priya Sharma", type: "Client", phone: "555-2002", email: "priya@archisite.pro", experience: "5 years", assignedProjects: ["3"], joinDate: "2023-01-15" },
+  { id: "s3", name: "David Khan", type: "Client", phone: "555-2003", email: "david@archisite.pro", experience: "10 years", assignedProjects: [], joinDate: "2021-06-20" },
 ];
 
 export const WORKER_SPECIALIZATIONS = [
   "Mason", "Electrician", "Plumber", "Painter", "Carpenter",
   "Steel Fixer", "Welder", "Tiler", "Plasterer", "Excavator Operator",
-  "Crane Operator", "Civil Engineer", "Interior Designer", "Supervisor",
+  "Crane Operator", "Civil Engineer", "Interior Designer", "Director",
 ];
 
 export const workers = [
-  { id: "1", name: "John Doe", type: "Architect", team: "Office", specializations: ["Design", "Planning"], phone: "555-0123", rate: "$150/hour", assignedProjects: ["Modern Villa"], experience: "6 years", joinDate: "2023-02-01", address: "123 Main St, Beverly Hills" },
-  { id: "2", name: "Ali Hassan", type: "Designer", team: "Office", specializations: ["Interior", "Electrical Plan"], phone: "555-0124", rate: "$200/hour", assignedProjects: ["City Heights Apartment"], experience: "9 years", joinDate: "2022-08-15", address: "45 Oak Ave, Seattle" },
-  { id: "3", name: "Sarah Lane", type: "Painter", team: "Site", specializations: ["Painting", "Tiling"], phone: "555-0125", rate: "$120/day", assignedProjects: ["City Heights Apartment"], experience: "4 years", joinDate: "2023-05-10", address: "78 Pine Rd, Seattle" },
-  { id: "4", name: "Robert Paulson", type: "Plumber", team: "Site", specializations: ["Plumbing", "Steel Fixing"], phone: "555-0126", rate: "$180/day", assignedProjects: ["Modern Villa"], experience: "7 years", joinDate: "2022-11-20", address: "90 Elm St, Beverly Hills" },
+  { id: "1", name: "John Doe", type: "Director", team: "Office", specializations: ["Design", "Planning"], phone: "555-0123", email: "john@archisite.pro", rate: "$150/hour", assignedProjects: ["Modern Villa"], experience: "6 years", joinDate: "2023-02-01", address: "123 Main St, Beverly Hills" },
+  { id: "2", name: "Ali Hassan", type: "Designer", team: "Office", specializations: ["Interior", "Electrical Plan"], phone: "555-0124", email: "ali@archisite.pro", rate: "$200/hour", assignedProjects: ["City Heights Apartment"], experience: "9 years", joinDate: "2022-08-15", address: "45 Oak Ave, Seattle" },
+  { id: "3", name: "Sarah Lane", type: "Painter", team: "Site", specializations: ["Painting", "Tiling"], phone: "555-0125", email: "sarah@archisite.pro", rate: "$120/day", assignedProjects: ["City Heights Apartment"], experience: "4 years", joinDate: "2023-05-10", address: "78 Pine Rd, Seattle" },
+  { id: "4", name: "Robert Paulson", type: "Plumber", team: "Site", specializations: ["Plumbing", "Steel Fixing"], phone: "555-0126", email: "robert@archisite.pro", rate: "$180/day", assignedProjects: ["Modern Villa"], experience: "7 years", joinDate: "2022-11-20", address: "90 Elm St, Beverly Hills" },
 ];
 
 export const clients = [

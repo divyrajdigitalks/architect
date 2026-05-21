@@ -19,8 +19,8 @@ const PAGE_ICONS: Record<string, React.ElementType> = {
   "office-work": PenTool,
   "site-work":   Hammer,
   tasks:        CheckSquare,
-  workers:      Users,
-  supervisors:  HardHat,
+  "office-team": Users,
+  "site-team":   HardHat,
   clients:      UserCircle2,
   "site-updates": ClipboardList,
   "site-photos":  Camera,
@@ -40,16 +40,16 @@ const PAGE_LABELS: Record<string, string> = {
   "office-work":  "Office Work",
   "site-work":    "Site Work",
   tasks:          "Tasks",
-  workers:        "OFFICE TEAM",
-  supervisors:    "SITE TEAM",
-  clients:        "Clients",
+  "office-team":  "OFFICE TEAM",
+  "site-team":    "SITE TEAM",
+  clients:        "OFFICE TEAM",
+  supervisors:    "CLIENTS",
+  workers:        "AGENCY",
   "site-updates": "Site Updates",
   "site-photos":  "Site Photos",
   attendance:     "Attendance",
-  "office-team": "OFFICE TEAM",
-  "site-team":   "SITE TEAM",
   arkiton:        "ARKITON",
-  "working-sop": "WORKING SOP",
+  "working-sop":  "WORKING SOP",
   payments:       "Payments",
   calendar:       "Calendar",
   reports:        "Reports",
@@ -60,18 +60,26 @@ const PAGE_LABELS: Record<string, string> = {
 // Worker dashboard shows as "My Tasks", worker projects as "Job Locations"
 const ROLE_PAGE_LABELS: Record<string, Record<string, string>> = {
   worker: {
-    dashboard: "My Tasks",
+    dashboard: "Agency Tasks",
     projects:  "Job Locations",
   },
   client: {
-    dashboard: "My Project",
+    dashboard: "Office Dashboard",
   },
   supervisor: {
-    dashboard: "Dashboard",
-    projects:  "Active Projects",
+    dashboard: "Client Dashboard",
+    projects:  "My Projects",
     tasks:     "Today's Tasks",
     "site-updates": "Site Logs",
   },
+  "site-engineer": {
+    dashboard: "Guest Dashboard",
+    projects: "Work Portfolio",
+    arkiton: "Arkiton Introduction",
+    "working-sop": "Working Style",
+    "site-updates": "Project & Achievement",
+    messages: "Agency Contact",
+   }
 };
 
 export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void }) {
@@ -81,11 +89,12 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
 
   if (pathname === "/login") return null;
 
-  const roleConfig = getRoleById(user?.role ?? "");
+  const roleId = typeof user?.role === 'string' ? user.role : "";
+  const roleConfig = getRoleById(roleId);
   const allowedPages = roleConfig?.pages ?? [];
 
   const menuItems = allowedPages.map(pageKey => {
-    const roleLabels = ROLE_PAGE_LABELS[user?.role ?? ""] ?? {};
+    const roleLabels = ROLE_PAGE_LABELS[roleId] ?? {};
     return {
       key: pageKey,
       name: roleLabels[pageKey] ?? PAGE_LABELS[pageKey] ?? pageKey,
@@ -115,7 +124,7 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
           return (
             <Link key={item.key} href={item.href} onClick={onMobileClose}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors duration-150",
+                "flex items-center gap-3 px-3 py-2 text-sm font-bold rounded transition-colors duration-150 uppercase tracking-tight",
                 isActive 
                   ? "bg-slate-800 text-white border-l-2 border-primary-500" 
                   : "hover:bg-slate-800 hover:text-white"
@@ -136,7 +145,7 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white truncate">{user?.name}</p>
               <p className="text-[10px] text-slate-500 truncate uppercase font-semibold tracking-wider">
-                {roleConfig?.name ?? user?.role}
+                {roleConfig?.name || (typeof user?.role === 'string' ? user.role : 'User')}
               </p>
             </div>
           </div>

@@ -14,7 +14,7 @@ import { useRoles } from "@/lib/role-context";
 
 type Worker = typeof initialWorkers[0] & { assignedRole?: string };
 
-const emptyForm = { name: "", type: "", team: "Site", specializations: [] as string[], phone: "", rate: "", address: "", experience: "" };
+const emptyForm = { name: "", type: "", team: "Site", specializations: [] as string[], phone: "", email: "", rate: "", address: "", experience: "" };
 
 export default function WorkersPage() {
   const { user } = useAuth();
@@ -57,6 +57,7 @@ export default function WorkersPage() {
       type: form.specializations[0] || form.type,
       assignedProjects: [],
       joinDate: new Date().toISOString().split("T")[0],
+      email: form.email || `${form.name.toLowerCase().replace(/\s+/g, ".")}@archisite.pro`
     }]);
     setForm(emptyForm);
     setIsAddModalOpen(false);

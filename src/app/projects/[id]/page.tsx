@@ -32,6 +32,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { useTasks } from "@/lib/tasks-store";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
 import { ExecutionModule } from "@/components/projects/ExecutionModule";
 
@@ -41,7 +42,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const { user } = useAuth();
   const { getProjectById, updateStageStatus } = useProjects();
-  const { tasks } = useTasks();
+  const { tasks: allTasks } = useTasks();
   
   const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -66,7 +67,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     updateStageStatus(project.id, stageName, newStatus);
   };
 
-  const projectTasks = tasks.filter(t => t.projectId === project.id || t.project === project.name);
+  const projectTasks = allTasks.filter(t => t.projectId === project.id || t.project === project.name);
   const projectUpdates = siteUpdates.filter(u => u.project === project.name);
   const projectWorkers = workers.filter(w => w.assignedProjects.includes(project.name));
   const projectPayments = payments.filter(p => p.project === project.name);

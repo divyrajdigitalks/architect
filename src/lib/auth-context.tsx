@@ -12,6 +12,7 @@ export interface User {
   email: string;
   role: Role;
   projectId?: string;
+  mobile?: string;
 }
 
 interface AuthContextType {
@@ -26,11 +27,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Default demo users for built-in roles
 const DEMO_USERS: Record<string, User> = {
   architect:       { id: "1", name: "Arch. Sarah Connor", email: "sarah@archisite.pro",  role: "architect" },
-  client:          { id: "2", name: "Alice Johnson",       email: "alice@example.com",    role: "client",        projectId: "1" },
-  supervisor:      { id: "3", name: "Mike Ross",           email: "mike@archisite.pro",   role: "supervisor",    projectId: "1" },
-  worker:          { id: "4", name: "John Doe",            email: "john@trades.pro",      role: "worker",        projectId: "1" },
-  accountant:      { id: "5", name: "Riya Mehta",          email: "riya@archisite.pro",   role: "accountant" },
-  "site-engineer": { id: "6", name: "Arjun Kapoor",        email: "arjun@archisite.pro",  role: "site-engineer" },
+  client:          { id: "2", name: "Office Admin",        email: "office@archisite.pro", role: "client" },
+  supervisor:      { id: "3", name: "Client User",         email: "client@example.com",   role: "supervisor",    projectId: "1" },
+  worker:          { id: "4", name: "Agency Lead",         email: "agency@trades.pro",    role: "worker",        projectId: "1" },
+  accountant:      { id: "5", name: "Academy Manager",     email: "academy@archisite.pro", role: "accountant" },
+  "site-engineer": { id: "6", name: "Guest User",          email: "guest@example.com",    role: "site-engineer" },
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -42,7 +43,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("auth_user");
-      if (saved) setUser(JSON.parse(saved));
+      if (saved) {
+        const parsedUser = JSON.parse(saved);
+        // Ensure role is a string
+        if (parsedUser && typeof parsedUser.role === 'object' && parsedUser.role !== null) {
+          parsedUser.role = parsedUser.role.roleName || 'guest';
+        }
+        setUser(parsedUser);
+      }
     } catch {
       localStorage.removeItem("auth_user");
     } finally {
