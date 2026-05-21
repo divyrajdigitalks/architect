@@ -16,7 +16,7 @@ const stats = [
     border: "border-blue-100"
   },
   { 
-    label: "Active Sites", 
+    label: "RUNNING SITE", 
     value: "8", 
     icon: Construction, 
     color: "text-green-600", 

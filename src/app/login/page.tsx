@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Mail, Lock, ChevronRight } from "lucide-react";
+import { Building2, Mail, Lock, ChevronRight, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/role-context";
@@ -38,6 +38,7 @@ export default function LoginPage() {
 
   const selected = roles.find(r => r.id === selectedRole);
   const selColors = COLOR_SELECTED[selected?.color ?? "indigo"];
+  const isGuest = selectedRole === "guest";
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
@@ -88,22 +89,57 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Work Email</label>
-              <Input type="email" placeholder="name@company.com" icon={Mail} required />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between ml-1">
-                <label className="text-sm font-bold text-slate-700">Password</label>
-                <button type="button" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Forgot?</button>
+            {isGuest ? (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1">Mobile Number</label>
+                <Input type="tel" placeholder="+91 00000 00000" icon={Phone} required />
+                <p className="text-[10px] font-medium text-slate-400 ml-1 uppercase tracking-widest">Guest login mate mobile number jaruri che</p>
               </div>
-              <Input type="password" placeholder="••••••••" icon={Lock} required />
-            </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Work Email</label>
+                  <Input type="email" placeholder="name@company.com" icon={Mail} required />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-sm font-bold text-slate-700">Password</label>
+                    <button type="button" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Forgot?</button>
+                  </div>
+                  <Input type="password" placeholder="••••••••" icon={Lock} required />
+                </div>
+              </>
+            )}
             <Button type="submit" className="w-full py-4 text-base gap-2 group">
-              Sign In as {selected?.name ?? "User"}
+              {isGuest ? "Continue as Guest" : `Sign In as ${selected?.name ?? "User"}`}
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </form>
+
+          {isGuest && (
+            <div className="bg-slate-50 p-5 rounded-3xl border border-slate-200">
+              <p className="text-sm font-bold text-slate-700">Guest Access Preview</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Guest visitors can explore the portfolio, agency introduction, work style, projects and achievements, and agency contact details.
+              </p>
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
+                {[
+                  "Work Portfolio",
+                  "Arkiton Introduction",
+                  "Working Style",
+                  "Project and Achievement",
+                  "Agency Contact Number"
+                ].map((item) => (
+                  <p key={item} className="flex items-center gap-2">
+                    <span className="inline-flex h-2.5 w-2.5 rounded-full bg-indigo-600" />
+                    {item}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-4 text-sm font-semibold text-slate-700">Guest mobile:</p>
+              <p className="text-base font-bold text-slate-900">+91 99999 88888</p>
+            </div>
+          )}
 
           <div className="text-center">
             <p className="text-sm text-slate-500 font-medium">

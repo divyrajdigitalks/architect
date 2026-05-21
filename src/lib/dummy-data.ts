@@ -92,10 +92,10 @@ export const projects = [
 ];
 
 export const tasks = [
-  { id: "1", name: "Foundation Inspection", project: "Modern Villa", stage: "Foundation", worker: "John Doe", deadline: "2024-03-20", status: "Pending" },
-  { id: "2", name: "Electrical Wiring - Floor 1", project: "City Heights Apartment", stage: "Electrical", worker: "Ali Hassan", deadline: "2024-03-18", status: "In Progress" },
-  { id: "3", name: "Plastering - Exterior Wall", project: "City Heights Apartment", stage: "Plaster", worker: "Sarah Lane", deadline: "2024-03-15", status: "Completed" },
-  { id: "4", name: "Structure Beam Reinforcement", project: "Modern Villa", stage: "Structure", worker: "Robert Paulson", deadline: "2024-03-22", status: "In Progress" },
+  { id: "1", name: "Foundation Inspection", project: "Modern Villa", stage: "Foundation", officeTeam: "Ruth Designer", officeStatus: "Pending", siteTeam: "John Doe", siteStatus: "Pending", deadline: "2024-03-20" },
+  { id: "2", name: "Electrical Wiring - Floor 1", project: "City Heights Apartment", stage: "Electrical", officeTeam: "Ali Hassan", officeStatus: "In Progress", siteTeam: "Mike Ross", siteStatus: "In Progress", deadline: "2024-03-18" },
+  { id: "3", name: "Plastering - Exterior Wall", project: "City Heights Apartment", stage: "Plaster", officeTeam: "Sarah Lane", officeStatus: "Completed", siteTeam: "Sarah Lane", siteStatus: "Completed", deadline: "2024-03-15" },
+  { id: "4", name: "Structure Beam Reinforcement", project: "Modern Villa", stage: "Structure", officeTeam: "Robert Paulson", officeStatus: "In Progress", siteTeam: "Robert Paulson", siteStatus: "In Progress", deadline: "2024-03-22" },
 ];
 
 export const supervisors = [
@@ -111,10 +111,10 @@ export const WORKER_SPECIALIZATIONS = [
 ];
 
 export const workers = [
-  { id: "1", name: "John Doe", type: "Mason", specializations: ["Mason", "Plasterer"], phone: "555-0123", rate: "$150/day", assignedProjects: ["Modern Villa"], experience: "6 years", joinDate: "2023-02-01", address: "123 Main St, Beverly Hills" },
-  { id: "2", name: "Ali Hassan", type: "Electrician", specializations: ["Electrician", "Welder"], phone: "555-0124", rate: "$200/day", assignedProjects: ["City Heights Apartment"], experience: "9 years", joinDate: "2022-08-15", address: "45 Oak Ave, Seattle" },
-  { id: "3", name: "Sarah Lane", type: "Painter", specializations: ["Painter", "Tiler"], phone: "555-0125", rate: "$120/day", assignedProjects: ["City Heights Apartment"], experience: "4 years", joinDate: "2023-05-10", address: "78 Pine Rd, Seattle" },
-  { id: "4", name: "Robert Paulson", type: "Plumber", specializations: ["Plumber", "Steel Fixer"], phone: "555-0126", rate: "$180/day", assignedProjects: ["Modern Villa"], experience: "7 years", joinDate: "2022-11-20", address: "90 Elm St, Beverly Hills" },
+  { id: "1", name: "John Doe", type: "Architect", team: "Office", specializations: ["Design", "Planning"], phone: "555-0123", rate: "$150/hour", assignedProjects: ["Modern Villa"], experience: "6 years", joinDate: "2023-02-01", address: "123 Main St, Beverly Hills" },
+  { id: "2", name: "Ali Hassan", type: "Designer", team: "Office", specializations: ["Interior", "Electrical Plan"], phone: "555-0124", rate: "$200/hour", assignedProjects: ["City Heights Apartment"], experience: "9 years", joinDate: "2022-08-15", address: "45 Oak Ave, Seattle" },
+  { id: "3", name: "Sarah Lane", type: "Painter", team: "Site", specializations: ["Painting", "Tiling"], phone: "555-0125", rate: "$120/day", assignedProjects: ["City Heights Apartment"], experience: "4 years", joinDate: "2023-05-10", address: "78 Pine Rd, Seattle" },
+  { id: "4", name: "Robert Paulson", type: "Plumber", team: "Site", specializations: ["Plumbing", "Steel Fixing"], phone: "555-0126", rate: "$180/day", assignedProjects: ["Modern Villa"], experience: "7 years", joinDate: "2022-11-20", address: "90 Elm St, Beverly Hills" },
 ];
 
 export const clients = [

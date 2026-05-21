@@ -14,7 +14,7 @@ import { useRoles } from "@/lib/role-context";
 
 type Worker = typeof initialWorkers[0] & { assignedRole?: string };
 
-const emptyForm = { name: "", type: "", specializations: [] as string[], phone: "", rate: "", address: "", experience: "" };
+const emptyForm = { name: "", type: "", team: "Site", specializations: [] as string[], phone: "", rate: "", address: "", experience: "" };
 
 export default function WorkersPage() {
   const { user } = useAuth();
@@ -53,6 +53,7 @@ export default function WorkersPage() {
     setWorkers(prev => [...prev, {
       id: String(Date.now()),
       ...form,
+      team: form.team as "Office" | "Site",
       type: form.specializations[0] || form.type,
       assignedProjects: [],
       joinDate: new Date().toISOString().split("T")[0],

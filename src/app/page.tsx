@@ -2,30 +2,31 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { projects, tasks, siteUpdates, messages, payments } from "@/lib/dummy-data";
-import { 
+import {
   Briefcase, 
   Construction, 
   Clock, 
   CreditCard,
   MessageSquare,
   HardHat,
-  TrendingUp,
   ChevronRight, 
   Camera,
   Calendar,
-  Plus,
-  ArrowUpRight,
   CircleCheck,
   CircleAlert,
   MapPin,
+  Phone,
+  LayoutDashboard,
   Users,
-  Phone
+  Plus
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatsCard } from "@/components/ui/StatsCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import DashboardCards from "@/components/DashboardCards";
 
 export default function Dashboard() {
@@ -45,10 +46,88 @@ export default function Dashboard() {
     case "accountant":
       return <AccountantDashboard />;
     case "site-engineer":
-      return <SiteEngineerDashboard />;
+    case "guest":
+      return <GuestDashboard />;
     default:
       return null;
   }
+}
+
+// --- Guest Dashboard ---
+function GuestDashboard() {
+  const sections = [
+    { title: "Work Portfolio", content: "Explore our diverse portfolio of residential villas, commercial landmarks, and urban apartment complexes that showcase our design philosophy." },
+    { title: "Arkiton Introduction", content: "Arkiton is a premier design-build firm committed to transforming architectural visions into structural realities through innovation." },
+    { title: "Working Style", content: "Our collaborative approach integrates architecture, engineering, and on-site management to ensure seamless project execution." },
+    { title: "Project and Achievement", content: "With over 50 completed projects and multiple design excellence awards, we take pride in our track record of success." },
+    { title: "Agency Contact Directory", content: "Contact our verified agencies for specialized services in plumbing, electrical, and structural engineering." },
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="bg-primary-900 p-8 rounded-lg text-white shadow-md relative overflow-hidden border border-primary-800">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+        <div className="relative z-10 space-y-6">
+          <div className="space-y-1">
+            <p className="text-primary-300 font-bold uppercase tracking-widest text-[10px]">Welcome to ArchiSite</p>
+            <h2 className="text-3xl font-bold tracking-tight">Guest Console</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded border border-white/20 backdrop-blur-sm">
+              <Phone className="w-4 h-4 text-primary-300" />
+              <div>
+                <p className="text-[9px] font-bold text-primary-300 uppercase tracking-widest">Inquiry Number</p>
+                <p className="text-base font-bold">+91 98765 43210</p>
+              </div>
+            </div>
+            <Button variant="primary" className="bg-white text-primary-900 border-white hover:bg-slate-100 shadow-lg px-6 h-10">
+              Contact Us Now
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {sections.map((s) => (
+          <Card key={s.title} className="hover:border-primary-300 transition-all duration-300 group">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-bold text-primary-600 uppercase tracking-wider">{s.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                {s.content}
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button variant="ghost" size="sm" className="p-0 text-primary-600 font-bold text-xs gap-1 group-hover:gap-2 transition-all">
+                Learn more <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Featured Portfolio</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {projects.slice(0, 2).map(p => (
+            <div key={p.id} className="group cursor-pointer">
+              <div className="aspect-video bg-slate-100 rounded-lg mb-3 overflow-hidden relative border border-slate-200 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                  <p className="text-white font-semibold text-sm">{p.location}</p>
+                </div>
+                <div className="w-full h-full flex items-center justify-center">
+                  <Briefcase className="w-8 h-8 text-slate-300 group-hover:scale-105 transition-transform duration-300" />
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{p.name}</h4>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{p.status}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 // --- Architect Dashboard ---
@@ -56,84 +135,84 @@ function ArchitectDashboard() {
   const todayTasks = tasks.slice(0, 3);
   
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Architect Console</h2>
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-            <Calendar className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-bold text-slate-700">Mar 14, 2026</span>
-          </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader 
+        title="Architect Console" 
+        description="Monitor projects, tasks, and team performance across all sites."
+      >
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-slate-200 shadow-sm">
+          <Calendar className="w-3.5 h-3.5 text-primary-600" />
+          <span className="text-xs font-bold text-slate-700">May 21, 2026</span>
         </div>
-        <DashboardCards />
-      </section>
+      </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <Card className="lg:col-span-2 p-10 space-y-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-50 p-3 rounded-2xl">
-                <HardHat className="w-6 h-6 text-orange-600" />
+      <DashboardCards />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                <HardHat className="w-4 h-4 text-slate-600" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Live Site Schedule</h2>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Across All Projects</p>
-              </div>
+              <CardTitle>Live Site Schedule</CardTitle>
             </div>
             <Link href="/tasks">
-              <Button variant="ghost" size="sm" className="text-indigo-600 gap-1 group">
-                Full View
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              <Button variant="ghost" size="sm" className="text-primary-600 font-bold gap-1">
+                View all tasks
+                <ChevronRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {todayTasks.map((task) => (
-              <div key={task.id} className="p-6 border border-slate-100 rounded-3xl hover:border-indigo-200 transition-all group">
-                <div className="flex items-start justify-between mb-4">
-                  <span className="px-2.5 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 rounded-lg uppercase tracking-wider">{task.project}</span>
-                  <StatusBadge status={task.status} />
-                </div>
-                <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors mb-4">{task.name}</h3>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-bold text-indigo-600">
-                      {task.worker.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <span className="text-xs font-bold text-slate-600">{task.worker}</span>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {todayTasks.map((task) => (
+                <div key={task.id} className="p-4 border border-slate-200 rounded-md hover:border-primary-200 transition-all group bg-white shadow-sm">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{task.project}</span>
+                    <DashboardStatusBadge status={task.officeStatus} className="text-[10px] px-2 py-0" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">{task.deadline}</span>
+                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors mb-3">{task.name}</h3>
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center text-[9px] font-bold text-primary-600 border border-primary-100">
+                        {task.officeTeam.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-600">{task.officeTeam}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">{task.deadline}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </CardContent>
         </Card>
 
-        <Card className="p-10 space-y-10">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-50 p-3 rounded-2xl">
-              <MessageSquare className="w-6 h-6 text-blue-600" />
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                <MessageSquare className="w-4 h-4 text-slate-600" />
+              </div>
+              <CardTitle>Client Feed</CardTitle>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">Client Feed</h2>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Inbox</p>
-            </div>
-          </div>
-          <div className="space-y-6">
-            {messages.map((msg) => (
-              <div key={msg.id} className={cn("p-5 rounded-3xl border transition-all", msg.unread ? "bg-indigo-50/50 border-indigo-100" : "bg-white border-slate-50 hover:bg-slate-50")}>
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-xs font-bold text-indigo-600 shadow-sm border border-slate-100">
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {messages.slice(0, 3).map((msg) => (
+              <div key={msg.id} className={cn("p-4 rounded border transition-all", msg.unread ? "bg-primary-50/30 border-primary-100" : "bg-white border-slate-100 hover:bg-slate-50")}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-7 h-7 bg-slate-100 rounded flex items-center justify-center text-[10px] font-bold text-primary-600 border border-slate-200">
                     {msg.from.split(' ').map(n => n[0]).join('')}
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900">{msg.from}</h3>
+                  <h3 className="text-xs font-bold text-slate-900">{msg.from}</h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{msg.text}</p>
+                <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2 font-medium">{msg.text}</p>
               </div>
             ))}
-          </div>
-          <Button variant="secondary" className="w-full text-xs uppercase tracking-widest">View All Messages</Button>
+          </CardContent>
+          <CardFooter>
+            <Button variant="secondary" className="w-full text-xs font-bold py-2">View all messages</Button>
+          </CardFooter>
         </Card>
       </div>
     </div>
@@ -143,77 +222,80 @@ function ArchitectDashboard() {
 // --- Client Dashboard ---
 function ClientDashboard({ projectId }: { projectId?: string }) {
   const project = projects.find(p => p.id === projectId) || projects[0];
-  const projectUpdates = siteUpdates.filter(u => u.project === project.name).slice(0, 2);
   
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{project.name}</h2>
-          <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
-            <span className="flex items-center gap-2"><Construction className="w-4 h-4 text-indigo-500" /> Site Progress</span>
-            <span className="text-indigo-600 bg-indigo-50 px-3 py-1 rounded-xl">{project.progress}% Complete</span>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <Card className="bg-white p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h2>
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+              <span className="flex items-center gap-1.5"><Construction className="w-3.5 h-3.5 text-primary-500" /> Site Progress</span>
+              <span className="text-primary-700 bg-primary-50 px-2.5 py-0.5 rounded border border-primary-100">{project.progress}% Complete</span>
+            </div>
           </div>
+          <Button variant="primary" className="gap-2 h-10 px-6">
+            <MessageSquare className="w-4 h-4" />
+            Contact Architect
+          </Button>
         </div>
-        <Button className="gap-2">
-          <MessageSquare className="w-5 h-5" />
-          Contact Architect
-        </Button>
-      </div>
+      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <Card className="lg:col-span-2 p-10 space-y-10">
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Construction Roadmap</h3>
-          <div className="space-y-8 relative pl-10">
-            <div className="absolute left-4 top-2 bottom-2 w-px bg-slate-100" />
-            {project.stages.slice(0, 5).map((stage, idx) => (
-              <div key={idx} className="relative flex items-center gap-6">
-                <div className={cn(
-                  "absolute -left-10 w-8 h-8 rounded-2xl border-4 border-white flex items-center justify-center z-10 shadow-sm",
-                  stage.status === "Completed" ? "bg-green-500" :
-                  stage.status === "In Progress" ? "bg-indigo-600 animate-pulse" : "bg-slate-100"
-                )}>
-                  {stage.status === "Completed" ? <CircleCheck className="w-4 h-4 text-white" /> : <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
-                <div className={cn("flex-1 p-5 rounded-2xl border", stage.status === "In Progress" ? "bg-indigo-50/50 border-indigo-100" : "bg-white border-slate-50")}>
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm text-slate-900">{stage.name}</p>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{stage.status}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Construction Roadmap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 relative pl-8">
+              <div className="absolute left-3.5 top-1 bottom-1 w-0.5 bg-slate-100" />
+              {project.stages.slice(0, 5).map((stage, idx) => (
+                <div key={idx} className="relative flex items-center gap-4">
+                  <div className={cn(
+                    "absolute -left-8 w-7 h-7 rounded border-2 border-white flex items-center justify-center z-10 shadow-sm",
+                    stage.status === "Completed" ? "bg-emerald-500" :
+                    stage.status === "In Progress" ? "bg-primary-600 animate-pulse" : "bg-slate-100"
+                  )}>
+                    {stage.status === "Completed" ? <CircleCheck className="w-3.5 h-3.5 text-white" /> : <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <div className="space-y-8">
-          <Card className="p-8 space-y-6">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Site Photos</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="aspect-square bg-slate-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-200">
-                  <Camera className="w-6 h-6 text-slate-300" />
+                  <div className="flex-1">
+                    <p className={cn("text-sm font-bold", stage.status === "Pending" ? "text-slate-400" : "text-slate-900")}>{stage.name}</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{stage.status}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full text-xs">View Gallery</Button>
-          </Card>
+          </CardContent>
+        </Card>
 
-          <Card className="p-8 bg-indigo-600 text-white space-y-4">
-            <h3 className="font-bold text-lg">Payment History</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-indigo-100">Total Budget</span>
-                <span className="font-black">{project.budget}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-indigo-100">Received</span>
-                <span className="font-black">{project.received}</span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Financial Summary</p>
+              <div className="p-4 bg-slate-50 rounded border border-slate-100 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-slate-500">Total Budget</span>
+                  <span className="text-sm font-bold text-slate-900">{project.budget}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-slate-500">Received</span>
+                  <span className="text-sm font-bold text-emerald-600">{project.received}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-700">Pending</span>
+                  <span className="text-sm font-bold text-red-600">{project.pending}</span>
+                </div>
               </div>
             </div>
-            <Button variant="white" className="w-full text-indigo-600">Download Statement</Button>
-          </Card>
-        </div>
+            <Button variant="outline" className="w-full text-xs font-bold gap-2">
+              <CreditCard className="w-4 h-4" />
+              Make Payment
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -222,64 +304,94 @@ function ClientDashboard({ projectId }: { projectId?: string }) {
 // --- Supervisor Dashboard ---
 function SupervisorDashboard({ projectId }: { projectId?: string }) {
   const project = projects.find(p => p.id === projectId) || projects[0];
-  const siteTasks = tasks.filter(t => t.project === project.name);
+  const siteTasks = tasks.filter(t => t.project === project.name).slice(0, 4);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-        <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Site Console</h2>
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">{project.name}</p>
-        </div>
-        <div className="flex gap-3">
-          <Link href="/attendance"><Button variant="outline" className="gap-2">
-            <Users className="w-5 h-5" />
-            Attendance
-          </Button></Link>
-          <Button className="gap-2">
-            <Plus className="w-5 h-5" />
-            Daily Log
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader 
+        title={project.name} 
+        description={`${project.location} • Supervisor View`}
+      >
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2 font-bold text-xs">
+            <Camera className="w-4 h-4" />
+            Add Site Photo
+          </Button>
+          <Button variant="primary" size="sm" className="gap-2 font-bold text-xs">
+            <Plus className="w-4 h-4" />
+            New Update
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <Card className="lg:col-span-2 p-10 space-y-8">
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Today's Site Tasks</h3>
-          <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Active Site Tasks</CardTitle>
+            <Link href="/tasks">
+              <Button variant="ghost" size="sm" className="text-primary-600 font-bold gap-1">
+                Manage all
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {siteTasks.map(task => (
-              <div key={task.id} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:border-indigo-100 transition-all group">
-                <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                    <HardHat className="w-6 h-6 text-indigo-600" />
+              <div key={task.id} className="flex items-center justify-between p-4 bg-white rounded border border-slate-200 hover:border-primary-200 transition-all group shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 rounded flex items-center justify-center border border-slate-100">
+                    <HardHat className="w-5 h-5 text-slate-600" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">{task.name}</p>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{task.worker}</p>
+                    <p className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{task.name}</p>
+                    <p className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">{task.siteTeam}</p>
                   </div>
                 </div>
-                <Link href="/tasks"><Button variant="white" size="sm" className="text-indigo-600">Update Status</Button></Link>
+                <div className="flex items-center gap-3">
+                  <DashboardStatusBadge status={task.siteStatus} className="text-[10px] px-2 py-0" />
+                  <Link href="/tasks">
+                    <Button variant="outline" size="sm" className="text-[10px] font-bold h-7 px-3">Update</Button>
+                  </Link>
+                </div>
               </div>
             ))}
-          </div>
+          </CardContent>
         </Card>
 
-        <Card className="p-10 space-y-8">
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Upload Progress</h3>
-          <Link href="/site-photos" className="block">
-            <div className="aspect-video bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all">
-              <Camera className="w-10 h-10 text-slate-300" />
-              <p className="text-xs font-bold text-slate-400">Upload Site Photos</p>
+        <div className="space-y-6">
+          <Card className="p-6 space-y-6">
+            <CardTitle>Quick Actions</CardTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="secondary" className="flex-col h-20 gap-2 font-bold text-[10px] uppercase tracking-wider">
+                <Users className="w-5 h-5" />
+                Attendance
+              </Button>
+              <Button variant="secondary" className="flex-col h-20 gap-2 font-bold text-[10px] uppercase tracking-wider">
+                <MapPin className="w-5 h-5" />
+                Site Log
+              </Button>
             </div>
-          </Link>
-          <div className="space-y-4 pt-4 border-t border-slate-50">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Project Health</p>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-700">On Schedule</span>
-              <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg shadow-green-100" />
+          </Card>
+          
+          <Card className="p-6">
+            <CardTitle className="mb-4 text-sm uppercase tracking-wider text-slate-500">Project Health</CardTitle>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-600">On Schedule</span>
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-sm" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <span>Overall Progress</span>
+                  <span>{project.progress}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-600" style={{ width: `${project.progress}%` }} />
+                </div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
@@ -288,94 +400,74 @@ function SupervisorDashboard({ projectId }: { projectId?: string }) {
 // --- Worker Dashboard ---
 function WorkerDashboard({ projectId }: { projectId?: string }) {
   const project = projects.find(p => p.id === projectId) || projects[0];
-  const myTasks = tasks.filter(t => t.worker === "John Doe");
+  const myTasks = tasks.filter(t => t.siteTeam === "John Doe");
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 max-w-2xl mx-auto pb-20">
-      {/* Header with high contrast and big text */}
-      <div className="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-2xl shadow-indigo-100 border-4 border-white">
-        <p className="text-indigo-100 font-black uppercase tracking-widest text-xs mb-2">Aapka Kaam (Today's Site)</p>
-        <h2 className="text-4xl font-black tracking-tight leading-tight mb-4">{project.name}</h2>
-        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/20">
-          <MapPin className="w-6 h-6 text-white" />
-          <span className="text-lg font-bold">{project.location}</span>
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-3xl mx-auto pb-10">
+      <div className="bg-primary-900 p-8 rounded-lg text-white shadow-lg border border-primary-800">
+        <p className="text-primary-300 font-bold uppercase tracking-[0.2em] text-[10px] mb-2">Today's Site Assignment</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-4">{project.name}</h2>
+        <div className="flex items-center gap-2 text-primary-200 text-sm font-medium">
+          <MapPin className="w-4 h-4" />
+          {project.location}
         </div>
       </div>
 
-      {/* Actionable Tasks */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-2xl font-black text-slate-900">Aaj ke Kaam</h3>
-          <span className="bg-slate-900 text-white px-4 py-2 rounded-2xl text-sm font-black">
-            {myTasks.length} Kaam
-          </span>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Daily Tasks</h3>
+          <div className="px-3 py-1 font-bold bg-slate-100 rounded text-slate-600 text-xs">
+            {myTasks.length} Assigned
+          </div>
         </div>
 
         {myTasks.map(task => (
-          <Card key={task.id} className="p-8 border-4 border-slate-100 shadow-xl space-y-8 rounded-[2.5rem] hover:border-indigo-600 transition-all active:scale-[0.98]">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <h4 className="text-3xl font-black text-slate-900 leading-tight">{task.name}</h4>
-                <div className="flex items-center gap-2 text-indigo-600 font-black text-lg">
-                  <MapPin className="w-5 h-5" />
-                  Floor 1, West Wing
+          <Card key={task.id} className="p-6 hover:border-primary-300 transition-all bg-white shadow-sm border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-lg font-bold text-slate-900">{task.name}</h4>
+                <div className="flex items-center gap-2 text-primary-600 font-semibold text-xs uppercase tracking-wider">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Site Area A-4
                 </div>
               </div>
-              <div className={cn(
-                "p-3 rounded-2xl border-2 font-black text-sm",
-                task.status === "In Progress" ? "bg-blue-50 text-blue-600 border-blue-200" :
-                task.status === "Completed" ? "bg-green-50 text-green-600 border-green-200" :
-                "bg-slate-50 text-slate-400 border-slate-200"
-              )}>
-                {task.status === "In Progress" ? "Chalu hai" : task.status === "Completed" ? "Ho gaya" : "Baki hai"}
-              </div>
+              <DashboardStatusBadge status={task.siteStatus} className="w-fit" />
             </div>
 
-            {/* BIG ACTION BUTTONS FOR WORKERS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 pt-6 border-t border-slate-100">
               <Button 
                 variant="outline" 
-                className="h-24 rounded-[2rem] border-4 border-slate-200 gap-4 group/btn hover:bg-indigo-50 hover:border-indigo-600"
+                className="h-12 gap-2 font-bold text-xs uppercase tracking-wider"
                 onClick={() => window.location.href = "/site-photos"}
               >
-                <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-indigo-600" />
-                </div>
-                <div className="text-left">
-                  <p className="font-black text-lg text-slate-900 leading-none">Photo Khecho</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Add Photo</p>
-                </div>
+                <Camera className="w-4 h-4 text-primary-600" />
+                Upload Photo
               </Button>
 
               <Button 
-                className="h-24 rounded-[2rem] bg-green-600 hover:bg-green-700 shadow-xl shadow-green-100 gap-4 group/done active:bg-green-800"
+                variant="primary"
+                className="h-12 gap-2 font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
                 onClick={() => window.location.href = "/tasks"}
               >
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <CircleCheck className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-black text-lg text-white leading-none">Kaam Ho Gaya</p>
-                  <p className="text-xs font-bold text-green-100 uppercase tracking-widest mt-1">Mark Done</p>
-                </div>
+                <CircleCheck className="w-4 h-4" />
+                Mark as Done
               </Button>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Emergency / Support Section */}
-      <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white flex items-center justify-between shadow-2xl border-4 border-slate-800">
-        <div className="space-y-1">
-          <p className="text-slate-400 font-black text-xs uppercase tracking-widest">Help Chahiye?</p>
-          <p className="text-xl font-black">Supervisor ko Call Karein</p>
+      <div className="bg-slate-900 p-6 rounded-lg text-white flex items-center justify-between border border-slate-800 shadow-lg">
+        <div className="space-y-0.5">
+          <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Need Support?</p>
+          <p className="text-base font-bold">Contact Site Supervisor</p>
         </div>
         <Button 
-          variant="white" 
-          className="w-16 h-16 rounded-[1.5rem] p-0 shadow-lg active:scale-90 transition-transform"
+          variant="secondary" 
+          className="w-10 h-10 p-0 rounded bg-white/10 hover:bg-white/20 border-white/10"
           onClick={() => window.location.href = "tel:911"}
         >
-          <Phone className="w-8 h-8 text-slate-900" />
+          <Phone className="w-4 h-4 text-white" />
         </Button>
       </div>
     </div>
@@ -384,66 +476,61 @@ function WorkerDashboard({ projectId }: { projectId?: string }) {
 
 // --- Accountant Dashboard ---
 function AccountantDashboard() {
-  const totalBudget = payments.reduce((sum, p) => sum + parseFloat(p.amount.replace(/[$,]/g, "")), 0);
-  const paid = payments.filter(p => p.status === "Paid").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[$,]/g, "")), 0);
-  const pending = payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[$,]/g, "")), 0);
+  const totalBudget = payments.reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
+  const paid = payments.filter(p => p.status === "Paid").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
+  const pending = payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Financial Console</h2>
-        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Accountant Overview</p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader 
+        title="Financial Console" 
+        description="Monitor payments, project budgets, and receivables."
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatsCard label="Total Budget" value={`₹${totalBudget.toLocaleString()}`} icon={CreditCard} />
+        <StatsCard label="Received" value={`₹${paid.toLocaleString()}`} icon={CircleCheck} className="border-emerald-100" />
+        <StatsCard label="Pending" value={`₹${pending.toLocaleString()}`} icon={Clock} className="border-amber-100" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[
-          { label: "Total Budget",    value: `$${totalBudget.toLocaleString()}`, color: "text-slate-900",   bg: "bg-slate-50",   border: "border-slate-200" },
-          { label: "Received",        value: `$${paid.toLocaleString()}`,         color: "text-green-700",  bg: "bg-green-50",   border: "border-green-200" },
-          { label: "Pending",         value: `$${pending.toLocaleString()}`,      color: "text-orange-700", bg: "bg-orange-50",  border: "border-orange-200" },
-        ].map(s => (
-          <Card key={s.label} className={cn("p-8 border", s.bg, s.border)}>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{s.label}</p>
-            <p className={cn("text-3xl font-black mt-2", s.color)}>{s.value}</p>
-          </Card>
-        ))}
-      </div>
-
-      <Card className="overflow-hidden p-0">
-        <div className="px-8 py-5 border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-900">Recent Payments</h3>
-        </div>
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50/50">
-              {["Project", "Client", "Milestone", "Amount", "Status", "Date"].map(h => (
-                <th key={h} className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {payments.map(p => (
-              <tr key={p.id} className="hover:bg-slate-50/30 transition-colors">
-                <td className="px-8 py-5 text-sm font-bold text-slate-900">{p.project}</td>
-                <td className="px-8 py-5 text-sm text-slate-600">{p.client}</td>
-                <td className="px-8 py-5 text-sm text-slate-600">{p.milestone}</td>
-                <td className="px-8 py-5 text-sm font-bold text-slate-900">{p.amount}</td>
-                <td className="px-8 py-5">
-                  <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider",
-                    p.status === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
-                    p.status === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                    "bg-red-50 text-red-700 border-red-100")}>
-                    {p.status}
-                  </span>
-                </td>
-                <td className="px-8 py-5 text-sm text-slate-500">{p.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Recent Transactions</CardTitle>
+          <Button variant="outline" size="sm" className="font-bold text-xs uppercase tracking-wider">Export PDF</Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="pro-table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Client</th>
+                  <th>Milestone</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map(p => (
+                  <tr key={p.id} className="group">
+                    <td><span className="font-bold">{p.project}</span></td>
+                    <td>{p.client}</td>
+                    <td>{p.milestone}</td>
+                    <td><span className="font-bold text-slate-900">{p.amount}</span></td>
+                    <td><DashboardStatusBadge status={p.status} className="text-[10px] px-2 py-0" /></td>
+                    <td><span className="text-slate-500 font-medium">{p.date}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
 }
+
 
 // --- Site Engineer Dashboard ---
 function SiteEngineerDashboard() {
@@ -457,7 +544,7 @@ function SiteEngineerDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           { label: "Active Projects", value: projects.filter(p => p.status === "In Progress").length, color: "text-indigo-700", bg: "bg-indigo-50", border: "border-indigo-200" },
-          { label: "Open Tasks",      value: tasks.filter(t => t.status !== "Completed").length,       color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+          { label: "Open Tasks",      value: tasks.filter(t => t.officeStatus !== "Completed").length,       color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
           { label: "Site Updates",    value: siteUpdates.length,                                        color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200" },
         ].map(s => (
           <Card key={s.label} className={cn("p-8 border", s.bg, s.border)}>
@@ -489,13 +576,13 @@ function SiteEngineerDashboard() {
         <Card className="p-8 space-y-6">
           <h3 className="text-base font-bold text-slate-900">Pending Tasks</h3>
           <div className="space-y-4">
-            {tasks.filter(t => t.status !== "Completed").map(task => (
+            {tasks.filter(t => t.officeStatus !== "Completed").map(task => (
               <div key={task.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <div>
                   <p className="text-sm font-bold text-slate-900">{task.name}</p>
-                  <p className="text-xs text-slate-500">{task.project} · {task.worker}</p>
+                  <p className="text-xs text-slate-500">{task.project} · {task.siteTeam}</p>
                 </div>
-                <StatusBadge status={task.status} />
+                <DashboardStatusBadge status={task.officeStatus} />
               </div>
             ))}
           </div>
@@ -505,17 +592,19 @@ function SiteEngineerDashboard() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function DashboardStatusBadge({ status, className }: { status: string, className?: string }) {
   const styles = {
     "Pending": "bg-slate-100 text-slate-600 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-100",
-    "Completed": "bg-green-50 text-green-600 border-green-100"
+    "Completed": "bg-green-50 text-green-600 border-green-100",
+    "Paid": "bg-green-50 text-green-600 border-green-100"
   };
 
   const icons = {
     "Pending": CircleAlert,
     "In Progress": Clock,
-    "Completed": CircleCheck
+    "Completed": CircleCheck,
+    "Paid": CircleCheck
   };
 
   const Icon = icons[status as keyof typeof icons] || CircleAlert;
@@ -523,10 +612,12 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span className={cn(
       "px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border uppercase tracking-wider shadow-sm",
-      styles[status as keyof typeof styles]
+      styles[status as keyof typeof styles],
+      className
     )}>
       <Icon className="w-3.5 h-3.5" />
       {status}
     </span>
   );
 }
+

@@ -247,9 +247,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     <td className="px-10 py-8">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-600 border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-500 shadow-inner">
-                          {task.worker.split(' ').map(n => n[0]).join('')}
+                          {task.siteTeam.split(' ').map(n => n[0]).join('')}
                         </div>
-                        <span className="text-sm font-bold text-slate-700">{task.worker}</span>
+                        <span className="text-sm font-bold text-slate-700">{task.siteTeam}</span>
                       </div>
                     </td>
                     <td className="px-10 py-8">
@@ -258,11 +258,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     <td className="px-10 py-8">
                       <span className={cn(
                         "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
-                        task.status === "In Progress" ? "bg-white text-blue-600 border-blue-100" :
-                        task.status === "Completed" ? "bg-white text-green-600 border-green-100" :
+                        task.officeStatus === "In Progress" ? "bg-white text-blue-600 border-blue-100" :
+                        task.officeStatus === "Completed" ? "bg-white text-green-600 border-green-100" :
                         "bg-white text-slate-400 border-slate-100"
                       )}>
-                        {task.status}
+                        {task.officeStatus}
                       </span>
                     </td>
                     <td className="px-10 py-8 text-right">

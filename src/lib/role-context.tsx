@@ -22,6 +22,10 @@ export const ALL_PAGES = [
   { key: "site-updates", label: "Site Updates" },
   { key: "site-photos",  label: "Site Photos" },
   { key: "attendance",   label: "Attendance" },
+  { key: "office-team",  label: "Office Team" },
+  { key: "site-team",    label: "Site Team" },
+  { key: "arkiton",      label: "Arkiton" },
+  { key: "working-sop",  label: "Working SOP" },
   { key: "payments",     label: "Payments" },
   { key: "calendar",     label: "Calendar" },
   { key: "reports",      label: "Reports" },
@@ -31,28 +35,40 @@ export const ALL_PAGES = [
 
 export const DEFAULT_ROLES: RoleConfig[] = [
   {
-    id: "architect", name: "Architect", color: "indigo", canDelete: false,
+    id: "architect", name: "DIRECTOR", color: "indigo", canDelete: false,
     pages: ALL_PAGES.map(p => p.key),
   },
   {
-    id: "client", name: "Client", color: "blue", canDelete: false,
+    id: "client", name: "OFFICE TEAM", color: "blue", canDelete: false,
     pages: ["dashboard", "site-photos", "payments", "messages"],
   },
   {
-    id: "supervisor", name: "Supervisor", color: "orange", canDelete: false,
-    pages: ["dashboard", "projects", "tasks", "workers", "attendance", "site-updates", "site-photos", "messages"],
+    id: "supervisor", name: "CLIENTS", color: "orange", canDelete: false,
+    pages: ["dashboard", "projects", "tasks", "site-team", "attendance", "site-updates", "site-photos", "messages"],
   },
   {
-    id: "worker", name: "Worker", color: "green", canDelete: false,
+    id: "worker", name: "AGENCY", color: "green", canDelete: false,
     pages: ["dashboard", "site-photos", "messages"],
   },
   {
-    id: "accountant", name: "Accountant", color: "purple", canDelete: false,
+    id: "office-admin", name: "ACADEMY", color: "teal", canDelete: false,
+    pages: ["dashboard", "office-team", "projects", "tasks", "messages", "attendance"],
+  },
+  {
+    id: "accountant", name: "ACADEMY", color: "purple", canDelete: false,
     pages: ["dashboard", "payments", "projects", "reports", "clients"],
   },
   {
-    id: "site-engineer", name: "Site Engineer", color: "rose", canDelete: false,
-    pages: ["dashboard", "projects", "tasks", "site-updates", "site-photos", "workers", "reports", "messages"],
+    id: "site-engineer", name: "GUEST", color: "rose", canDelete: false,
+    pages: ["dashboard", "arkiton", "working-sop"],
+  },
+  {
+    id: "guest", name: "GUEST", color: "slate", canDelete: false,
+    pages: ["dashboard", "arkiton", "working-sop"],
+  },
+  {
+    id: "director", name: "DIRECTOR", color: "indigo", canDelete: false,
+    pages: ALL_PAGES.map(p => p.key),
   },
 ];
 
@@ -68,19 +84,28 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 const STORAGE_KEY = "archisite_roles";
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [roles, setRoles] = useState<RoleConfig[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_ROLES;
+  const [roles, setRoles] = useState<RoleConfig[]>(DEFAULT_ROLES);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return DEFAULT_ROLES;
-  });
+      if (saved) {
+        setRoles(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load roles from localStorage", e);
+    }
+    setIsInitialized(true);
+  }, []);
 
-  // Persist to localStorage whenever roles change
+  // Persist to localStorage whenever roles change, but only after initialization
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(roles));
-  }, [roles]);
+    if (isInitialized) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(roles));
+    }
+  }, [roles, isInitialized]);
 
   const addRole = (name: string, color: string): RoleConfig => {
     const newRole: RoleConfig = {

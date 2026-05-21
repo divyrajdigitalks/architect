@@ -2,7 +2,7 @@
 
 import { tasks as initialTasks } from "@/lib/dummy-data";
 import {
-  Plus, Search, Filter, CircleCheck, CircleAlert, Clock, MoreVertical, X
+  Plus, Search, CircleCheck, CircleAlert, Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -21,25 +21,31 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newTask, setNewTask] = useState({ name: "", project: "", stage: "", worker: "", deadline: "" });
+  const [newTask, setNewTask] = useState({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
 
   const canEdit = user?.role === "architect" || user?.role === "supervisor";
 
   const filteredTasks = tasks.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.worker.toLowerCase().includes(searchQuery.toLowerCase())
+    t.officeTeam.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.siteTeam.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const updateStatus = (id: string, status: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+  const updateStatus = (id: string, statusKey: "officeStatus" | "siteStatus", status: string) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, [statusKey]: status } : t));
   };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.name.trim()) return;
-    setTasks(prev => [...prev, { ...newTask, id: String(Date.now()), status: "Pending" }]);
-    setNewTask({ name: "", project: "", stage: "", worker: "", deadline: "" });
+    setTasks(prev => [...prev, {
+      ...newTask,
+      id: String(Date.now()),
+      officeStatus: "Pending",
+      siteStatus: "Pending"
+    }] as Task[]);
+    setNewTask({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
     setIsAddModalOpen(false);
   };
 
@@ -74,11 +80,12 @@ export default function TasksPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Task Name</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Assigned Worker</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>TASK NAME</TableHead>
+                <TableHead>ASSIGNED OFFICE TEAM</TableHead>
+                <TableHead>STATUS</TableHead>
+                <TableHead>ASSIGNED SITE TEAM</TableHead>
+                <TableHead>DEADLINE</TableHead>
+                <TableHead>STATUS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,19 +93,46 @@ export default function TasksPage() {
                 <TableRow key={task.id} className="group">
                   <TableCell>
                     <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.name}</p>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{task.project}</p>
-                  </TableCell>
-                  <TableCell>
-                    <span className="px-2.5 py-1 bg-slate-100 text-[10px] font-bold text-slate-500 rounded uppercase tracking-wider">
-                      {task.stage}
-                    </span>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{task.project} • {task.stage}</p>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
-                        {task.worker.split(" ").map(n => n[0]).join("")}
+                        {task.officeTeam.split(" ").map(n => n[0]).join("")}
                       </div>
-                      <span className="text-sm font-medium text-slate-700">{task.worker}</span>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">{task.officeTeam}</p>
+                        <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">DESIGNER NAME AVSE</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {canEdit ? (
+                      <select
+                        value={task.officeStatus}
+                        onChange={(e) => updateStatus(task.id, "officeStatus", e.target.value)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
+                          task.officeStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
+                          task.officeStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          "bg-slate-100 text-slate-600 border-slate-200"
+                        )}
+                      >
+                        {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    ) : (
+                      <StatusBadge status={task.officeStatus} />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
+                        {task.siteTeam.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">{task.siteTeam}</p>
+                        <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">SITE NA LABOR NU NAME AVSE</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -110,19 +144,19 @@ export default function TasksPage() {
                   <TableCell>
                     {canEdit ? (
                       <select
-                        value={task.status}
-                        onChange={(e) => updateStatus(task.id, e.target.value)}
+                        value={task.siteStatus}
+                        onChange={(e) => updateStatus(task.id, "siteStatus", e.target.value)}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-                          task.status === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
-                          task.status === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          task.siteStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
+                          task.siteStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
                           "bg-slate-100 text-slate-600 border-slate-200"
                         )}
                       >
                         {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     ) : (
-                      <StatusBadge status={task.status} />
+                      <StatusBadge status={task.siteStatus} />
                     )}
                   </TableCell>
                 </TableRow>
@@ -150,9 +184,15 @@ export default function TasksPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Assign Worker</label>
-              <Input placeholder="e.g., John Doe" value={newTask.worker} onChange={e => setNewTask(f => ({ ...f, worker: e.target.value }))} />
+              <label className="text-sm font-bold text-slate-700 ml-1">Office Team</label>
+              <Input placeholder="e.g., Designer Name" value={newTask.officeTeam} onChange={e => setNewTask(f => ({ ...f, officeTeam: e.target.value }))} />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 ml-1">Site Team</label>
+              <Input placeholder="e.g., Labor Name" value={newTask.siteTeam} onChange={e => setNewTask(f => ({ ...f, siteTeam: e.target.value }))} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 ml-1">Deadline</label>
               <Input type="date" value={newTask.deadline} onChange={e => setNewTask(f => ({ ...f, deadline: e.target.value }))} />
