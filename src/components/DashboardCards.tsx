@@ -57,7 +57,7 @@ export default function DashboardCards() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500 mb-0.5">{stat.label}</p>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+            <p className="text-2xl font-medium text-slate-900 tracking-tight font-mono">{stat.value}</p>
           </div>
         </div>
       ))}

@@ -191,7 +191,7 @@ export default function AttendancePage() {
       {/* Header Area */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-30">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Staff Attendance & Payroll</h1>
+          <h1 className="text-xl font-medium text-slate-900 tracking-tight">Staff Attendance & Payroll</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-slate-100 p-1 rounded-xl mr-4">
@@ -201,7 +201,7 @@ export default function AttendancePage() {
                 setNewStaff(s => ({ ...s, team: "office" }));
               }}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
                 activeTab === "office" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -213,7 +213,7 @@ export default function AttendancePage() {
                 setNewStaff(s => ({ ...s, team: "site" }));
               }}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
                 activeTab === "site" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -223,7 +223,7 @@ export default function AttendancePage() {
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-9 gap-2 text-slate-600 font-bold text-xs tracking-wider"
+            className="h-9 gap-2 text-slate-600 font-medium text-xs tracking-wider"
             onClick={() => setIsSettingsModalOpen(true)}
           >
             Attendance settings
@@ -232,7 +232,7 @@ export default function AttendancePage() {
           <Button 
             variant="primary" 
             size="sm" 
-            className="h-9 gap-2 font-bold text-xs tracking-wider shadow-lg shadow-indigo-100"
+            className="h-9 gap-2 font-medium text-xs tracking-wider shadow-lg shadow-indigo-100"
             onClick={() => setIsAddStaffModalOpen(true)}
           >
             <Plus className="w-4 h-4" />
@@ -241,11 +241,11 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
-        {/* Date Picker & Stats Row */}
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Date Selector & Stats */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-700">{formatDate(currentDate)}</h2>
+            <h2 className="text-sm font-medium text-slate-700">{formatDate(currentDate)}</h2>
             <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
               <button 
                 onClick={() => {
@@ -257,7 +257,7 @@ export default function AttendancePage() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-50/50">
+              <div className="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-50/50">
                 Today: {formatDate(new Date(2026, 4, 20))}
               </div>
               <button 
@@ -274,16 +274,16 @@ export default function AttendancePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
-            {[ 
+            {[
               { label: "Present (P)", value: counts.P, color: "text-green-600" },
               { label: "Absent (A)", value: counts.A, color: "text-red-600" },
               { label: "Half day (HD)", value: counts.HD, color: "text-orange-600" },
-              { label: "Paid Leave (PL)", value: counts.PL, color: "text-blue-600" },
+              { label: "Paid leave (PL)", value: counts.PL, color: "text-blue-600" },
               { label: "Weekly off (WO)", value: counts.WO, color: "text-slate-600" },
             ].map((stat) => (
               <div key={stat.label} className="p-4 text-center">
-                <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-1">{stat.label}</p>
-                <p className={cn("text-xl font-black", stat.color)}>{stat.value}</p>
+                <p className="text-[10px] font-medium text-slate-400 tracking-widest mb-1">{stat.label}</p>
+                <p className={cn("text-xl font-medium font-mono", stat.color)}>{stat.value}</p>
               </div>
             ))}
           </div>
@@ -295,32 +295,32 @@ export default function AttendancePage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200">
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest">Staff name</th>
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest">Mobile number</th>
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest">Last month due</th>
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest">Balance</th>
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest">Mark attendance</th>
-                  <th className="px-6 py-4 text-[11px] font-black text-slate-500 tracking-widest text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Staff name</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mobile number</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Last month due</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Balance</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mark attendance</th>
+                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredStaff.map((staff) => (
                   <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-slate-900">{staff.name}</p>
+                      <p className="text-sm font-medium text-slate-900">{staff.name}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-slate-600">{staff.mobile}</p>
+                      <p className="text-sm font-normal font-mono text-slate-600">{staff.mobile}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-slate-700">₹ {staff.lastMonthDue.toLocaleString('en-IN')}</p>
+                      <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.lastMonthDue.toLocaleString('en-IN')}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <div className="text-red-500 rotate-180 bg-red-50 p-0.5 rounded">
                           <Plus className="w-3 h-3 rotate-45" />
                         </div>
-                        <p className="text-sm font-bold text-slate-700">₹ {staff.balance.toLocaleString('en-IN')}</p>
+                        <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.balance.toLocaleString('en-IN')}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -328,7 +328,7 @@ export default function AttendancePage() {
                         <button 
                           onClick={() => handleStatusChange(staff.id, "P")}
                           className={cn(
-                            "w-8 h-8 rounded border text-[10px] font-black flex items-center justify-center transition-all",
+                            "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
                             staff.status === "P" 
                               ? "bg-green-500 border-green-500 text-white shadow-sm" 
                               : "bg-white border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-500"
@@ -339,7 +339,7 @@ export default function AttendancePage() {
                         <button 
                           onClick={() => handleStatusChange(staff.id, "A")}
                           className={cn(
-                            "w-8 h-8 rounded border text-[10px] font-black flex items-center justify-center transition-all",
+                            "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
                             staff.status === "A" 
                               ? "bg-red-500 border-red-500 text-white shadow-sm" 
                               : "bg-white border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500"
@@ -357,7 +357,7 @@ export default function AttendancePage() {
                           )}
                         >
                           {staff.status && staff.status !== "P" && staff.status !== "A" ? (
-                            <span className="text-[10px] font-black">{staff.status}</span>
+                            <span className="text-[10px] font-medium">{staff.status}</span>
                           ) : (
                             <MoreVertical className="w-4 h-4" />
                           )}
@@ -375,7 +375,7 @@ export default function AttendancePage() {
                               <button
                                 key={item.value}
                                 onClick={() => handleStatusChange(staff.id, item.value as AttendanceStatus)}
-                                className="w-full px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                               >
                                 {item.label}
                               </button>
@@ -388,7 +388,7 @@ export default function AttendancePage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-8 text-[10px] font-black tracking-widest text-indigo-600 border-indigo-100 hover:bg-indigo-50"
+                        className="h-8 text-[10px] font-medium tracking-widest text-indigo-600 border-indigo-100 hover:bg-indigo-50"
                         onClick={() => handleClearDues(staff.id)}
                       >
                         Clear dues
@@ -400,17 +400,17 @@ export default function AttendancePage() {
               <tfoot>
                 <tr className="bg-slate-50/50 border-t border-slate-200">
                   <td colSpan={2} className="px-6 py-4">
-                    <p className="text-sm font-black text-slate-900">Pending amount</p>
+                    <p className="text-sm font-medium text-slate-900">Pending amount</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-black text-red-600">₹ {totalLastMonthDue.toLocaleString('en-IN')} <span className="text-[10px] font-bold text-red-400 ml-1">(overdue)</span></p>
+                    <p className="text-sm font-medium font-mono text-red-600">₹ {totalLastMonthDue.toLocaleString('en-IN')} <span className="text-[10px] font-medium text-red-400 ml-1">(overdue)</span></p>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="text-red-500 rotate-180 bg-red-50 p-0.5 rounded">
                         <Plus className="w-3 h-3 rotate-45" />
                       </div>
-                      <p className="text-sm font-black text-slate-900">₹ {totalBalance.toLocaleString('en-IN')}</p>
+                      <p className="text-sm font-medium font-mono text-slate-900">₹ {totalBalance.toLocaleString('en-IN')}</p>
                     </div>
                   </td>
                   <td colSpan={2}></td>
@@ -439,7 +439,7 @@ export default function AttendancePage() {
         <form onSubmit={handleAddStaff} className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Name<span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium text-slate-700">Name<span className="text-red-500">*</span></label>
               <Input 
                 placeholder="Enter Employee Name" 
                 value={newStaff.name}
@@ -448,7 +448,7 @@ export default function AttendancePage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Mobile Number<span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium text-slate-700">Mobile Number<span className="text-red-500">*</span></label>
               <Input 
                 placeholder="+91 9999999999" 
                 value={newStaff.mobile}
@@ -460,9 +460,9 @@ export default function AttendancePage() {
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Salary Payout Type<span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium text-slate-700">Salary Payout Type<span className="text-red-500">*</span></label>
               <select 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
                 value={newStaff.payoutType}
                 onChange={(e) => setNewStaff({...newStaff, payoutType: e.target.value as SalaryPayoutType})}
                 required
@@ -473,15 +473,15 @@ export default function AttendancePage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Salary<span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium text-slate-700">Salary<span className="text-red-500">*</span></label>
               <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
-                <div className="pl-3 pr-1 text-sm font-bold text-slate-700">₹</div>
+                <div className="pl-3 pr-1 text-sm font-medium text-slate-700">₹</div>
                 <input 
                   type="number" 
                   placeholder="20000"
                   value={newStaff.salary}
                   onChange={(e) => setNewStaff({...newStaff, salary: parseInt(e.target.value) || 0})}
-                  className="w-full py-2 text-sm font-bold focus:outline-none" 
+                  className="w-full py-2 text-sm font-medium font-mono focus:outline-none" 
                   required
                 />
               </div>
@@ -489,21 +489,21 @@ export default function AttendancePage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
               Outstanding/Opening Balance
               <Info className="w-3.5 h-3.5 text-slate-400" />
             </label>
             <div className="flex items-center gap-0 border border-slate-200 rounded-lg overflow-hidden bg-white max-w-[300px]">
-              <div className="pl-3 pr-1 text-sm font-bold text-slate-700">₹</div>
+              <div className="pl-3 pr-1 text-sm font-medium text-slate-700">₹</div>
               <input 
                 type="number"
                 placeholder="0" 
                 value={newStaff.balance}
                 onChange={(e) => setNewStaff({...newStaff, balance: parseInt(e.target.value) || 0})}
-                className="flex-1 py-2 text-sm font-bold focus:outline-none"
+                className="flex-1 py-2 text-sm font-medium font-mono focus:outline-none"
               />
               <select 
-                className="bg-slate-50 border-l border-slate-200 px-3 py-2 text-sm font-bold focus:outline-none cursor-pointer"
+                className="bg-slate-50 border-l border-slate-200 px-3 py-2 text-sm font-medium focus:outline-none cursor-pointer"
                 value={newStaff.balanceType}
                 onChange={(e) => setNewStaff({...newStaff, balanceType: e.target.value as "To Pay" | "To Receive"})}
               >
@@ -514,13 +514,13 @@ export default function AttendancePage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">Assign Team</label>
+            <label className="text-sm font-medium text-slate-700">Assign Team</label>
             <div className="flex bg-slate-100 p-1 rounded-xl w-full max-w-[300px]">
               <button 
                 type="button"
                 onClick={() => setNewStaff({...newStaff, team: "office"})}
                 className={cn(
-                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
                   newStaff.team === "office" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
                 )}
               >
@@ -530,7 +530,7 @@ export default function AttendancePage() {
                 type="button"
                 onClick={() => setNewStaff({...newStaff, team: "site"})}
                 className={cn(
-                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
                   newStaff.team === "site" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
                 )}
               >
@@ -540,10 +540,10 @@ export default function AttendancePage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button variant="outline" type="button" onClick={() => setIsAddStaffModalOpen(false)} className="px-8 rounded-lg text-xs font-bold h-10">
+            <Button variant="outline" type="button" onClick={() => setIsAddStaffModalOpen(false)} className="px-8 rounded-lg text-xs font-medium h-10">
               Cancel
             </Button>
-            <Button type="submit" className="px-10 rounded-lg text-xs font-bold h-10 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100">
+            <Button type="submit" className="px-10 rounded-lg text-xs font-medium h-10 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100">
               Save
             </Button>
           </div>
@@ -558,7 +558,7 @@ export default function AttendancePage() {
       >
         <div className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">General Rules</h3>
+            <h3 className="text-xs font-medium text-slate-900 uppercase tracking-widest">General Rules</h3>
             <div className="space-y-3">
               {[
                 { label: "Auto-mark Sunday as Weekly Off", enabled: true },
@@ -566,7 +566,7 @@ export default function AttendancePage() {
                 { label: "Enable payroll calculations", enabled: true },
               ].map((setting) => (
                 <div key={setting.label} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
-                  <span className="text-xs font-bold text-slate-700">{setting.label}</span>
+                  <span className="text-xs font-medium text-slate-700">{setting.label}</span>
                   <div className={cn(
                     "w-10 h-5 rounded-full relative transition-colors",
                     setting.enabled ? "bg-indigo-600" : "bg-slate-300"
@@ -582,14 +582,14 @@ export default function AttendancePage() {
           </div>
           
           <div className="space-y-4 pt-2">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Shift Timings</h3>
+            <h3 className="text-xs font-medium text-slate-900 uppercase tracking-widest">Shift Timings</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500">In Time</label>
+                <label className="text-[10px] font-medium text-slate-500">In Time</label>
                 <Input type="time" defaultValue="09:00" />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500">Out Time</label>
+                <label className="text-[10px] font-medium text-slate-500">Out Time</label>
                 <Input type="time" defaultValue="18:00" />
               </div>
             </div>
@@ -611,17 +611,17 @@ export default function AttendancePage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-1">
-              <p className="text-[11px] font-bold text-slate-400">Staff name</p>
-              <p className="text-sm font-bold text-slate-900">{selectedStaffForOT?.name}</p>
+              <p className="text-[11px] font-medium text-slate-400">Staff name</p>
+              <p className="text-sm font-medium text-slate-900">{selectedStaffForOT?.name}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] font-bold text-slate-400">Date</p>
-              <p className="text-sm font-bold text-slate-900">{formatDate(currentDate)}</p>
+              <p className="text-[11px] font-medium text-slate-400">Date</p>
+              <p className="text-sm font-medium text-slate-900">{formatDate(currentDate)}</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-[11px] font-bold text-slate-400">Overtime Type</p>
+            <p className="text-[11px] font-medium text-slate-400">Overtime Type</p>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div 
@@ -633,7 +633,7 @@ export default function AttendancePage() {
                 >
                   {overtimeType === "hourly" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>
-                <span className="text-xs font-bold text-slate-700">Hourly rate</span>
+                <span className="text-xs font-medium text-slate-700">Hourly rate</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div 
@@ -645,7 +645,7 @@ export default function AttendancePage() {
                 >
                   {overtimeType === "fixed" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>
-                <span className="text-xs font-bold text-slate-700">Fixed amount</span>
+                <span className="text-xs font-medium text-slate-700">Fixed amount</span>
                 <Info className="w-3 h-3 text-slate-400" />
               </label>
             </div>
@@ -655,62 +655,62 @@ export default function AttendancePage() {
             <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-100 space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold text-slate-500">Number of hours <span className="text-red-500">*</span></p>
+                  <p className="text-[11px] font-medium text-slate-500">Number of hours <span className="text-red-500">*</span></p>
                   <div className="flex items-center gap-1">
                     <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
                       <input 
                         type="text" 
                         value={otHours}
                         onChange={(e) => setOtHours(e.target.value)}
-                        className="w-12 py-2 text-center text-sm font-bold focus:outline-none" 
+                        className="w-12 py-2 text-center text-sm font-medium font-mono focus:outline-none" 
                       />
-                      <div className="px-2 py-2 bg-slate-50 border-l border-slate-200 text-[10px] font-bold text-slate-500">Hrs</div>
+                      <div className="px-2 py-2 bg-slate-50 border-l border-slate-200 text-[10px] font-medium text-slate-500">Hrs</div>
                     </div>
-                    <span className="text-slate-400 font-bold">:</span>
+                    <span className="text-slate-400 font-medium">:</span>
                     <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
                       <select 
                         value={otMins}
                         onChange={(e) => setOtMins(e.target.value)}
-                        className="w-12 py-2 text-center text-sm font-bold focus:outline-none appearance-none cursor-pointer"
+                        className="w-12 py-2 text-center text-sm font-medium font-mono focus:outline-none appearance-none cursor-pointer"
                       >
                         <option value="00">00</option>
                         <option value="15">15</option>
                         <option value="30">30</option>
                         <option value="45">45</option>
                       </select>
-                      <div className="px-2 py-2 bg-slate-50 border-l border-slate-200 text-[10px] font-bold text-slate-500">Min</div>
+                      <div className="px-2 py-2 bg-slate-50 border-l border-slate-200 text-[10px] font-medium text-slate-500">Min</div>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold text-slate-500">Overtime rate <span className="text-red-500">*</span></p>
+                  <p className="text-[11px] font-medium text-slate-500">Overtime rate <span className="text-red-500">*</span></p>
                   <div className="flex items-center gap-2">
                     <select 
                       value={otRateType}
                       onChange={(e) => setOtRateType(e.target.value)}
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none appearance-none cursor-pointer bg-white"
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none appearance-none cursor-pointer bg-white"
                     >
                       <option>1x Salary</option>
                       <option>1.5x Salary</option>
                       <option>2x Salary</option>
                     </select>
                     <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white min-w-[100px]">
-                      <div className="pl-3 pr-1 text-sm font-bold text-slate-700">₹</div>
+                      <div className="pl-3 pr-1 text-sm font-medium text-slate-700">₹</div>
                       <input 
                         type="number" 
                         value={otHourlyRate}
                         onChange={(e) => setOtHourlyRate(parseInt(e.target.value))}
-                        className="w-full py-2 text-sm font-bold focus:outline-none" 
+                        className="w-full py-2 text-sm font-medium font-mono focus:outline-none" 
                       />
-                      <div className="pr-3 text-[10px] font-bold text-slate-400">/Hr</div>
+                      <div className="pr-3 text-[10px] font-medium text-slate-400">/Hr</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2 pt-2">
-                <p className="text-[11px] font-bold text-slate-400">Total amount</p>
-                <p className="text-sm font-bold text-slate-900">
+                <p className="text-[11px] font-medium text-slate-400">Total amount</p>
+                <p className="text-sm font-medium font-mono text-slate-900">
                   {otHours}:{otMins} X ₹{otHourlyRate} = ₹{Math.round(totalOTAmount)}
                 </p>
               </div>
@@ -718,13 +718,13 @@ export default function AttendancePage() {
           ) : (
             <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-100 space-y-4">
               <div className="space-y-2">
-                <p className="text-[11px] font-bold text-slate-500">Overtime amount <span className="text-red-500">*</span></p>
+                <p className="text-[11px] font-medium text-slate-500">Overtime amount <span className="text-red-500">*</span></p>
                 <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white max-w-[200px]">
                   <input 
                     type="number" 
                     value={otFixedAmount}
                     onChange={(e) => setOtFixedAmount(parseInt(e.target.value))}
-                    className="w-full px-4 py-2.5 text-sm font-bold focus:outline-none" 
+                    className="w-full px-4 py-2.5 text-sm font-medium font-mono focus:outline-none" 
                     placeholder="0"
                   />
                 </div>
@@ -736,13 +736,13 @@ export default function AttendancePage() {
             <Button 
               variant="outline" 
               onClick={() => setIsOvertimeModalOpen(false)}
-              className="px-8 rounded-lg text-xs font-bold h-10"
+              className="px-8 rounded-lg text-xs font-medium h-10"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveOvertime}
-              className="px-10 rounded-lg text-xs font-bold h-10 bg-indigo-600 hover:bg-indigo-700"
+              className="px-10 rounded-lg text-xs font-medium h-10 bg-indigo-600 hover:bg-indigo-700"
             >
               Save
             </Button>

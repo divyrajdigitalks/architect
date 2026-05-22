@@ -28,7 +28,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
         className
       )}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+          <h3 className="text-base font-medium text-slate-900 tracking-tight">{title}</h3>
           <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 -mr-2 text-slate-400 hover:text-slate-600">
             <X className="w-4 h-4" />
           </Button>

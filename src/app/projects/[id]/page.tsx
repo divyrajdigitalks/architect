@@ -80,23 +80,23 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         <div className="space-y-6">
           <Link 
             href="/projects" 
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors group uppercase tracking-widest"
+            className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors group uppercase tracking-widest"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Back to Projects
           </Link>
           <div className="space-y-3">
-            <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">{project.name}</h2>
-            <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-slate-500">
+            <h2 className="text-4xl font-medium text-slate-900 tracking-tight">{project.name}</h2>
+            <div className="flex flex-wrap items-center gap-6 text-sm font-medium text-slate-500">
               <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                 <MapPin className="w-4 h-4 text-indigo-500" />
                 {project.location}
               </span>
               <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                 <Calendar className="w-4 h-4 text-indigo-500" />
-                {project.startDate}
+                <span className="font-mono">{project.startDate}</span>
               </span>
-              <span className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100">
+              <span className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-medium uppercase tracking-widest shadow-lg shadow-indigo-100">
                 {project.status}
               </span>
             </div>
@@ -104,10 +104,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all active:scale-95">
+          <button className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-medium shadow-sm hover:bg-slate-50 transition-all active:scale-95">
             Project Settings
           </button>
-          <Link href="/site-updates"><Button className="gap-2">
+          <Link href="/site-updates"><Button className="gap-2 font-medium">
             <Plus className="w-5 h-5" />
             Daily Log
           </Button></Link>
@@ -130,7 +130,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
             className={cn(
-              "flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-bold transition-all duration-300 whitespace-nowrap",
+              "flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-medium transition-all duration-300 whitespace-nowrap",
               activeTab === tab.id 
                 ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100" 
                 : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
@@ -148,9 +148,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <div className="lg:col-span-2 space-y-10">
               <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-10">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Construction roadmap</h3>
+                  <h3 className="text-2xl font-medium text-slate-900 tracking-tight">Construction roadmap</h3>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">{project.progress}% Complete</span>
+                    <span className="text-sm font-medium text-indigo-600 uppercase tracking-widest font-mono">{project.progress}% Complete</span>
                     <div className="w-40 h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                       <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-200" style={{ width: `${project.progress}%` }} />
                     </div>
@@ -179,7 +179,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       )}>
                         <div className="flex items-center justify-between">
                           <p className={cn(
-                            "font-bold text-base tracking-tight",
+                            "font-medium text-base tracking-tight",
                             stage.status === "Completed" ? "text-green-800" :
                             stage.status === "In Progress" ? "text-indigo-900" :
                             "text-slate-500"
@@ -191,10 +191,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                               value={stage.status}
                               onChange={(e) => handleUpdateStageStatus(stage.name, e.target.value)}
                               className={cn(
-                                "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm border cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-                                stage.status === "Completed" ? "bg-white text-green-600 border-green-100" :
-                                stage.status === "In Progress" ? "bg-white text-indigo-600 border-indigo-100" :
-                                "bg-white text-slate-400 border-slate-100"
+                                "text-[10px] font-medium uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm border cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white",
+                                stage.status === "Completed" ? "text-green-600 border-green-100" :
+                                stage.status === "In Progress" ? "text-indigo-600 border-indigo-100" :
+                                "text-slate-400 border-slate-100"
                               )}
                             >
                               <option value="Pending">Pending</option>
@@ -203,10 +203,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                             </select>
                           ) : (
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm",
-                              stage.status === "Completed" ? "bg-white text-green-600 border border-green-100" :
-                              stage.status === "In Progress" ? "bg-white text-indigo-600 border border-indigo-100" :
-                              "bg-white text-slate-400 border border-slate-100"
+                              "text-[10px] font-medium uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm bg-white border",
+                              stage.status === "Completed" ? "text-green-600 border-green-100" :
+                              stage.status === "In Progress" ? "text-indigo-600 border-indigo-100" :
+                              "text-slate-400 border-slate-100"
                             )}>
                               {stage.status}
                             </span>
@@ -221,20 +221,20 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
             <div className="space-y-8">
               <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">Financial Health</h3>
+                <h3 className="text-xl font-medium text-slate-900 tracking-tight">Financial Health</h3>
                 <div className="space-y-6">
                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Budget</p>
-                    <p className="text-2xl font-black text-slate-900">{project.budget}</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Total Budget</p>
+                    <p className="text-2xl font-medium text-slate-900 font-mono">{project.budget}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-green-50/50 rounded-2xl border border-green-100">
-                      <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mb-1">Received</p>
-                      <p className="text-lg font-black text-green-700">{project.received}</p>
+                      <p className="text-[9px] font-medium text-green-600 uppercase tracking-widest mb-1">Received</p>
+                      <p className="text-lg font-medium text-green-700 font-mono">{project.received}</p>
                     </div>
                     <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                      <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Pending</p>
-                      <p className="text-lg font-black text-indigo-700">{project.pending}</p>
+                      <p className="text-[9px] font-medium text-indigo-600 uppercase tracking-widest mb-1">Pending</p>
+                      <p className="text-lg font-medium text-indigo-700 font-mono">{project.pending}</p>
                     </div>
                   </div>
                 </div>
@@ -243,8 +243,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
               <div className="bg-indigo-600 p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-100 space-y-6 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
                 <TrendingUp className="w-10 h-10 text-white/40" />
-                <h3 className="text-xl font-bold text-white relative z-10 leading-tight">Project is ahead <br /> of schedule by 4 days</h3>
-                <button className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl text-sm font-bold shadow-lg hover:bg-indigo-50 transition-all relative z-10">
+                <h3 className="text-xl font-medium text-white relative z-10 leading-tight">Project is ahead <br /> of schedule by 4 days</h3>
+                <button className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl text-sm font-medium shadow-lg hover:bg-indigo-50 transition-all relative z-10">
                   View Timeline
                 </button>
               </div>

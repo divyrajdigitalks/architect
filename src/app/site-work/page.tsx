@@ -51,7 +51,7 @@ export default function SiteWorkPage() {
         title="SITE WORK" 
         description="Track on-site execution, daily logs, and technical implementation."
       >
-        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-bold gap-2 bg-blue-600 hover:bg-blue-500">
+        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-blue-600 hover:bg-blue-500">
           <Plus className="w-4 h-4" /> Log Site Activity
         </Button>
       </PageHeader>
@@ -63,7 +63,7 @@ export default function SiteWorkPage() {
       >
         <form onSubmit={handleAddLog} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">Project</label>
+            <label className="text-sm font-medium text-slate-700">Project</label>
             <select 
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               value={newLog.project}
@@ -77,7 +77,7 @@ export default function SiteWorkPage() {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">Current Task / Activity</label>
+            <label className="text-sm font-medium text-slate-700">Current Task / Activity</label>
             <Input 
               placeholder="e.g., Foundation Casting" 
               value={newLog.task}
@@ -86,7 +86,7 @@ export default function SiteWorkPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">Status</label>
+            <label className="text-sm font-medium text-slate-700">Status</label>
             <select 
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               value={newLog.status}
@@ -99,7 +99,7 @@ export default function SiteWorkPage() {
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white">Save Activity</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-medium">Save Activity</Button>
           </div>
         </form>
       </Modal>
@@ -113,19 +113,19 @@ export default function SiteWorkPage() {
                 <stat.icon className={cn("w-6 h-6", stat.color)} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.title}</p>
-                <h3 className="text-2xl font-black text-slate-900">{stat.count}</h3>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">{stat.title}</p>
+                <h3 className="text-2xl font-medium text-slate-900 font-mono">{stat.count}</h3>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid  gap-8">
         {/* Site Activity Table */}
-        <Card className="lg:col-span-2 border-slate-100 shadow-sm overflow-hidden">
+        <Card className=" border-slate-100 shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">
-            <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-widest">Active Site Execution</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-widest">Active Site Execution</CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
                 <Search className="w-4 h-4" />
@@ -138,7 +138,7 @@ export default function SiteWorkPage() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                <thead className="bg-slate-50/50 text-[10px] font-medium text-slate-400 uppercase tracking-[0.2em]">
                   <tr>
                     <th className="px-6 py-4">Site ID</th>
                     <th className="px-6 py-4">Current Task</th>
@@ -150,14 +150,14 @@ export default function SiteWorkPage() {
                   {activeSites.map((site) => (
                     <tr key={site.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
-                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded font-mono">
                           {site.id}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-slate-900">{site.task}</p>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{site.project} / {site.supervisor}</p>
+                          <p className="text-sm font-medium text-slate-900">{site.task}</p>
+                          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{site.project} / {site.supervisor}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -193,7 +193,7 @@ export default function SiteWorkPage() {
         </Card>
 
         {/* Site Media & Tools */}
-        <div className="space-y-6">
+        {/* <div className="space-y-6">
           <Card className="p-6 bg-slate-900 text-white border-slate-800 shadow-xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-blue-600/30 transition-all" />
             <div className="relative z-10 space-y-4">
@@ -225,7 +225,7 @@ export default function SiteWorkPage() {
               ))}
             </div>
           </Card>
-        </div>
+        </div> */}
       </div>
     </div>
   );

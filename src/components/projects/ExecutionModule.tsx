@@ -27,7 +27,7 @@ export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
         <button
           onClick={() => setActiveSubTab("civil")}
           className={cn(
-            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            "px-6 py-2 rounded-xl text-xs font-medium transition-all",
             activeSubTab === "civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
@@ -36,7 +36,7 @@ export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
         <button
           onClick={() => setActiveSubTab("interior")}
           className={cn(
-            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            "px-6 py-2 rounded-xl text-xs font-medium transition-all",
             activeSubTab === "interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
@@ -73,12 +73,12 @@ function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
             {stage.status === "Completed" ? <CheckCircle2 className="w-6 h-6" /> : <HardHat className="w-6 h-6" />}
           </div>
           <div>
-            <h4 className="text-base font-bold text-slate-900">{stage.stage}</h4>
+            <h4 className="text-base font-medium text-slate-900">{stage.stage}</h4>
             <div className="flex items-center gap-3 mt-1">
-              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest", statusColors[stage.status])}>
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[stage.status])}>
                 {stage.status}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest flex items-center gap-1 font-mono">
                 <Camera className="w-3 h-3" />
                 {stage.images.length} Photos
               </span>
@@ -88,7 +88,7 @@ function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
 
         <div className="flex items-center gap-8 w-full md:w-auto">
           <div className="flex-1 md:w-48 space-y-2">
-            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 uppercase tracking-widest font-mono">
               <span>Progress</span>
               <span>{stage.progress}%</span>
             </div>
@@ -99,15 +99,9 @@ function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
-              Update Log
-            </Button>
-            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-indigo-600">
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+            <ChevronRight className="w-5 h-5" />
+          </Button>
         </div>
       </div>
     </Card>

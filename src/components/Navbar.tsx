@@ -62,7 +62,7 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
             <Menu className="w-4 h-4" />
           </Button>
           <div className="flex flex-col">
-            <h1 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h1 className="text-sm font-medium text-slate-900 tracking-tight">
               {getPageTitle(pathname)}
             </h1>
             <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider hidden sm:block">

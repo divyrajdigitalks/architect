@@ -28,7 +28,7 @@ export function DesignModule({ data, projectId }: DesignModuleProps) {
         <button
           onClick={() => setActiveSubTab("civil")}
           className={cn(
-            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            "px-6 py-2 rounded-xl text-xs font-medium transition-all",
             activeSubTab === "civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
@@ -37,7 +37,7 @@ export function DesignModule({ data, projectId }: DesignModuleProps) {
         <button
           onClick={() => setActiveSubTab("interior")}
           className={cn(
-            "px-6 py-2 rounded-xl text-xs font-bold transition-all",
+            "px-6 py-2 rounded-xl text-xs font-medium transition-all",
             activeSubTab === "interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
@@ -65,8 +65,8 @@ function DesignTaskCard({ task }: { task: DesignTask }) {
     <Card className="p-6 space-y-4 hover:shadow-lg transition-all group border-slate-200">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
-          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest", statusColors[task.status])}>
+          <h4 className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
+          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[task.status])}>
             {task.status}
           </span>
         </div>
@@ -76,7 +76,7 @@ function DesignTaskCard({ task }: { task: DesignTask }) {
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 uppercase tracking-widest font-mono">
           <span>Progress</span>
           <span>{task.progress}%</span>
         </div>
@@ -92,17 +92,16 @@ function DesignTaskCard({ task }: { task: DesignTask }) {
         <div className="flex -space-x-2">
           {task.assignedTo.length > 0 ? (
             task.assignedTo.map((user, i) => (
-              <div key={i} className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-indigo-600">
+              <div key={i} className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[10px] font-medium text-indigo-600 font-mono">
                 {user[0]}
               </div>
             ))
           ) : (
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unassigned</span>
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest gap-2">
-          Details
-          <ChevronRight className="w-3 h-3" />
+        <Button variant="ghost" size="sm" className="h-8 text-[10px] font-medium uppercase tracking-widest gap-1 hover:text-indigo-600 p-0">
+          Details <ChevronRight className="w-3 h-3" />
         </Button>
       </div>
     </Card>

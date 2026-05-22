@@ -73,7 +73,7 @@ export default function WorkersPage() {
       <div className="space-y-10 animate-in fade-in duration-500">
         <div className="flex flex-row items-center justify-between gap-6">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Worker Directory</h2>
+            <h2 className="text-2xl font-medium text-slate-900 tracking-tight">Worker Directory</h2>
             <p className="text-sm font-medium text-slate-500 hidden sm:block">Manage your workforce and specialized trades</p>
           </div>
           <div className="flex items-center gap-4">
@@ -92,7 +92,7 @@ export default function WorkersPage() {
               </Button>
             </div>
             {canEdit && (
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 font-medium">
                 <Plus className="w-5 h-5" />
                 <span className="hidden sm:inline">Register Worker</span>
               </Button>
@@ -105,15 +105,15 @@ export default function WorkersPage() {
             {filteredWorkers.map(worker => (
               <Card key={worker.id} className="p-6 space-y-5 group hover:border-indigo-200 transition-all">
                 <div className="flex items-start justify-between">
-                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 font-mono">
                     {worker.name.split(" ").map(n => n[0]).join("")}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</h3>
+                  <h3 className="text-base font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {worker.specializations.map(s => (
-                      <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-bold text-indigo-700 rounded-lg border border-indigo-100 uppercase tracking-wider">
+                      <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-medium text-indigo-700 rounded-lg border border-indigo-100 uppercase tracking-wider">
                         {s}
                       </span>
                     ))}
@@ -122,20 +122,20 @@ export default function WorkersPage() {
                 <div className="space-y-2 pt-3 border-t border-slate-50">
                   <div className="flex items-center gap-3 text-slate-500">
                     <Phone className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-medium">{worker.phone}</span>
+                    <span className="text-sm font-medium font-mono">{worker.phone}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-slate-500">Daily Rate</span>
-                    <span className="font-bold text-slate-900">{worker.rate}</span>
+                    <span className="font-medium text-slate-900 font-mono">{worker.rate}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1 text-xs" onClick={() => setProfileWorker(worker)}>View Profile</Button>
+                  <Button variant="secondary" className="flex-1 text-xs font-medium" onClick={() => setProfileWorker(worker)}>View Profile</Button>
                   {isArchitect && (
                     <select
                       value={(worker as Worker).assignedRole ?? ""}
                       onChange={e => setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, assignedRole: e.target.value } : w))}
-                      className="flex-1 px-2 py-1.5 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                      className="flex-1 px-2 py-1.5 border border-slate-200 rounded-xl text-[10px] font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                       <option value="">No Role</option>
                       {roles.filter(r => r.id !== "architect" && r.id !== "client").map(r => (
                         <option key={r.id} value={r.id}>{r.name}</option>
@@ -151,12 +151,12 @@ export default function WorkersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Worker</TableHead>
-                  <TableHead>Specializations</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Daily Rate</TableHead>
-                  <TableHead>Assigned Project</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="font-medium">Worker</TableHead>
+                  <TableHead className="font-medium">Specializations</TableHead>
+                  <TableHead className="font-medium">Contact</TableHead>
+                  <TableHead className="font-medium">Daily Rate</TableHead>
+                  <TableHead className="font-medium">Assigned Project</TableHead>
+                  <TableHead className="text-right font-medium">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,32 +164,32 @@ export default function WorkersPage() {
                   <TableRow key={worker.id} className="group">
                     <TableCell>
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-sm font-bold text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-sm font-medium text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
                           {worker.name.split(" ").map(n => n[0]).join("")}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</p>
-                          <p className="text-xs text-slate-500">{worker.experience}</p>
+                          <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</p>
+                          <p className="text-xs text-slate-500 font-medium">{worker.experience}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {worker.specializations.map(s => (
-                          <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-bold text-indigo-700 rounded border border-indigo-100 uppercase tracking-wider">
+                          <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-medium text-indigo-700 rounded border border-indigo-100 uppercase tracking-wider">
                             {s}
                           </span>
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell><span className="text-sm font-medium text-slate-600">{worker.phone}</span></TableCell>
-                    <TableCell><span className="text-sm font-bold text-slate-900">{worker.rate}</span></TableCell>
+                    <TableCell><span className="text-sm font-medium text-slate-600 font-mono">{worker.phone}</span></TableCell>
+                    <TableCell><span className="text-sm font-medium text-slate-900 font-mono">{worker.rate}</span></TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {worker.assignedProjects.length === 0
                           ? <span className="text-xs text-slate-400 italic">None</span>
                           : worker.assignedProjects.map(p => (
-                            <span key={p} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded border border-green-100">{p}</span>
+                            <span key={p} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded border border-green-100">{p}</span>
                           ))}
                       </div>
                     </TableCell>

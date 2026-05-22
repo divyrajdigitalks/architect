@@ -22,7 +22,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
             key={tab.key}
             onClick={() => onChange(tab.key)}
             className={cn(
-              "flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all relative",
+              "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative",
               isActive 
                 ? "text-primary-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary-600" 
                 : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"

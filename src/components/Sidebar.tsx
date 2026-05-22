@@ -110,7 +110,7 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
           <div className="bg-primary-600 p-1.5 rounded">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">ArchiSite</span>
+          <span className="text-lg font-medium text-white tracking-tight">ArchiSite</span>
         </div>
         <Button variant="ghost" size="icon" className="lg:hidden text-slate-400 hover:text-white hover:bg-slate-800" onClick={onMobileClose}>
           <X className="w-4 h-4" />
@@ -118,17 +118,17 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
       </div>
 
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto custom-scrollbar">
-        <p className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Main Menu</p>
+        <p className="px-3 mb-2 text-[10px] font-medium text-slate-500 uppercase tracking-[0.2em]">Main Menu</p>
         {menuItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link key={item.key} href={item.href} onClick={onMobileClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm font-bold rounded transition-colors duration-150 tracking-tight",
-                  isActive 
-                    ? "bg-slate-800 text-white border-l-2 border-primary-500" 
-                    : "hover:bg-slate-800 hover:text-white"
-                )}>
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors duration-150 tracking-tight",
+                isActive 
+                  ? "bg-slate-800 text-white border-l-2 border-primary-500" 
+                  : "hover:bg-slate-800 hover:text-white"
+              )}>
               <item.icon className={cn("w-4 h-4", isActive ? "text-primary-400" : "text-slate-500")} />
               {item.name}
             </Link>
@@ -136,25 +136,25 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
-        <div className="px-3 py-3 mb-4 rounded bg-slate-800/50 border border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-primary-900/50 border border-primary-800 flex items-center justify-center text-primary-400 text-xs font-bold">
-              {user?.name?.[0] ?? "U"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">{user?.name}</p>
-              <p className="text-[10px] text-slate-500 truncate font-semibold tracking-wider">
-                {roleConfig?.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || (typeof user?.role === 'string' ? user.role : 'User')}
-              </p>
-            </div>
+      {/* User Profile */}
+      <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+            {user?.name?.[0] || "U"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-white truncate">{user?.name}</p>
+            <p className="text-[10px] text-slate-500 truncate font-medium tracking-wider">
+              {roleConfig?.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || (typeof user?.role === 'string' ? user.role : 'User')}
+            </p>
           </div>
         </div>
+
         <button 
           onClick={logout}
-          className="flex items-center gap-3 w-full px-3 py-2 text-xs font-bold text-slate-400 hover:text-red-400 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 mt-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 group-hover:text-red-400" />
           Sign Out
         </button>
       </div>

@@ -93,7 +93,7 @@ export default function ProjectsPage() {
       <div className="space-y-10 animate-in fade-in duration-500">
         <div className="flex flex-row items-center justify-between gap-6">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-2xl font-medium text-slate-900 tracking-tight">
               {user?.role === "client" ? "My Project" : "Project Portfolio"}
             </h2>
             <p className="text-sm font-medium text-slate-500 hidden sm:block">
@@ -108,7 +108,7 @@ export default function ProjectsPage() {
               </div>
             )}
             {canAdd && (
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 font-medium">
                 <Plus className="w-5 h-5" />
                 <span className="hidden sm:inline">Add Project</span>
               </Button>
@@ -120,12 +120,12 @@ export default function ProjectsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Supervisor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="font-medium">Project</TableHead>
+                <TableHead className="font-medium">Location</TableHead>
+                <TableHead className="font-medium">Supervisor</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Progress</TableHead>
+                <TableHead className="text-right font-medium">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -133,14 +133,14 @@ export default function ProjectsPage() {
                 <TableRow key={project.id} className="group">
                   <TableCell>
                     <div>
-                      <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{project.name}</p>
+                      <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{project.name}</p>
                       <p className="text-xs font-medium text-slate-500">{project.client}</p>
                     </div>
                   </TableCell>
                   <TableCell><span className="text-sm font-medium text-slate-600">{project.location}</span></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-indigo-100">
+                      <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-medium text-indigo-600 border border-indigo-100 font-mono">
                         {getSupervisorName(project.supervisorId).split(" ").map(n => n[0]).join("")}
                       </div>
                       <span className="text-sm font-medium text-slate-700">{getSupervisorName(project.supervisorId)}</span>
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-2">
                       <div className={cn("w-2 h-2 rounded-full",
                         project.status === "In Progress" ? "bg-green-500" : "bg-blue-500")} />
-                      <span className="text-xs font-bold text-slate-700">{project.status}</span>
+                      <span className="text-xs font-medium text-slate-700">{project.status}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -158,12 +158,12 @@ export default function ProjectsPage() {
                       <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div className="h-full bg-indigo-600" style={{ width: `${project.progress}%` }} />
                       </div>
-                      <span className="text-xs font-bold text-slate-900">{project.progress}%</span>
+                      <span className="text-xs font-medium text-slate-900 font-mono">{project.progress}%</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Link href={`/projects/${project.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-bold text-indigo-600 hover:text-indigo-700">
+                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
                       View <ChevronRight className="w-4 h-4" />
                     </Link>
                   </TableCell>
@@ -182,12 +182,12 @@ export default function ProjectsPage() {
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Project Name *</label>
+              <label className="text-sm font-medium text-slate-700 ml-1">Project Name *</label>
               <Input placeholder="e.g., Modern Villa" value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Client</label>
+              <label className="text-sm font-medium text-slate-700 ml-1">Client</label>
               <select value={form.clientId}
                 onChange={e => setForm(f => ({ ...f, clientId: e.target.value, client: clients.find(c => c.id === e.target.value)?.name || "" }))}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -198,32 +198,32 @@ export default function ProjectsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">Location</label>
+            <label className="text-sm font-medium text-slate-700 ml-1">Location</label>
             <Input placeholder="e.g., Beverly Hills, CA" value={form.location}
               onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Start Date</label>
+              <label className="text-sm font-medium text-slate-700 ml-1">Start Date</label>
               <Input type="date" value={form.startDate}
                 onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Expected Completion</label>
+              <label className="text-sm font-medium text-slate-700 ml-1">Expected Completion</label>
               <Input type="date" value={form.expectedCompletion}
                 onChange={e => setForm(f => ({ ...f, expectedCompletion: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Budget</label>
+              <label className="text-sm font-medium text-slate-700 ml-1">Budget</label>
               <Input placeholder="e.g., $850,000" value={form.budget}
-                onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} />
+                onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} className="font-mono" />
             </div>
           </div>
 
           {/* Supervisor Assign */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
-            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
               <HardHat className="w-4 h-4 text-indigo-600" /> Assign Supervisor
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -236,12 +236,12 @@ export default function ProjectsPage() {
                       ? "bg-indigo-50 border-indigo-400"
                       : "bg-white border-slate-100 hover:border-slate-300"
                   )}>
-                  <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black transition-all",
+                  <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium transition-all",
                     form.supervisorId === sup.id ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
                     {sup.name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{sup.name}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{sup.name}</p>
                     <p className="text-[10px] text-slate-500 font-medium">{sup.experience}</p>
                   </div>
                   {form.supervisorId === sup.id && (
@@ -254,11 +254,11 @@ export default function ProjectsPage() {
 
           {/* Workers Assign */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
-            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
               <Users className="w-4 h-4 text-indigo-600" />
               Assign Workers
               {form.workerIds.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-black rounded-full">
+                <span className="ml-1 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-medium rounded-full font-mono">
                   {form.workerIds.length} selected
                 </span>
               )}
@@ -274,15 +274,15 @@ export default function ProjectsPage() {
                       "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
                       selected ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300"
                     )}>
-                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0 transition-all",
+                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium flex-shrink-0 transition-all font-mono",
                       selected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
                       {w.name.split(" ").map(n => n[0]).join("")}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-900 truncate">{w.name}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{w.name}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {w.specializations.map(s => (
-                          <span key={s} className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
+                          <span key={s} className="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
                             {s}
                           </span>
                         ))}

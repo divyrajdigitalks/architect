@@ -88,7 +88,7 @@ export default function SupervisorsPage() {
       <div className="space-y-10 animate-in fade-in duration-500">
         <div className="flex flex-row items-center justify-between gap-6">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Supervisors</h2>
+            <h2 className="text-2xl font-medium text-slate-900 tracking-tight">Supervisors</h2>
             <p className="text-sm font-medium text-slate-500 hidden sm:block">Manage site supervisors and their project assignments</p>
           </div>
           <div className="flex items-center gap-4">
@@ -109,7 +109,7 @@ export default function SupervisorsPage() {
               </Button>
             </div>
             {canEdit && (
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 font-medium">
                 <Plus className="w-5 h-5" />
                 <span className="hidden sm:inline">Add Supervisor</span>
               </Button>
@@ -124,15 +124,15 @@ export default function SupervisorsPage() {
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl font-black text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                    <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 font-mono">
                       {sup.name.split(" ").map(n => n[0]).join("")}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{sup.name}</h3>
+                      <h3 className="text-base font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{sup.name}</h3>
                       <p className="text-xs font-medium text-slate-500">{sup.experience} experience</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 bg-indigo-50 text-[10px] font-black text-indigo-600 rounded-lg border border-indigo-100 uppercase tracking-widest">
+                  <span className="px-2.5 py-1 bg-indigo-50 text-[10px] font-medium text-indigo-600 rounded-lg border border-indigo-100 uppercase tracking-widest">
                     Supervisor
                   </span>
                 </div>
@@ -141,7 +141,7 @@ export default function SupervisorsPage() {
                 <div className="space-y-2 pt-2 border-t border-slate-50">
                   <div className="flex items-center gap-3 text-slate-500">
                     <Phone className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-medium">{sup.phone}</span>
+                    <span className="text-sm font-medium font-mono">{sup.phone}</span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-500">
                     <Mail className="w-4 h-4 text-slate-400" />
@@ -151,13 +151,13 @@ export default function SupervisorsPage() {
 
                 {/* Assigned Projects */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned Projects</p>
+                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Assigned Projects</p>
                   {sup.assignedProjects.length === 0 ? (
                     <p className="text-xs font-medium text-slate-400 italic">No projects assigned</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {sup.assignedProjects.map(pid => (
-                        <span key={pid} className="px-2.5 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-lg border border-green-100 uppercase tracking-wider">
+                        <span key={pid} className="px-2.5 py-1 bg-green-50 text-green-700 text-[10px] font-medium rounded-lg border border-green-100 uppercase tracking-wider">
                           {getProjectName(pid)}
                         </span>
                       ))}
@@ -168,11 +168,11 @@ export default function SupervisorsPage() {
                 {/* Role Assignment */}
                 {canEdit && (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Role</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">System Role</p>
                     <select
                       value={sup.assignedRole ?? "supervisor"}
                       onChange={e => setSupervisors(prev => prev.map(s => s.id === sup.id ? { ...s, assignedRole: e.target.value } : s))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                       {roles.filter(r => r.id !== "architect" && r.id !== "client").map(r => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}
@@ -182,11 +182,11 @@ export default function SupervisorsPage() {
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-2 border-t border-slate-50">
-                  <Button variant="secondary" className="flex-1 text-xs" onClick={() => setProfileSupervisor(sup)}>
+                  <Button variant="secondary" className="flex-1 text-xs font-medium" onClick={() => setProfileSupervisor(sup)}>
                     View Profile
                   </Button>
                   {canEdit && (
-                    <Button variant="outline" className="flex-1 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                    <Button variant="outline" className="flex-1 text-xs font-medium text-indigo-600 border-indigo-200 hover:bg-indigo-50"
                       onClick={() => setAssignSupervisor(supervisors.find(s => s.id === sup.id) || sup)}>
                       Assign Project
                     </Button>
