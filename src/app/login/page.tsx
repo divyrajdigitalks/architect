@@ -125,7 +125,7 @@ export default function LoginPage() {
               {/* Auto Role Detect */}
               {currentRole && (
                 <p className="text-xs font-semibold text-indigo-600 ml-1">
-                  Auto detected role: {currentRole}
+                    {currentRole}
                 </p>
               )}
             </div>
