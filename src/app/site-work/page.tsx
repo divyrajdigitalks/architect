@@ -21,6 +21,14 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 export default function SiteWorkPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,59 +144,57 @@ export default function SiteWorkPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-[10px] font-medium text-slate-400 uppercase tracking-[0.2em]">
-                  <tr>
-                    <th className="px-6 py-4">Site ID</th>
-                    <th className="px-6 py-4">Current Task</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {activeSites.map((site) => (
-                    <tr key={site.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded font-mono">
-                          {site.id}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-slate-900">{site.task}</p>
-                          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{site.project} / {site.supervisor}</p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-6">Site ID</TableHead>
+                  <TableHead className="px-6">Current Task</TableHead>
+                  <TableHead className="px-6">Status</TableHead>
+                  <TableHead className="px-6 text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activeSites.map((site) => (
+                  <TableRow key={site.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <TableCell className="px-6 py-4">
+                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded font-mono">
+                        {site.id}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-slate-900">{site.task}</p>
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{site.project} / {site.supervisor}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant={site.status === "Critical" ? "destructive" : site.status === "Delayed" ? "warning" : "success"}
+                          className="text-[9px] px-2 py-0"
+                        >
+                          {site.status}
+                        </Badge>
+                        <div className="flex-1 w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
+                          <div 
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500",
+                              site.status === "Critical" ? "bg-red-500" : site.status === "Delayed" ? "bg-orange-500" : "bg-green-500"
+                            )} 
+                            style={{ width: `${site.progress}%` }} 
+                          />
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Badge 
-                            variant={site.status === "Critical" ? "destructive" : site.status === "Delayed" ? "warning" : "success"}
-                            className="text-[9px] px-2 py-0"
-                          >
-                            {site.status}
-                          </Badge>
-                          <div className="flex-1 w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
-                            <div 
-                              className={cn(
-                                "h-full rounded-full transition-all duration-500",
-                                site.status === "Critical" ? "bg-red-500" : site.status === "Delayed" ? "bg-orange-500" : "bg-green-500"
-                              )} 
-                              style={{ width: `${site.progress}%` }} 
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-blue-600">
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-blue-600">
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 

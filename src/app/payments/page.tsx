@@ -18,6 +18,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 const payments = [
   { id: "1", project: "Modern Villa", client: "Alice Johnson", amount: "$12,500", status: "Paid", date: "2024-03-12" },
@@ -65,27 +73,27 @@ export default function PaymentsPage() {
         </div>
 
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Project / Client</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50/50">
+                <TableHead className="px-8 py-5">Project / Client</TableHead>
+                <TableHead className="px-8 py-5">Amount</TableHead>
+                <TableHead className="px-8 py-5">Status</TableHead>
+                <TableHead className="px-8 py-5">Date</TableHead>
+                <TableHead className="px-8 py-5 text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-100">
               {payments.map((payment) => (
-                <tr key={payment.id} className="group hover:bg-slate-50/30 transition-colors">
-                  <td className="px-8 py-6">
+                <TableRow key={payment.id} className="group hover:bg-slate-50/30 transition-colors">
+                  <TableCell className="px-8 py-6">
                     <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{payment.project}</p>
                     <p className="text-xs font-medium text-slate-500">{payment.client}</p>
-                  </td>
-                  <td className="px-8 py-6">
+                  </TableCell>
+                  <TableCell className="px-8 py-6">
                     <span className="text-sm font-bold text-slate-900">{payment.amount}</span>
-                  </td>
-                  <td className="px-8 py-6">
+                  </TableCell>
+                  <TableCell className="px-8 py-6">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider",
                       payment.status === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
@@ -94,17 +102,17 @@ export default function PaymentsPage() {
                     )}>
                       {payment.status}
                     </span>
-                  </td>
-                  <td className="px-8 py-6 text-sm font-medium text-slate-500">{payment.date}</td>
-                  <td className="px-8 py-6 text-right">
+                  </TableCell>
+                  <TableCell className="px-8 py-6 text-sm font-medium text-slate-500">{payment.date}</TableCell>
+                  <TableCell className="px-8 py-6 text-right">
                     <button className="p-2 text-slate-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-all">
                       <ArrowUpRight className="w-5 h-5" />
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 

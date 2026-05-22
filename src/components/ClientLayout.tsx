@@ -46,7 +46,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <div className="flex-1 min-h-screen lg:pl-60 overflow-x-hidden">
         <Navbar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
         <main className="pt-28 p-4 md:p-8">
-          <div className="max-w-7xl pt-10 mx-auto space-y-12">
+          <div className="pt-10 mx-auto space-y-12">
             {children}
           </div>
         </main>

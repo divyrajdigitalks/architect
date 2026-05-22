@@ -19,6 +19,14 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 export default function OfficeWorkPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,48 +144,46 @@ export default function OfficeWorkPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-[10px] font-medium text-slate-400 uppercase tracking-[0.2em]">
-                  <tr>
-                    <th className="px-6 py-4">Task ID</th>
-                    <th className="px-6 py-4">Task Detail</th>
-                    <th className="px-6 py-4">Project</th>
-                    <th className="px-6 py-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {recentTasks.map((task) => (
-                    <tr key={task.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded font-mono">
-                          {task.id}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-slate-900">{task.title}</p>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={task.priority === "High" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
-                              {task.priority}
-                            </Badge>
-                            <span className="text-[10px] text-slate-400 font-medium font-mono">Due: {task.deadine}</span>
-                          </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-6">Task ID</TableHead>
+                  <TableHead className="px-6">Task Detail</TableHead>
+                  <TableHead className="px-6">Project</TableHead>
+                  <TableHead className="px-6 text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentTasks.map((task) => (
+                  <TableRow key={task.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <TableCell className="px-6 py-4">
+                      <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded font-mono">
+                        {task.id}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-slate-900">{task.title}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={task.priority === "High" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
+                            {task.priority}
+                          </Badge>
+                          <span className="text-[10px] text-slate-400 font-medium font-mono">Due: {task.deadine}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-xs font-medium text-slate-600">{task.project}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600">
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <p className="text-xs font-medium text-slate-600">{task.project}</p>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600">
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 

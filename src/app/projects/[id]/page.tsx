@@ -35,6 +35,14 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
 import { ExecutionModule } from "@/components/projects/ExecutionModule";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 type Tab = "overview" | "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
 
@@ -263,35 +271,35 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
         {activeTab === "tasks" && (
           <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Details</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Assignee</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Deadline</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50">
+                  <TableHead className="px-10 py-6">Task Details</TableHead>
+                  <TableHead className="px-10 py-6">Assignee</TableHead>
+                  <TableHead className="px-10 py-6">Deadline</TableHead>
+                  <TableHead className="px-10 py-6">Status</TableHead>
+                  <TableHead className="px-10 py-6 text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-slate-50">
                 {projectTasks.map((task) => (
-                  <tr key={task.id} className="group hover:bg-slate-50/30 transition-all">
-                    <td className="px-10 py-8">
+                  <TableRow key={task.id} className="group hover:bg-slate-50/30 transition-all">
+                    <TableCell className="px-10 py-8">
                       <p className="text-sm font-bold text-slate-900 mb-1">{task.name}</p>
                       <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest border border-indigo-100/50">{task.stage}</span>
-                    </td>
-                    <td className="px-10 py-8">
+                    </TableCell>
+                    <TableCell className="px-10 py-8">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-600 border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-500 shadow-inner">
                           {task.siteTeam?.split(' ').map(n => n[0]).join('') || "U"}
                         </div>
                         <span className="text-sm font-bold text-slate-700">{task.siteTeam || "Unassigned"}</span>
                       </div>
-                    </td>
-                    <td className="px-10 py-8">
+                    </TableCell>
+                    <TableCell className="px-10 py-8">
                       <span className="text-sm font-bold text-slate-500">{task.deadline}</span>
-                    </td>
-                    <td className="px-10 py-8">
+                    </TableCell>
+                    <TableCell className="px-10 py-8">
                       <span className={cn(
                         "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
                         task.officeStatus === "In Progress" ? "bg-white text-blue-600 border-blue-100" :
@@ -300,16 +308,16 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                       )}>
                         {task.officeStatus}
                       </span>
-                    </td>
-                    <td className="px-10 py-8 text-right">
+                    </TableCell>
+                    <TableCell className="px-10 py-8 text-right">
                       <button className="text-slate-300 hover:text-indigo-600 p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all">
                         <ChevronRight className="w-6 h-6" />
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
 
@@ -403,43 +411,43 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
             </div>
 
             <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Milestone</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Invoice</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/50">
+                    <TableHead className="px-10 py-6">Milestone</TableHead>
+                    <TableHead className="px-10 py-6">Amount</TableHead>
+                    <TableHead className="px-10 py-6">Date</TableHead>
+                    <TableHead className="px-10 py-6">Status</TableHead>
+                    <TableHead className="px-10 py-6 text-right">Invoice</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-slate-50">
                   {projectPayments.map((payment) => (
-                    <tr key={payment.id} className="group hover:bg-slate-50/30 transition-all">
-                      <td className="px-10 py-8">
+                    <TableRow key={payment.id} className="group hover:bg-slate-50/30 transition-all">
+                      <TableCell className="px-10 py-8">
                         <p className="text-sm font-bold text-slate-900">{payment.milestone}</p>
-                      </td>
-                      <td className="px-10 py-8">
+                      </TableCell>
+                      <TableCell className="px-10 py-8">
                         <p className="text-sm font-black text-slate-900">{payment.amount}</p>
-                      </td>
-                      <td className="px-10 py-8">
+                      </TableCell>
+                      <TableCell className="px-10 py-8">
                         <span className="text-sm font-bold text-slate-500">{payment.date}</span>
-                      </td>
-                      <td className="px-10 py-8">
+                      </TableCell>
+                      <TableCell className="px-10 py-8">
                         <span className={cn(
                           "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
                           payment.status === "Paid" ? "bg-white text-green-600 border-green-100" : "bg-white text-orange-600 border-orange-100"
                         )}>
                           {payment.status}
                         </span>
-                      </td>
-                      <td className="px-10 py-8 text-right">
+                      </TableCell>
+                      <TableCell className="px-10 py-8 text-right">
                         <button className="text-indigo-600 hover:text-indigo-800 font-black text-xs uppercase tracking-widest">Download</button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         )}

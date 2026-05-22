@@ -35,32 +35,36 @@ export const ALL_PAGES = [
 
 export const DEFAULT_ROLES: RoleConfig[] = [
   {
-    id: "super-admin", name: "SUPER ADMIN", color: "slate", canDelete: false,
+    id: "director", name: "DIRECTOR", color: "slate", canDelete: false,
     pages: ALL_PAGES.map(p => p.key),
   },
   {
-    id: "architect", name: "DIRECTOR", color: "indigo", canDelete: false,
-    pages: ["dashboard", "projects", "office-work", "site-work", "tasks", "office-team", "site-team", "clients", "site-updates", "site-photos", "attendance", "arkiton", "working-sop", "payments"],
+    id: "architect", name: "ARCHITECT", color: "indigo", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "site-work", "tasks", "office-team", "site-team", "clients", "site-updates", "site-photos", "attendance", "arkiton", "working-sop"],
   },
   {
-    id: "client", name: "OFFICE TEAM", color: "blue", canDelete: false,
-    pages: ["dashboard", "projects", "office-work", "messages"],
+    id: "office-team", name: "OFFICE TEAM", color: "blue", canDelete: false,
+    pages: ["dashboard", "projects", "office-work", "messages", "calendar"],
   },
   {
-    id: "supervisor", name: "CLIENT", color: "orange", canDelete: false,
-    pages: ["dashboard", "projects", "site-updates", "site-photos", "arkiton", "working-sop", "payments", "messages"],
+    id: "site-engineer", name: "SITE ENGINEER", color: "orange", canDelete: false,
+    pages: ["dashboard", "projects", "site-updates", "site-photos", "tasks", "site-team"],
   },
   {
-    id: "worker", name: "AGENCY", color: "green", canDelete: false,
-    pages: ["dashboard", "projects", "tasks"],
+    id: "supervisor", name: "SUPERVISOR", color: "green", canDelete: false,
+    pages: ["dashboard", "projects", "tasks", "site-updates"],
   },
   {
-    id: "accountant", name: "ACADEMY", color: "purple", canDelete: false,
+    id: "accountant", name: "ACCOUNTANT", color: "purple", canDelete: false,
     pages: ["dashboard", "payments", "reports", "arkiton", "working-sop"],
   },
   {
-    id: "site-engineer", name: "GUEST", color: "rose", canDelete: false,
-    pages: ["dashboard", "projects", "arkiton", "working-sop", "site-updates", "messages", "site-photos", "calendar"],
+    id: "client", name: "CLIENT PORTAL", color: "blue", canDelete: false,
+    pages: ["dashboard", "projects", "site-updates", "site-photos", "payments", "messages"],
+  },
+  {
+    id: "guest", name: "GUEST MODE", color: "rose", canDelete: false,
+    pages: ["dashboard", "projects", "arkiton", "working-sop"],
   },
 ];
 

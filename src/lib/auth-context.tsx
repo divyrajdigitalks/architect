@@ -26,12 +26,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Default demo users for built-in roles
 const DEMO_USERS: Record<string, User> = {
-  architect:       { id: "1", name: "Arch. Sarah Connor", email: "sarah@archisite.pro",  role: "architect" },
-  client:          { id: "2", name: "Office Admin",        email: "office@archisite.pro", role: "client" },
-  supervisor:      { id: "3", name: "Client User",         email: "client@example.com",   role: "supervisor",    projectId: "1" },
-  worker:          { id: "4", name: "Agency Lead",         email: "agency@trades.pro",    role: "worker",        projectId: "1" },
-  accountant:      { id: "5", name: "Academy Manager",     email: "academy@archisite.pro", role: "accountant" },
-  "site-engineer": { id: "6", name: "Guest User",          email: "guest@example.com",    role: "site-engineer" },
+  director:        { id: "1", name: "Dir. John Wick",      email: "director@archisite.pro", role: "director" },
+  architect:       { id: "2", name: "Arch. Sarah Connor",  email: "architect@archisite.pro", role: "architect" },
+  "office-team":   { id: "3", name: "Office Admin",        email: "office@archisite.pro",   role: "office-team" },
+  "site-engineer": { id: "4", name: "Engr. Mike Ross",     email: "engineer@archisite.pro", role: "site-engineer" },
+  supervisor:      { id: "5", name: "Site Supervisor",     email: "supervisor@archisite.pro", role: "supervisor" },
+  accountant:      { id: "6", name: "Fin. Manager",        email: "accountant@archisite.pro", role: "accountant" },
+  client:          { id: "7", name: "Premium Client",      email: "client@archisite.pro",   role: "client", projectId: "1" },
+  guest:           { id: "8", name: "Guest User",          email: "guest@archisite.pro",    role: "guest" },
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

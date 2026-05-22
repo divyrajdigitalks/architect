@@ -9,6 +9,15 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from "@/components/ui/Table";
 
 // Helper to get formatted date like "Wed, 20 May 2026"
 const formatDate = (date: Date) => {
@@ -291,134 +300,122 @@ export default function AttendancePage() {
 
         {/* Table Area */}
         <Card className="p-0 border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200">
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Staff name</th>
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mobile number</th>
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Last month due</th>
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Balance</th>
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mark attendance</th>
-                  <th className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredStaff.map((staff) => (
-                  <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-slate-900">{staff.name}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-normal font-mono text-slate-600">{staff.mobile}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.lastMonthDue.toLocaleString('en-IN')}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="text-red-500 rotate-180 bg-red-50 p-0.5 rounded">
-                          <Plus className="w-3 h-3 rotate-45" />
-                        </div>
-                        <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.balance.toLocaleString('en-IN')}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 relative">
-                        <button 
-                          onClick={() => handleStatusChange(staff.id, "P")}
-                          className={cn(
-                            "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
-                            staff.status === "P" 
-                              ? "bg-green-500 border-green-500 text-white shadow-sm" 
-                              : "bg-white border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-500"
-                          )}
-                        >
-                          P
-                        </button>
-                        <button 
-                          onClick={() => handleStatusChange(staff.id, "A")}
-                          className={cn(
-                            "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
-                            staff.status === "A" 
-                              ? "bg-red-500 border-red-500 text-white shadow-sm" 
-                              : "bg-white border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500"
-                          )}
-                        >
-                          A
-                        </button>
-                        <button 
-                          onClick={() => setShowMenuId(showMenuId === staff.id ? null : staff.id)}
-                          className={cn(
-                            "w-8 h-8 rounded border flex items-center justify-center transition-all",
-                            staff.status && staff.status !== "P" && staff.status !== "A"
-                              ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                              : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50"
-                          )}
-                        >
-                          {staff.status && staff.status !== "P" && staff.status !== "A" ? (
-                            <span className="text-[10px] font-medium">{staff.status}</span>
-                          ) : (
-                            <MoreVertical className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        {/* Dropdown Menu */}
-                        {showMenuId === staff.id && (
-                          <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-2 animate-in fade-in zoom-in-95 duration-150">
-                            {[
-                              { label: "Half day", value: "HD" },
-                              { label: "Paid leave", value: "PL" },
-                              { label: "Week off", value: "WO" },
-                              { label: "Add overtime", value: "OT" },
-                            ].map((item) => (
-                              <button
-                                key={item.value}
-                                onClick={() => handleStatusChange(staff.id, item.value as AttendanceStatus)}
-                                className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
-                              >
-                                {item.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 text-[10px] font-medium tracking-widest text-indigo-600 border-indigo-100 hover:bg-indigo-50"
-                        onClick={() => handleClearDues(staff.id)}
-                      >
-                        Clear dues
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-slate-50/50 border-t border-slate-200">
-                  <td colSpan={2} className="px-6 py-4">
-                    <p className="text-sm font-medium text-slate-900">Pending amount</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-medium font-mono text-red-600">₹ {totalLastMonthDue.toLocaleString('en-IN')} <span className="text-[10px] font-medium text-red-400 ml-1">(overdue)</span></p>
-                  </td>
-                  <td className="px-6 py-4">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50/80">
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Staff name</TableHead>
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mobile number</TableHead>
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Last month due</TableHead>
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Balance</TableHead>
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest">Mark attendance</TableHead>
+                <TableHead className="px-6 py-4 text-[11px] font-medium text-slate-500 tracking-widest text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="bg-white">
+              {filteredStaff.map((staff) => (
+                <TableRow key={staff.id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="px-6 py-4">
+                    <p className="text-sm font-medium text-slate-900">{staff.name}</p>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <p className="text-sm font-normal font-mono text-slate-600">{staff.mobile}</p>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.lastMonthDue.toLocaleString('en-IN')}</p>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="text-red-500 rotate-180 bg-red-50 p-0.5 rounded">
                         <Plus className="w-3 h-3 rotate-45" />
                       </div>
-                      <p className="text-sm font-medium font-mono text-slate-900">₹ {totalBalance.toLocaleString('en-IN')}</p>
+                      <p className="text-sm font-medium font-mono text-slate-700">₹ {staff.balance.toLocaleString('en-IN')}</p>
                     </div>
-                  </td>
-                  <td colSpan={2}></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </Card>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-2 relative">
+                      <button 
+                        onClick={() => handleStatusChange(staff.id, "P")}
+                        className={cn(
+                          "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
+                          staff.status === "P" 
+                            ? "bg-green-500 border-green-500 text-white shadow-sm" 
+                            : "bg-white border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-500"
+                        )}
+                      >
+                        P
+                      </button>
+                      <button 
+                        onClick={() => handleStatusChange(staff.id, "A")}
+                        className={cn(
+                          "w-8 h-8 rounded border text-[10px] font-medium flex items-center justify-center transition-all",
+                          staff.status === "A" 
+                            ? "bg-red-500 border-red-500 text-white shadow-sm" 
+                            : "bg-white border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500"
+                        )}
+                      >
+                        A
+                      </button>
+                      <button 
+                        onClick={() => setShowMenuId(showMenuId === staff.id ? null : staff.id)}
+                        className={cn(
+                          "w-8 h-8 rounded border flex items-center justify-center transition-all",
+                          staff.status && staff.status !== "P" && staff.status !== "A"
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50"
+                        )}
+                      >
+                        {staff.status && staff.status !== "P" && staff.status !== "A" ? (
+                          <span className="text-[10px] font-medium">{staff.status}</span>
+                        ) : (
+                          <MoreVertical className="w-4 h-4" />
+                        )}
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showMenuId === staff.id && (
+                        <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-2 animate-in fade-in zoom-in-95 duration-150">
+                          {[
+                            { label: "Half day", value: "HD" },
+                            { label: "Paid leave", value: "PL" },
+                            { label: "Week off", value: "WO" },
+                            { label: "Add overtime", value: "OT" },
+                          ].map((item) => (
+                            <button
+                              key={item.value}
+                              onClick={() => handleStatusChange(staff.id, item.value as AttendanceStatus)}
+                              className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-right">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 text-[10px] font-medium tracking-widest text-indigo-600 border-indigo-100 hover:bg-indigo-50"
+                      onClick={() => handleClearDues(staff.id)}
+                    >
+                      Clear dues
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter className="bg-slate-50/50 font-bold">
+              <TableRow>
+                <TableCell className="px-6 py-4 text-slate-500">Total staff: {filteredStaff.length}</TableCell>
+                <TableCell className="px-6 py-4"></TableCell>
+                <TableCell className="px-6 py-4 font-mono text-slate-900">₹ {totalLastMonthDue.toLocaleString('en-IN')}</TableCell>
+                <TableCell className="px-6 py-4 font-mono text-slate-900">₹ {totalBalance.toLocaleString('en-IN')}</TableCell>
+                <TableCell className="px-6 py-4"></TableCell>
+                <TableCell className="px-6 py-4"></TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
       </div>
 
       {/* Overlay to close dropdown when clicking outside */}

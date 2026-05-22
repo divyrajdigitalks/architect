@@ -50,20 +50,25 @@ export default function LoginPage() {
 
   // Email → Role Mapping
   const roleCredentials: Record<string, string> = {
-    "admin@gmail.com": "architect",
-    "office@gmail.com": "client",
-    "client@gmail.com": "supervisor",
-    "agency@gmail.com": "worker",
-    "academy@gmail.com": "accountant",
+    "director@gmail.com": "director",
+    "architect@gmail.com": "architect",
+    "office@gmail.com": "office-team",
+    "engineer@gmail.com": "site-engineer",
+    "supervisor@gmail.com": "supervisor",
+    "accountant@gmail.com": "accountant",
+    "client@gmail.com": "client",
   };
 
   // Optional Role Names
   const roleNames: Record<string, string> = {
-    architect: "Admin",
-    client: "Office",
-    supervisor: "Client",
-    worker: "Agency",
+    director: "Director",
+    architect: "Architect",
+    "office-team": "Office Team",
+    "site-engineer": "Site Engineer",
+    supervisor: "Supervisor",
     accountant: "Accountant",
+    client: "Client Portal",
+    guest: "Guest Mode",
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,8 +80,8 @@ export default function LoginPage() {
         setError("Please enter a valid mobile number.");
         return;
       }
-      // Guest login as architect (Director) as requested
-      login("architect", { name: "Guest Architect", mobile });
+      // Guest login
+      login("guest", { name: "Guest User", mobile });
       return;
     }
 
@@ -184,53 +189,40 @@ export default function LoginPage() {
               Demo Login Credentials
             </p>
 
-            <div className="mt-4 space-y-3 text-sm text-slate-700">
-
+            <div className="mt-4 space-y-2 text-xs text-slate-700">
               <div className="flex justify-between">
-                <span>Admin</span>
-                <span className="font-semibold">
-                  admin@gmail.com
-                </span>
+                <span>Director</span>
+                <span className="font-semibold">director@gmail.com</span>
               </div>
-
               <div className="flex justify-between">
-                <span>Office</span>
-                <span className="font-semibold">
-                  office@gmail.com
-                </span>
+                <span>Architect</span>
+                <span className="font-semibold">architect@gmail.com</span>
               </div>
-
               <div className="flex justify-between">
-                <span>Client</span>
-                <span className="font-semibold">
-                  client@gmail.com
-                </span>
+                <span>Office Team</span>
+                <span className="font-semibold">office@gmail.com</span>
               </div>
-
               <div className="flex justify-between">
-                <span>Agency</span>
-                <span className="font-semibold">
-                  agency@gmail.com
-                </span>
+                <span>Site Engineer</span>
+                <span className="font-semibold">engineer@gmail.com</span>
               </div>
-
+              <div className="flex justify-between">
+                <span>Supervisor</span>
+                <span className="font-semibold">supervisor@gmail.com</span>
+              </div>
               <div className="flex justify-between">
                 <span>Accountant</span>
-                <span className="font-semibold">
-                  academy@gmail.com
-                </span>
+                <span className="font-semibold">accountant@gmail.com</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Client Portal</span>
+                <span className="font-semibold">client@gmail.com</span>
               </div>
             </div>
 
             <div className="mt-5 pt-4 border-t border-slate-200">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Master Password</p>
               <p className="text-lg font-medium text-slate-900 mt-1 font-mono">123456</p>
-            </div>
-
-            <div className="mt-5 pt-4 border-t border-slate-200">
-              <p className="text-[10px] text-slate-400 text-center">
-                Need help? Contact <span className="text-indigo-600 font-medium hover:underline cursor-pointer">Support Team</span>
-              </p>
             </div>
           </div> */}
 

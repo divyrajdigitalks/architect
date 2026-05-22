@@ -42,14 +42,12 @@ const PAGE_LABELS: Record<string, string> = {
   tasks:          "Tasks",
   "office-team":  "Office Team",
   "site-team":    "Site Team",
-  clients:        "Office Team",
-  supervisors:    "Clients",
-  workers:        "Agency",
+  clients:        "Clients",
   "site-updates": "Site Updates",
   "site-photos":  "Site Photos",
   attendance:     "Attendance",
   arkiton:        "Arkiton",
-  "working-sop":  "Working Sop",
+  "working-sop":  "Working SOP",
   payments:       "Payments",
   calendar:       "Calendar",
   reports:        "Reports",
@@ -57,29 +55,33 @@ const PAGE_LABELS: Record<string, string> = {
   settings:       "Settings",
 };
 
-// Worker dashboard shows as "My Tasks", worker projects as "Job Locations"
+// Custom labels based on roles
 const ROLE_PAGE_LABELS: Record<string, Record<string, string>> = {
-  worker: {
-    dashboard: "Agency Tasks",
-    projects:  "Job Locations",
+  director: {
+    dashboard: "Director Hub",
   },
-  client: {
-    dashboard: "Office Dashboard",
+  architect: {
+    dashboard: "Architect Console",
   },
-  supervisor: {
-    dashboard: "Client Dashboard",
-    projects:  "My Projects",
-    tasks:     "Today's Tasks",
-    "site-updates": "Site Logs",
+  "office-team": {
+    dashboard: "Office Hub",
   },
   "site-engineer": {
-    dashboard: "Guest Dashboard",
+    dashboard: "Engineer View",
+  },
+  supervisor: {
+    dashboard: "Site Overview",
+  },
+  client: {
+    dashboard: "My Dashboard",
+    projects: "My Project",
+  },
+  guest: {
+    dashboard: "Showcase",
     projects: "Work Portfolio",
-    arkiton: "Arkiton Introduction",
-    "working-sop": "Working Style",
-    "site-updates": "Project & Achievement",
-    messages: "Agency Contact",
-   }
+    arkiton: "Arkiton Intro",
+    "working-sop": "Our Process",
+  }
 };
 
 export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void }) {

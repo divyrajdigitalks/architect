@@ -216,22 +216,22 @@ export default function TasksPage() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    "Pending": "bg-slate-100 text-slate-600 border-slate-200",
-    "In Progress": "bg-blue-50 text-blue-600 border-blue-100",
-    "Completed": "bg-green-50 text-green-600 border-green-100",
-  };
-  const icons: Record<string, typeof CircleAlert> = {
-    "Pending": CircleAlert,
-    "In Progress": Clock,
-    "Completed": CircleCheck,
-  };
-  const Icon = icons[status] || CircleAlert;
-  return (
-    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border uppercase tracking-wider shadow-sm", styles[status])}>
-      <Icon className="w-3.5 h-3.5" />
-      {status}
-    </span>
-  );
-}
+// function StatusBadge({ status }: { status: string }) {
+//   const styles: Record<string, string> = {
+//     "Pending": "bg-slate-100 text-slate-600 border-slate-200",
+//     "In Progress": "bg-blue-50 text-blue-600 border-blue-100",
+//     "Completed": "bg-green-50 text-green-600 border-green-100",
+//   };
+//   const icons: Record<string, typeof CircleAlert> = {
+//     "Pending": CircleAlert,
+//     "In Progress": Clock,
+//     "Completed": CircleCheck,
+//   };
+//   const Icon = icons[status] || CircleAlert;
+//   return (
+//     <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border uppercase tracking-wider shadow-sm", styles[status])}>
+//       <Icon className="w-3.5 h-3.5" />
+//       {status}
+//     </span>
+//   );
+// }
