@@ -108,8 +108,6 @@ export default function SupervisorsPage() {
     s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getProjectName = (id: string) => projects.find(p => p.id === id)?.name || id;
-
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newForm.name.trim()) return;

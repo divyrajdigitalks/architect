@@ -18,8 +18,10 @@ interface ExecutionModuleProps {
 export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
-  const civilStages = Object.entries(data.civil);
-  const interiorStages = Object.entries(data.interior);
+  if (!data) return <div className="p-10 text-center text-slate-500">Execution data not available.</div>;
+
+  const civilStages = Object.entries(data.civil || {});
+  const interiorStages = Object.entries(data.interior || {});
 
   return (
     <div className="space-y-8">

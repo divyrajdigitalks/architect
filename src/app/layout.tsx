@@ -4,6 +4,9 @@ import "../styles/globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import { AuthProvider } from "@/lib/auth-context";
 import { RoleProvider } from "@/lib/role-context";
+import { ProjectsProvider } from "@/lib/projects-store";
+import { TasksProvider } from "@/lib/tasks-store";
+import { SiteUpdatesProvider } from "@/lib/site-updates-store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +35,13 @@ export default function RootLayout({
       >
         <RoleProvider>
           <AuthProvider>
-            <ClientLayout>{children}</ClientLayout>
+            <ProjectsProvider>
+              <TasksProvider>
+                <SiteUpdatesProvider>
+                  <ClientLayout>{children}</ClientLayout>
+                </SiteUpdatesProvider>
+              </TasksProvider>
+            </ProjectsProvider>
           </AuthProvider>
         </RoleProvider>
       </body>

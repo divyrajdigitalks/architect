@@ -38,8 +38,9 @@ import { ExecutionModule } from "@/components/projects/ExecutionModule";
 
 type Tab = "overview" | "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
 
-export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ProjectDetailsPage({ params }: { params: any }) {
+  const resolvedParams = params instanceof Promise ? use(params) : params;
+  const id = resolvedParams?.id;
   const { user } = useAuth();
   const { getProjectById, updateStageStatus } = useProjects();
   const { tasks: allTasks } = useTasks();
@@ -282,9 +283,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     <td className="px-10 py-8">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-600 border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-500 shadow-inner">
-                          {task.siteTeam.split(' ').map(n => n[0]).join('')}
+                          {task.siteTeam?.split(' ').map(n => n[0]).join('') || "U"}
                         </div>
-                        <span className="text-sm font-bold text-slate-700">{task.siteTeam}</span>
+                        <span className="text-sm font-bold text-slate-700">{task.siteTeam || "Unassigned"}</span>
                       </div>
                     </td>
                     <td className="px-10 py-8">
@@ -318,7 +319,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
               <div key={worker.id} className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6 hover:shadow-xl transition-all duration-500 group">
                 <div className="flex justify-center">
                   <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-2xl font-black text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700 shadow-inner">
-                    {worker.name.split(' ').map(n => n[0]).join('')}
+                    {worker.name?.split(' ').map(n => n[0]).join('') || "W"}
                   </div>
                 </div>
                 <div className="text-center space-y-1">

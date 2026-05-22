@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { projects as initialProjects, supervisors, workers, clients, WORKER_SPECIALIZATIONS } from "@/lib/dummy-data";
+import { useProjects } from "@/lib/projects-store";
+import { supervisors, workers, clients, WORKER_SPECIALIZATIONS } from "@/lib/dummy-data";
 import {
   MoreHorizontal, MapPin, Calendar, ChevronRight, Plus, ArrowUpRight,
   LayoutGrid, List, Search, X, HardHat, Users, CheckCircle2
@@ -30,7 +31,7 @@ const emptyForm = {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { projects, createProject } = useProjects();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -125,24 +126,18 @@ export default function ProjectsPage() {
     e.preventDefault();
     if (!form.name.trim()) return;
     const clientObj = clients.find(c => c.id === form.clientId);
-    const newProject: Project = {
-      id: String(Date.now()),
+    createProject({
       name: form.name,
       client: clientObj?.name || form.client,
       clientId: form.clientId,
       location: form.location,
       startDate: form.startDate,
       expectedCompletion: form.expectedCompletion,
-      status: "Planned",
-      progress: 0,
       budget: form.budget,
-      received: "$0",
-      pending: form.budget,
       supervisorId: form.supervisorId,
       workerIds: form.workerIds,
       stages: defaultStages,
-    };
-    setProjects(prev => [...prev, newProject]);
+    });
     setForm(emptyForm);
     setIsAddModalOpen(false);
   };
@@ -175,9 +170,9 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        <Card className="overflow-hidden p-0">
+        {/* <Card className="overflow-hidden p-0"> */}
           <DataTable columns={columns} data={filteredProjects} />
-        </Card>
+        {/* </Card> */}
       </div>
 
       {/* Create Project Modal */}

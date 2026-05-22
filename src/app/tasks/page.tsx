@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { useAuth } from "@/lib/auth-context";
+import { useTasks } from "@/lib/tasks-store";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Task = typeof initialTasks[0];
 const statusOptions = ["Pending", "In Progress", "Completed"];

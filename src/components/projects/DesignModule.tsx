@@ -19,8 +19,10 @@ interface DesignModuleProps {
 export function DesignModule({ data, projectId }: DesignModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
-  const civilTasks = Object.entries(data.civil);
-  const interiorTasks = Object.entries(data.interior);
+  if (!data) return <div className="p-10 text-center text-slate-500">Design data not available.</div>;
+
+  const civilTasks = Object.entries(data.civil || {});
+  const interiorTasks = Object.entries(data.interior || {});
 
   return (
     <div className="space-y-8">
