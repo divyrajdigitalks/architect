@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { DataTable, Column } from "@/components/ui/DataTable";
 
 type Project = typeof initialProjects[0];
 
@@ -47,6 +47,65 @@ export default function ProjectsPage() {
 
   const getSupervisorName = (id?: string) =>
     supervisors.find(s => s.id === id)?.name || "—";
+
+  const columns: Column<Project>[] = [
+    {
+      header: "Project",
+      render: (project) => (
+        <div>
+          <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{project.name}</p>
+          <p className="text-xs font-medium text-slate-500">{project.client}</p>
+        </div>
+      ),
+    },
+    {
+      header: "Location",
+      render: (project) => <span className="text-sm font-medium text-slate-600">{project.location}</span>,
+    },
+    {
+      header: "Supervisor",
+      render: (project) => (
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-medium text-indigo-600 border border-indigo-100 font-mono">
+            {getSupervisorName(project.supervisorId).split(" ").map(n => n[0]).join("")}
+          </div>
+          <span className="text-sm font-medium text-slate-700">{getSupervisorName(project.supervisorId)}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      render: (project) => (
+        <div className="flex items-center gap-2">
+          <div className={cn("w-2 h-2 rounded-full",
+            project.status === "In Progress" ? "bg-green-500" : "bg-blue-500")} />
+          <span className="text-xs font-medium text-slate-700">{project.status}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Progress",
+      render: (project) => (
+        <div className="flex items-center gap-4">
+          <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-600" style={{ width: `${project.progress}%` }} />
+          </div>
+          <span className="text-xs font-medium text-slate-900 font-mono">{project.progress}%</span>
+        </div>
+      ),
+    },
+    {
+      header: "Action",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (project) => (
+        <Link href={`/projects/${project.id}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
+          View <ChevronRight className="w-4 h-4" />
+        </Link>
+      ),
+    },
+  ];
 
   const filteredWorkersForForm = workers.filter(w =>
     specFilter === "" || w.specializations.some(s => s.toLowerCase().includes(specFilter.toLowerCase())) ||
@@ -117,60 +176,7 @@ export default function ProjectsPage() {
         </div>
 
         <Card className="overflow-hidden p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-medium">Project</TableHead>
-                <TableHead className="font-medium">Location</TableHead>
-                <TableHead className="font-medium">Supervisor</TableHead>
-                <TableHead className="font-medium">Status</TableHead>
-                <TableHead className="font-medium">Progress</TableHead>
-                <TableHead className="text-right font-medium">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProjects.map(project => (
-                <TableRow key={project.id} className="group">
-                  <TableCell>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{project.name}</p>
-                      <p className="text-xs font-medium text-slate-500">{project.client}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell><span className="text-sm font-medium text-slate-600">{project.location}</span></TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-medium text-indigo-600 border border-indigo-100 font-mono">
-                        {getSupervisorName(project.supervisorId).split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <span className="text-sm font-medium text-slate-700">{getSupervisorName(project.supervisorId)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className={cn("w-2 h-2 rounded-full",
-                        project.status === "In Progress" ? "bg-green-500" : "bg-blue-500")} />
-                      <span className="text-xs font-medium text-slate-700">{project.status}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-4">
-                      <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-600" style={{ width: `${project.progress}%` }} />
-                      </div>
-                      <span className="text-xs font-medium text-slate-900 font-mono">{project.progress}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/projects/${project.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                      View <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={filteredProjects} />
         </Card>
       </div>
 

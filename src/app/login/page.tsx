@@ -6,18 +6,46 @@ import {
   Mail,
   Lock,
   ChevronRight,
+  Phone,
+  User,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
+import { useRoles } from "@/lib/role-context";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
+
+const COLOR_SELECTED: Record<string, any> = {
+  slate: { bg: "bg-slate-50", border: "border-slate-400", text: "text-slate-900" },
+  indigo: { bg: "bg-indigo-50", border: "border-indigo-400", text: "text-indigo-900" },
+  blue: { bg: "bg-blue-50", border: "border-blue-400", text: "text-blue-900" },
+  orange: { bg: "bg-orange-50", border: "border-orange-400", text: "text-orange-900" },
+  green: { bg: "bg-green-50", border: "border-green-400", text: "text-green-900" },
+  purple: { bg: "bg-purple-50", border: "border-purple-400", text: "text-purple-900" },
+  rose: { bg: "bg-rose-50", border: "border-rose-400", text: "text-rose-900" },
+};
+
+const COLOR_DOT: Record<string, string> = {
+  slate: "bg-slate-400",
+  indigo: "bg-indigo-400",
+  blue: "bg-blue-400",
+  orange: "bg-orange-400",
+  green: "bg-green-400",
+  purple: "bg-purple-400",
+  rose: "bg-rose-400",
+};
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { roles } = useRoles();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [selectedRole, setSelectedRole] = useState("architect");
+  const [isGuest, setIsGuest] = useState(false);
   const [error, setError] = useState("");
 
   // Email → Role Mapping
@@ -42,6 +70,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
+    if (isGuest) {
+      if (mobile.length < 10) {
+        setError("Please enter a valid mobile number.");
+        return;
+      }
+      // Guest login as architect (Director) as requested
+      login("architect", { name: "Guest Architect", mobile });
+      return;
+    }
+
     const matchedRole = roleCredentials[email.trim().toLowerCase()];
 
     // Common password for all demo users
@@ -52,10 +90,7 @@ export default function LoginPage() {
     }
   };
 
-  const currentRole =
-    roleNames[
-      roleCredentials[email.trim().toLowerCase()]
-    ];
+  const selected = roles.find(r => r.id === selectedRole);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
@@ -76,40 +111,30 @@ export default function LoginPage() {
         </div>
 
         <Card className="p-10 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-8">
-          {/* Dynamic Role Selector */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-1">
-              {roles.filter(r => r.id !== "super-admin").map((r) => {
-                const isSelected = selectedRole === r.id;
-                const c = COLOR_SELECTED[r.color] ?? COLOR_SELECTED.slate;
-                const dot = COLOR_DOT[r.color] ?? COLOR_DOT.slate;
-                // Proper casing for roles
-                const roleName = r.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                return (
-                  <button key={r.id} type="button" onClick={() => setSelectedRole(r.id)}
-                    className={cn(
-                      "flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all duration-200 border-2 text-center",
-                      isSelected
-                        ? `${c.bg} ${c.border} shadow-md`
-                        : "bg-slate-50 border-transparent hover:bg-white hover:border-slate-200"
-                    )}>
-                    <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isSelected ? c.bg : "bg-white border border-slate-200")}>
-                      <div className={cn("w-3 h-3 rounded-full", dot)} />
-                    </div>
-                    <div>
-                      <p className={cn("text-xs font-medium leading-tight", isSelected ? c.text : "text-slate-600")}>
-                        {roleName}
-                      </p>
-                      <p className="text-[9px] font-medium text-slate-400 mt-0.5">
-                        {r.pages.length} pages
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          
+          {/* Mode Switcher */}
+          <div className="flex p-1 bg-slate-100 rounded-2xl">
+            <button 
+              onClick={() => setIsGuest(false)}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium rounded-xl transition-all",
+                !isGuest ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Standard Login
+            </button>
+            <button 
+              onClick={() => setIsGuest(true)}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium rounded-xl transition-all",
+                isGuest ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Guest Mode
+            </button>
           </div>
 
+              
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2 rounded-lg">{error}</p>}
             {isGuest ? (

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { DataTable, Column } from "@/components/ui/DataTable";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/role-context";
 
@@ -30,6 +30,76 @@ export default function WorkersPage() {
   const { roles } = useRoles();
   const canEdit = user?.role === "architect" || user?.role === "supervisor";
   const isArchitect = user?.role === "architect";
+
+  const columns: Column<Worker>[] = [
+    {
+      header: "Worker",
+      render: (worker) => (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-sm font-medium text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
+            {worker.name.split(" ").map(n => n[0]).join("")}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</p>
+            <p className="text-xs text-slate-500 font-medium">{worker.experience}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Specializations",
+      render: (worker) => (
+        <div className="flex flex-wrap gap-1">
+          {worker.specializations.map(s => (
+            <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-medium text-indigo-700 rounded border border-indigo-100 uppercase tracking-wider">
+              {s}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      header: "Contact",
+      render: (worker) => <span className="text-sm font-medium text-slate-600 font-mono">{worker.phone}</span>,
+    },
+    {
+      header: "Daily Rate",
+      render: (worker) => <span className="text-sm font-medium text-slate-900 font-mono">{worker.rate}</span>,
+    },
+    {
+      header: "Assigned Project",
+      render: (worker) => (
+        <div className="flex flex-wrap gap-1">
+          {worker.assignedProjects.length === 0
+            ? <span className="text-xs text-slate-400 italic">None</span>
+            : worker.assignedProjects.map(p => (
+              <span key={p} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded border border-green-100">{p}</span>
+            ))}
+        </div>
+      ),
+    },
+    {
+      header: "Action",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (worker) => (
+        <div className="flex items-center justify-end gap-2">
+          {isArchitect && (
+            <select
+              value={(worker as Worker).assignedRole ?? ""}
+              onChange={e => setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, assignedRole: e.target.value } : w))}
+              className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+              <option value="">No Role</option>
+              {roles.filter(r => r.id !== "architect" && r.id !== "client").map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          )}
+          <Button variant="ghost" className="text-indigo-600 font-bold text-sm" onClick={() => setProfileWorker(worker)}>View Profile</Button>
+        </div>
+      ),
+    },
+  ];
 
   const filteredWorkers = workers.filter(w =>
     w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -148,71 +218,7 @@ export default function WorkersPage() {
           </div>
         ) : (
           <Card className="overflow-hidden p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-medium">Worker</TableHead>
-                  <TableHead className="font-medium">Specializations</TableHead>
-                  <TableHead className="font-medium">Contact</TableHead>
-                  <TableHead className="font-medium">Daily Rate</TableHead>
-                  <TableHead className="font-medium">Assigned Project</TableHead>
-                  <TableHead className="text-right font-medium">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredWorkers.map(worker => (
-                  <TableRow key={worker.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-sm font-medium text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
-                          {worker.name.split(" ").map(n => n[0]).join("")}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{worker.name}</p>
-                          <p className="text-xs text-slate-500 font-medium">{worker.experience}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {worker.specializations.map(s => (
-                          <span key={s} className="px-2 py-0.5 bg-indigo-50 text-[10px] font-medium text-indigo-700 rounded border border-indigo-100 uppercase tracking-wider">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell><span className="text-sm font-medium text-slate-600 font-mono">{worker.phone}</span></TableCell>
-                    <TableCell><span className="text-sm font-medium text-slate-900 font-mono">{worker.rate}</span></TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {worker.assignedProjects.length === 0
-                          ? <span className="text-xs text-slate-400 italic">None</span>
-                          : worker.assignedProjects.map(p => (
-                            <span key={p} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded border border-green-100">{p}</span>
-                          ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {isArchitect && (
-                          <select
-                            value={(worker as Worker).assignedRole ?? ""}
-                            onChange={e => setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, assignedRole: e.target.value } : w))}
-                            className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                            <option value="">No Role</option>
-                            {roles.filter(r => r.id !== "architect" && r.id !== "client").map(r => (
-                              <option key={r.id} value={r.id}>{r.name}</option>
-                            ))}
-                          </select>
-                        )}
-                        <Button variant="ghost" className="text-indigo-600 font-bold text-sm" onClick={() => setProfileWorker(worker)}>View Profile</Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable columns={columns} data={filteredWorkers} />
           </Card>
         )}
       </div>

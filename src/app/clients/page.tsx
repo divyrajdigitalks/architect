@@ -13,9 +13,9 @@ type Client = typeof initialClients[0];
 
 const emptyForm = { name: "", email: "", phone: "", projects: [] as string[], paymentStatus: "Pending" };
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { DataTable, Column } from "@/components/ui/DataTable";
 
 export default function ClientsPage() {
   const { user } = useAuth();
@@ -25,6 +25,74 @@ export default function ClientsPage() {
   const [form, setForm] = useState(emptyForm);
 
   const canAdd = user?.role === "architect";
+
+  const columns: Column<Client>[] = [
+    {
+      header: "Client",
+      className: "py-4 px-6",
+      render: (client) => (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
+            {client.name.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-900">{client.name}</p>
+            <p className="text-[10px] font-medium text-slate-500">{client.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Projects",
+      className: "py-4 px-6",
+      render: (client) => (
+        <div className="flex flex-wrap gap-1">
+          {client.projects.map((p) => (
+            <span key={p} className="px-2 py-0.5 bg-slate-100 text-[9px] font-medium text-slate-600 rounded-md border border-slate-200">
+              {p}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      header: "Contact",
+      className: "py-4 px-6",
+      render: (client) => (
+        <div className="flex items-center gap-2 text-slate-600">
+          <Phone className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-xs font-medium font-mono">{client.phone}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Payment Status",
+      className: "py-4 px-6",
+      render: (client) => (
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-[10px] font-medium uppercase tracking-wider border",
+            client.paymentStatus === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
+            client.paymentStatus === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+            "bg-red-50 text-red-700 border-red-100"
+          )}
+        >
+          {client.paymentStatus}
+        </Badge>
+      ),
+    },
+    {
+      header: "Actions",
+      className: "py-4 px-6 text-right",
+      headerClassName: "text-right",
+      render: (client) => (
+        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      ),
+    },
+  ];
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -66,67 +134,7 @@ export default function ClientsPage() {
         </div>
 
         <Card className="overflow-hidden p-0 border-slate-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50">
-                <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Client</TableHead>
-                <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Projects</TableHead>
-                <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Contact</TableHead>
-                <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Payment Status</TableHead>
-                <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <TableCell className="py-4 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
-                        {client.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{client.name}</p>
-                        <p className="text-[10px] font-medium text-slate-500">{client.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <div className="flex flex-wrap gap-1">
-                      {client.projects.map((p) => (
-                        <span key={p} className="px-2 py-0.5 bg-slate-100 text-[9px] font-medium text-slate-600 rounded-md border border-slate-200">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-xs font-medium font-mono">{client.phone}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <Badge 
-                      variant="outline" 
-                      className={cn(
-                        "text-[10px] font-medium uppercase tracking-wider border",
-                        client.paymentStatus === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
-                        client.paymentStatus === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                        "bg-red-50 text-red-700 border-red-100"
-                      )}
-                    >
-                      {client.paymentStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-4 px-6 text-right">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={filteredClients} />
         </Card>
       </div>
 

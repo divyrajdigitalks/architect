@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { DataTable, Column } from "@/components/ui/DataTable";
 import Modal from "@/components/ui/Modal";
 import { useAuth } from "@/lib/auth-context";
 
@@ -22,6 +22,58 @@ export default function OfficeTeamPage() {
   const [newMember, setNewMember] = useState({ name: "", type: "Architect", email: "", phone: "", experience: "" });
 
   const canEdit = user?.role === "architect" || user?.role === "super-admin";
+
+  const columns: Column<Employee>[] = [
+    {
+      header: "Member",
+      className: "py-4 px-6",
+      render: (member) => (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
+            {member.name.split(" ").map(n => n[0]).join("")}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-900">{member.name}</p>
+            <p className="text-[10px] font-normal text-slate-500">{member.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Role",
+      className: "py-4 px-6",
+      render: (member) => (
+        <Badge variant="outline" className="text-[10px] font-medium text-indigo-600 bg-indigo-50 border-indigo-100 uppercase">
+          {member.type}
+        </Badge>
+      ),
+    },
+    {
+      header: "Contact",
+      className: "py-4 px-6",
+      render: (member) => (
+        <div className="flex items-center gap-2 text-slate-600">
+          <Phone className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-xs font-normal font-mono">{member.phone}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Experience",
+      className: "py-4 px-6",
+      render: (member) => <span className="text-xs font-medium text-slate-700">{member.experience || "—"}</span>,
+    },
+    {
+      header: "Actions",
+      className: "py-4 px-6 text-right",
+      headerClassName: "text-right",
+      render: (member) => (
+        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      ),
+    },
+  ];
 
   const filteredMembers = members.filter(m =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,53 +126,7 @@ export default function OfficeTeamPage() {
       </div>
 
       <Card className="overflow-hidden p-0 border-slate-200">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Member</TableHead>
-              <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Role</TableHead>
-              <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Contact</TableHead>
-              <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6">Experience</TableHead>
-              <TableHead className="text-[11px] font-medium text-slate-500 tracking-widest uppercase py-4 px-6 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredMembers.map((member) => (
-              <TableRow key={member.id} className="group hover:bg-slate-50/50 transition-colors">
-                <TableCell className="py-4 px-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
-                      {member.name.split(" ").map(n => n[0]).join("")}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{member.name}</p>
-                      <p className="text-[10px] font-normal text-slate-500">{member.email}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-4 px-6">
-                  <Badge variant="outline" className="text-[10px] font-medium text-indigo-600 bg-indigo-50 border-indigo-100 uppercase">
-                    {member.type}
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-4 px-6">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-xs font-normal font-mono">{member.phone}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="py-4 px-6">
-                  <span className="text-xs font-medium text-slate-700">{member.experience || "—"}</span>
-                </TableCell>
-                <TableCell className="py-4 px-6 text-right">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable columns={columns} data={filteredMembers} />
       </Card>
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Office Member">

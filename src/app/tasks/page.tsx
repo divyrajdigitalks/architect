@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { DataTable, Column } from "@/components/ui/DataTable";
 import { useAuth } from "@/lib/auth-context";
 
 type Task = typeof initialTasks[0];
@@ -24,6 +24,97 @@ export default function TasksPage() {
   const [newTask, setNewTask] = useState({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
 
   const canEdit = user?.role === "architect" || user?.role === "supervisor";
+
+  const columns: Column<Task>[] = [
+    {
+      header: "TASK NAME",
+      render: (task) => (
+        <div>
+          <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.name}</p>
+          <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{task.project} • {task.stage}</p>
+        </div>
+      ),
+    },
+    {
+      header: "ASSIGNED OFFICE TEAM",
+      render: (task) => (
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
+            {task.officeTeam.split(" ").map(n => n[0]).join("")}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700">{task.officeTeam}</p>
+            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">DESIGNER NAME AVSE</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "STATUS",
+      render: (task) => (
+        canEdit ? (
+          <select
+            value={task.officeStatus}
+            onChange={(e) => updateStatus(task.id, "officeStatus", e.target.value)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
+              task.officeStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
+              task.officeStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+              "bg-slate-100 text-slate-600 border-slate-200"
+            )}
+          >
+            {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        ) : (
+          <StatusBadge status={task.officeStatus} />
+        )
+      ),
+    },
+    {
+      header: "ASSIGNED SITE TEAM",
+      render: (task) => (
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
+            {task.siteTeam.split(" ").map(n => n[0]).join("")}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700">{task.siteTeam}</p>
+            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">SITE NA LABOR NU NAME AVSE</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "DEADLINE",
+      render: (task) => (
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+          <Clock className="w-4 h-4" />
+          {task.deadline}
+        </div>
+      ),
+    },
+    {
+      header: "STATUS",
+      render: (task) => (
+        canEdit ? (
+          <select
+            value={task.siteStatus}
+            onChange={(e) => updateStatus(task.id, "siteStatus", e.target.value)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
+              task.siteStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
+              task.siteStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+              "bg-slate-100 text-slate-600 border-slate-200"
+            )}
+          >
+            {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        ) : (
+          <StatusBadge status={task.siteStatus} />
+        )
+      ),
+    },
+  ];
 
   const filteredTasks = tasks.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,92 +168,7 @@ export default function TasksPage() {
         </div>
 
         <Card className="overflow-hidden p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>TASK NAME</TableHead>
-                <TableHead>ASSIGNED OFFICE TEAM</TableHead>
-                <TableHead>STATUS</TableHead>
-                <TableHead>ASSIGNED SITE TEAM</TableHead>
-                <TableHead>DEADLINE</TableHead>
-                <TableHead>STATUS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map((task) => (
-                <TableRow key={task.id} className="group">
-                  <TableCell>
-                    <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.name}</p>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{task.project} • {task.stage}</p>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
-                        {task.officeTeam.split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700">{task.officeTeam}</p>
-                        <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">DESIGNER NAME AVSE</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {canEdit ? (
-                      <select
-                        value={task.officeStatus}
-                        onChange={(e) => updateStatus(task.id, "officeStatus", e.target.value)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-                          task.officeStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
-                          task.officeStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          "bg-slate-100 text-slate-600 border-slate-200"
-                        )}
-                      >
-                        {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    ) : (
-                      <StatusBadge status={task.officeStatus} />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
-                        {task.siteTeam.split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700">{task.siteTeam}</p>
-                        <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">SITE NA LABOR NU NAME AVSE</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                      <Clock className="w-4 h-4" />
-                      {task.deadline}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {canEdit ? (
-                      <select
-                        value={task.siteStatus}
-                        onChange={(e) => updateStatus(task.id, "siteStatus", e.target.value)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-                          task.siteStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
-                          task.siteStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          "bg-slate-100 text-slate-600 border-slate-200"
-                        )}
-                      >
-                        {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    ) : (
-                      <StatusBadge status={task.siteStatus} />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={filteredTasks} />
         </Card>
       </div>
 
