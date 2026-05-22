@@ -30,14 +30,32 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { roles } = useRoles();
   const [selectedRole, setSelectedRole] = useState(roles[0]?.id ?? "architect");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    const roleCredentials: Record<string, string> = {
+      architect: "admin@gmail.com",
+      client: "office@gmail.com",
+      supervisor: "client@gmail.com",
+      worker: "agency@gmail.com",
+      accountant: "academy@gmail.com",
+    };
+
     if (selectedRole === "site-engineer") {
       login(selectedRole, { name: "Guest User", mobile });
     } else {
-      login(selectedRole);
+      const expectedEmail = roleCredentials[selectedRole];
+      if (email === expectedEmail && password === "123456") {
+        login(selectedRole);
+      } else {
+        setError("Invalid email or password for the selected role.");
+      }
     }
   };
 
@@ -62,12 +80,13 @@ export default function LoginPage() {
         <Card className="p-10 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-8">
           {/* Dynamic Role Selector */}
           <div className="space-y-3">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Select Your Role</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-1">
               {roles.filter(r => r.id !== "super-admin").map((r) => {
                 const isSelected = selectedRole === r.id;
                 const c = COLOR_SELECTED[r.color] ?? COLOR_SELECTED.slate;
                 const dot = COLOR_DOT[r.color] ?? COLOR_DOT.slate;
+                // Proper casing for roles
+                const roleName = r.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 return (
                   <button key={r.id} type="button" onClick={() => setSelectedRole(r.id)}
                     className={cn(
@@ -81,10 +100,7 @@ export default function LoginPage() {
                     </div>
                     <div>
                       <p className={cn("text-xs font-bold leading-tight", isSelected ? c.text : "text-slate-600")}>
-                        {r.name}
-                      </p>
-                      <p className="text-[9px] font-medium text-slate-400 mt-0.5">
-                        {r.pages.length} pages
+                        {roleName}
                       </p>
                     </div>
                   </button>
@@ -94,29 +110,44 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 p-2 rounded-lg">{error}</p>}
             {isGuest ? (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Mobile Number</label>
                 <Input type="tel" placeholder="+91 00000 00000" icon={Phone} value={mobile} onChange={(e) => setMobile(e.target.value)} required />
-                <p className="text-[10px] font-medium text-slate-400 ml-1 uppercase tracking-widest">Guest login mate mobile number jaruri che</p>
+                <p className="text-[10px] font-medium text-slate-400 ml-1 tracking-widest uppercase">Guest login mate mobile number jaruri che</p>
               </div>
             ) : (
               <>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1">Work Email</label>
-                  <Input type="email" placeholder="name@company.com" icon={Mail} required />
+                  <Input 
+                    type="email" 
+                    placeholder="name@company.com" 
+                    icon={Mail} 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between ml-1">
                     <label className="text-sm font-bold text-slate-700">Password</label>
                     <button type="button" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Forgot?</button>
                   </div>
-                  <Input type="password" placeholder="••••••••" icon={Lock} required />
+                  <Input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    icon={Lock} 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
               </>
             )}
             <Button type="submit" className="w-full py-4 text-base gap-2 group">
-              {isGuest ? "Continue as Guest" : `Sign In as ${selected?.name ?? "User"}`}
+              {isGuest ? "Continue as Guest" : `Sign In as ${selected?.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') ?? "User"}`}
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </form>

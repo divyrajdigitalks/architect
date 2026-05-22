@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,12 +14,18 @@ import {
   Search,
   Filter,
   ArrowRight,
-  HardHat
+  HardHat,
+  X
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
+import Modal from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 
 export default function SiteWorkPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newLog, setNewLog] = useState({ project: "", task: "", status: "On Track" });
+
   const siteStats = [
     { title: "Active Sites", count: 4, icon: MapPin, color: "text-blue-600", bg: "bg-blue-50" },
     { title: "On-site Team", count: 28, icon: HardHat, color: "text-indigo-600", bg: "bg-indigo-50" },
@@ -32,16 +39,70 @@ export default function SiteWorkPage() {
     { id: "SW-003", project: "Lakeview Res.", task: "Site Preparation", supervisor: "John Doe", status: "Delayed", progress: 15 },
   ];
 
+  const handleAddLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("New Site Log:", newLog);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <PageHeader 
         title="SITE WORK" 
         description="Track on-site execution, daily logs, and technical implementation."
       >
-        <Button className="rounded-xl font-bold gap-2 bg-blue-600 hover:bg-blue-500">
+        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-bold gap-2 bg-blue-600 hover:bg-blue-500">
           <Plus className="w-4 h-4" /> Log Site Activity
         </Button>
       </PageHeader>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Log New Site Activity"
+      >
+        <form onSubmit={handleAddLog} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Project</label>
+            <select 
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              value={newLog.project}
+              onChange={(e) => setNewLog({...newLog, project: e.target.value})}
+              required
+            >
+              <option value="">Select Project</option>
+              <option value="Modern Villa">Modern Villa</option>
+              <option value="City Heights">City Heights</option>
+              <option value="Lakeview">Lakeview</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Current Task / Activity</label>
+            <Input 
+              placeholder="e.g., Foundation Casting" 
+              value={newLog.task}
+              onChange={(e) => setNewLog({...newLog, task: e.target.value})}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Status</label>
+            <select 
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              value={newLog.status}
+              onChange={(e) => setNewLog({...newLog, status: e.target.value})}
+            >
+              <option value="On Track">On Track</option>
+              <option value="Delayed">Delayed</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white">Save Activity</Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

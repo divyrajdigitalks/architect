@@ -40,16 +40,16 @@ const PAGE_LABELS: Record<string, string> = {
   "office-work":  "Office Work",
   "site-work":    "Site Work",
   tasks:          "Tasks",
-  "office-team":  "OFFICE TEAM",
-  "site-team":    "SITE TEAM",
-  clients:        "OFFICE TEAM",
-  supervisors:    "CLIENTS",
-  workers:        "AGENCY",
+  "office-team":  "Office Team",
+  "site-team":    "Site Team",
+  clients:        "Office Team",
+  supervisors:    "Clients",
+  workers:        "Agency",
   "site-updates": "Site Updates",
   "site-photos":  "Site Photos",
   attendance:     "Attendance",
-  arkiton:        "ARKITON",
-  "working-sop":  "WORKING SOP",
+  arkiton:        "Arkiton",
+  "working-sop":  "Working Sop",
   payments:       "Payments",
   calendar:       "Calendar",
   reports:        "Reports",
@@ -123,12 +123,12 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link key={item.key} href={item.href} onClick={onMobileClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-bold rounded transition-colors duration-150 uppercase tracking-tight",
-                isActive 
-                  ? "bg-slate-800 text-white border-l-2 border-primary-500" 
-                  : "hover:bg-slate-800 hover:text-white"
-              )}>
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 text-sm font-bold rounded transition-colors duration-150 tracking-tight",
+                  isActive 
+                    ? "bg-slate-800 text-white border-l-2 border-primary-500" 
+                    : "hover:bg-slate-800 hover:text-white"
+                )}>
               <item.icon className={cn("w-4 h-4", isActive ? "text-primary-400" : "text-slate-500")} />
               {item.name}
             </Link>
@@ -144,8 +144,8 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white truncate">{user?.name}</p>
-              <p className="text-[10px] text-slate-500 truncate uppercase font-semibold tracking-wider">
-                {roleConfig?.name || (typeof user?.role === 'string' ? user.role : 'User')}
+              <p className="text-[10px] text-slate-500 truncate font-semibold tracking-wider">
+                {roleConfig?.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || (typeof user?.role === 'string' ? user.role : 'User')}
               </p>
             </div>
           </div>

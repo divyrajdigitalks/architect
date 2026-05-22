@@ -13,6 +13,10 @@ type Client = typeof initialClients[0];
 
 const emptyForm = { name: "", email: "", phone: "", projects: [] as string[], paymentStatus: "Pending" };
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+
 export default function ClientsPage() {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>(initialClients);
@@ -61,59 +65,69 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredClients.map((client) => (
-            <div key={client.id}
-              className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8 space-y-8 transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-2 group">
-              <div className="flex items-start justify-between">
-                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-inner">
-                  {client.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">{client.name}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {client.projects.map((p) => (
-                    <span key={p} className="px-2.5 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 rounded-lg uppercase tracking-wider border border-slate-100">
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-slate-50">
-                <div className="flex items-center gap-3 text-slate-500 group-hover:text-indigo-600 transition-colors">
-                  <Phone className="w-4 h-4" />
-                  <span className="text-sm font-medium">{client.phone}</span>
-                </div>
-                <div className="flex items-center gap-3 text-slate-500 group-hover:text-indigo-600 transition-colors">
-                  <Mail className="w-4 h-4" />
-                  <span className="text-sm font-medium">{client.email}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Payment Status</span>
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-                    client.paymentStatus === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
-                    client.paymentStatus === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                    "bg-red-50 text-red-700 border-red-100"
-                  )}>
-                    {client.paymentStatus}
-                  </span>
-                </div>
-              </div>
-
-              <button className="w-full py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-transparent hover:border-indigo-100 flex items-center justify-center gap-2 group/btn">
-                View Project Portfolio
-                <ArrowUpRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-              </button>
-            </div>
-          ))}
-        </div>
+        <Card className="overflow-hidden p-0 border-slate-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50/50">
+                <TableHead className="text-[11px] font-black text-slate-500 tracking-widest uppercase py-4 px-6">Client</TableHead>
+                <TableHead className="text-[11px] font-black text-slate-500 tracking-widest uppercase py-4 px-6">Projects</TableHead>
+                <TableHead className="text-[11px] font-black text-slate-500 tracking-widest uppercase py-4 px-6">Contact</TableHead>
+                <TableHead className="text-[11px] font-black text-slate-500 tracking-widest uppercase py-4 px-6">Payment Status</TableHead>
+                <TableHead className="text-[11px] font-black text-slate-500 tracking-widest uppercase py-4 px-6 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClients.map((client) => (
+                <TableRow key={client.id} className="group hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="py-4 px-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                        {client.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{client.name}</p>
+                        <p className="text-[10px] font-medium text-slate-500">{client.email}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 px-6">
+                    <div className="flex flex-wrap gap-1">
+                      {client.projects.map((p) => (
+                        <span key={p} className="px-2 py-0.5 bg-slate-100 text-[9px] font-bold text-slate-600 rounded-md border border-slate-200">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 px-6">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs font-medium">{client.phone}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 px-6">
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-[10px] font-bold uppercase tracking-wider border",
+                        client.paymentStatus === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
+                        client.paymentStatus === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                        "bg-red-50 text-red-700 border-red-100"
+                      )}
+                    >
+                      {client.paymentStatus}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-4 px-6 text-right">
+                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
       <Modal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setForm(emptyForm); }} title="Add New Client">
