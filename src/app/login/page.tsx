@@ -7,44 +7,22 @@ import {
   Lock,
   ChevronRight,
   Phone,
-  User,
+  Eye,
+  Briefcase,
+  Users,
+  Camera,
+  FileText,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
-import { useRoles } from "@/lib/role-context";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-
-const COLOR_SELECTED: Record<string, any> = {
-  slate: { bg: "bg-slate-50", border: "border-slate-400", text: "text-slate-900" },
-  indigo: { bg: "bg-indigo-50", border: "border-indigo-400", text: "text-indigo-900" },
-  blue: { bg: "bg-blue-50", border: "border-blue-400", text: "text-blue-900" },
-  orange: { bg: "bg-orange-50", border: "border-orange-400", text: "text-orange-900" },
-  green: { bg: "bg-green-50", border: "border-green-400", text: "text-green-900" },
-  purple: { bg: "bg-purple-50", border: "border-purple-400", text: "text-purple-900" },
-  rose: { bg: "bg-rose-50", border: "border-rose-400", text: "text-rose-900" },
-};
-
-const COLOR_DOT: Record<string, string> = {
-  slate: "bg-slate-400",
-  indigo: "bg-indigo-400",
-  blue: "bg-blue-400",
-  orange: "bg-orange-400",
-  green: "bg-green-400",
-  purple: "bg-purple-400",
-  rose: "bg-rose-400",
-};
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const { roles } = useRoles();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
-  const [selectedRole, setSelectedRole] = useState("architect");
   const [isGuest, setIsGuest] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,18 +37,6 @@ export default function LoginPage() {
     "client@gmail.com": "client",
   };
 
-  // Optional Role Names
-  const roleNames: Record<string, string> = {
-    director: "Director",
-    architect: "Architect",
-    "office-team": "Office Team",
-    "site-engineer": "Site Engineer",
-    supervisor: "Supervisor",
-    accountant: "Accountant",
-    client: "Client Portal",
-    guest: "Guest Mode",
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -80,14 +46,11 @@ export default function LoginPage() {
         setError("Please enter a valid mobile number.");
         return;
       }
-      // Guest login
       login("guest", { name: "Guest User", mobile });
       return;
     }
 
     const matchedRole = roleCredentials[email.trim().toLowerCase()];
-
-    // Common password for all demo users
     if (matchedRole && password === "123456") {
       login(matchedRole);
     } else {
@@ -95,150 +58,220 @@ export default function LoginPage() {
     }
   };
 
-  const selected = roles.find(r => r.id === selectedRole);
+  const guestFeatures = [
+    { icon: Briefcase, label: "Work Portfolio", desc: "Explore completed projects" },
+    { icon: Camera, label: "Site Photos", desc: "View construction progress" },
+    { icon: Users, label: "Meet the Team", desc: "Our architects & engineers" },
+    { icon: FileText, label: "Our Process", desc: "How we build excellence" },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
-      
-      {/* Background Blur Effects */}
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl animate-pulse delay-700" />
+    <div className="min-h-screen flex">
 
-      <div className="w-full max-w-lg relative z-10">
-        
-        {/* Logo Section */}
-        <div className="text-center space-y-4">
-          <div className="inline-flex bg-indigo-600 p-4 rounded-3xl shadow-2xl shadow-indigo-200">
-            <Building2 className="w-10 h-10 text-white" />
+      {/* ── Left Panel (visible on lg+) ── */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 flex-col justify-between p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=2000')] bg-cover bg-center opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 via-slate-900/60 to-slate-900" />
+
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="bg-indigo-600 p-2 rounded-xl">
+            <Building2 className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-4xl font-medium text-slate-900 tracking-tight">ArchiSite</h1>
-          <p className="text-slate-500 font-medium">Construction Management Reinvented</p>
+          <span className="text-xl font-bold text-white tracking-tight">ArchiSite</span>
         </div>
 
-        <Card className="p-10 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-8">
-          
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-xs font-semibold text-green-300 uppercase tracking-widest">Public Showcase</span>
+            </div>
+            <h2 className="text-4xl font-bold text-white leading-tight">
+              Crafting Spaces,<br />
+              <span className="text-indigo-400">Building Legacies.</span>
+            </h2>
+            <p className="text-slate-300 text-base leading-relaxed max-w-sm">
+              Explore our portfolio, meet the team, and discover how we turn architectural visions into reality.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {guestFeatures.map((f) => (
+              <div key={f.label} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 space-y-2 hover:bg-white/10 transition-all">
+                <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                  <f.icon className="w-4 h-4 text-indigo-300" />
+                </div>
+                <p className="text-sm font-semibold text-white">{f.label}</p>
+                <p className="text-xs text-slate-400">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-xs text-slate-500">© 2025 ArchiSite. All rights reserved.</p>
+        </div>
+      </div>
+
+      {/* ── Right Panel ── */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 -right-20 w-80 h-80 bg-indigo-100/40 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-blue-100/40 rounded-full blur-3xl" />
+
+        <div className="w-full max-w-md relative z-10 space-y-8">
+
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center space-y-3">
+            <div className="inline-flex bg-indigo-600 p-3.5 rounded-2xl shadow-xl shadow-indigo-200">
+              <Building2 className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">ArchiSite</h1>
+          </div>
+
           {/* Mode Switcher */}
-          <div className="flex p-1 bg-slate-100 rounded-2xl">
-            <button 
+          <div className="flex p-1 bg-white rounded-2xl border border-slate-200 shadow-sm">
+            <button
               onClick={() => setIsGuest(false)}
               className={cn(
-                "flex-1 py-2.5 text-sm font-medium rounded-xl transition-all",
-                !isGuest ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all",
+                !isGuest ? "bg-indigo-600 text-white shadow-md" : "text-slate-500 hover:text-slate-700"
               )}
             >
-              Standard Login
+              Staff Login
             </button>
-            <button 
+            <button
               onClick={() => setIsGuest(true)}
               className={cn(
-                "flex-1 py-2.5 text-sm font-medium rounded-xl transition-all",
-                isGuest ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all",
+                isGuest ? "bg-indigo-600 text-white shadow-md" : "text-slate-500 hover:text-slate-700"
               )}
             >
-              Guest Mode
+              Guest / Public
             </button>
           </div>
 
-              
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2 rounded-lg">{error}</p>}
-            {isGuest ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 ml-1">Mobile Number</label>
-                <Input type="tel" placeholder=" +91 00000 00000" icon={Phone} value={mobile} onChange={(e) => setMobile(e.target.value)} required className="font-mono" />
-                <p className="text-[10px] font-medium text-slate-400 ml-1 tracking-widest">Guest login mate mobile number jaruri che</p>
+          {/* ── GUEST PANEL ── */}
+          {isGuest ? (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-bold text-slate-900">Explore as Guest</h2>
+                <p className="text-sm text-slate-500">Enter your mobile number to browse our public showcase</p>
               </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 ml-1">Work Email</label>
-                  <Input 
-                    type="email" 
-                    placeholder="name@company.com" 
-                    icon={Mail} 
-                    required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+
+              {/* What you can see */}
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest">What you'll get access to</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {guestFeatures.map((f) => (
+                    <div key={f.label} className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center flex-shrink-0">
+                        <f.icon className="w-3 h-3 text-indigo-600" />
+                      </div>
+                      <span className="text-xs font-medium text-indigo-800">{f.label}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between ml-1">
-                    <label className="text-sm font-medium text-slate-700">Password</label>
-                    <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">Forgot?</button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
+                )}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Mobile Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                    />
                   </div>
-                  <Input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    icon={Lock} 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <p className="text-[11px] text-slate-400 pl-1">No account needed — just your number to continue</p>
                 </div>
-              </>
-            )}
-            <Button type="submit" className="w-full py-4 text-base gap-2 group font-medium">
-              {isGuest ? "Continue as Guest" : `Sign In as ${selected?.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') ?? "User"}`}
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </form>
 
-          {/* Demo Credentials */}
-          {/* <div className="bg-slate-50 p-5 rounded-3xl border border-slate-200">
-            <p className="text-sm font-medium text-slate-700">
-              Demo Login Credentials
-            </p>
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 group"
+                >
+                  <Eye className="w-4 h-4" />
+                  Explore ArchiSite
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </form>
 
-            <div className="mt-4 space-y-2 text-xs text-slate-700">
-              <div className="flex justify-between">
-                <span>Director</span>
-                <span className="font-semibold">director@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Architect</span>
-                <span className="font-semibold">architect@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Office Team</span>
-                <span className="font-semibold">office@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Site Engineer</span>
-                <span className="font-semibold">engineer@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Supervisor</span>
-                <span className="font-semibold">supervisor@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Accountant</span>
-                <span className="font-semibold">accountant@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Client Portal</span>
-                <span className="font-semibold">client@gmail.com</span>
-              </div>
+              <p className="text-center text-xs text-slate-400">
+                Are you a team member?{" "}
+                <button onClick={() => setIsGuest(false)} className="text-indigo-600 font-semibold hover:underline">
+                  Staff Login →
+                </button>
+              </p>
             </div>
+          ) : (
+            /* ── STAFF LOGIN PANEL ── */
+            <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
+                <p className="text-sm text-slate-500">Sign in to your ArchiSite workspace</p>
+              </div>
 
-            <div className="mt-5 pt-4 border-t border-slate-200">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Master Password</p>
-              <p className="text-lg font-medium text-slate-900 mt-1 font-mono">123456</p>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
+                )}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Work Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="email"
+                      placeholder="name@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-slate-700">Password</label>
+                    <button type="button" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Forgot?</button>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl transition-all group"
+                >
+                  Sign In
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </form>
+
+              <p className="text-center text-xs text-slate-400">
+                Just browsing?{" "}
+                <button onClick={() => setIsGuest(true)} className="text-indigo-600 font-semibold hover:underline">
+                  Continue as Guest →
+                </button>
+              </p>
             </div>
-          </div> */}
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-slate-500 font-medium">
-              Don't have an account?{" "}
-              <button
-                type="button"
-                className="text-indigo-600 font-medium hover:underline"
-              >
-                Request Access
-              </button>
-            </p>
-          </div>
-        </Card>
+          )}
+        </div>
       </div>
     </div>
   );

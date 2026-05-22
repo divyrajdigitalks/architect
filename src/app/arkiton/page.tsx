@@ -4,48 +4,12 @@ import { Button } from "@/components/ui/Button";
 
 export default function ArkitonPage() {
   const sections = [
-    { 
-      title: "ABOUT US", 
-      icon: Building2,
-      content: "Arkiton blends architecture, engineering, and project management to deliver modern construction solutions for commercial and residential sites.",
-      color: "text-indigo-600",
-      bg: "bg-indigo-50"
-    },
-    { 
-      title: "TEAM INTRODUCTION", 
-      icon: Users,
-      content: "Our team includes architects, designers, supervisors, and site engineers working together to deliver every project on time.",
-      color: "text-blue-600",
-      bg: "bg-blue-50"
-    },
-    { 
-      title: "ARKITON INTRODUCTION", 
-      icon: Rocket,
-      content: "Experience the Arkiton advantage - where innovative design meets precise engineering for sustainable construction.",
-      color: "text-orange-600",
-      bg: "bg-orange-50"
-    },
-    { 
-      title: "PROJECT DETAIL - DATA", 
-      icon: Database,
-      content: "Detailed project data, including layouts, structural plans, and technical specifications for all our active developments.",
-      color: "text-green-600",
-      bg: "bg-green-50"
-    },
-    { 
-      title: "WORK PORTFOLIO", 
-      icon: Briefcase,
-      content: "Browse our gallery of completed villas, commercial spaces, and multi-story apartment complexes across the country.",
-      color: "text-purple-600",
-      bg: "bg-purple-50"
-    },
-    { 
-      title: "TESTIMONIAL", 
-      icon: Star,
-      content: "What our clients say about our commitment to quality, transparency, and timely delivery of their dream projects.",
-      color: "text-rose-600",
-      bg: "bg-rose-50"
-    },
+    { title: "ABOUT US", icon: Building2, content: "Arkiton blends architecture, engineering, and project management to deliver modern construction solutions for commercial and residential sites.", color: "text-indigo-600", bg: "bg-indigo-50" },
+    { title: "TEAM INTRODUCTION", icon: Users, content: "Our team includes architects, designers, supervisors, and site engineers working together to deliver every project on time.", color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "ARKITON INTRODUCTION", icon: Rocket, content: "Experience the Arkiton advantage - where innovative design meets precise engineering for sustainable construction.", color: "text-orange-600", bg: "bg-orange-50" },
+    { title: "PROJECT DETAIL - DATA", icon: Database, content: "Detailed project data, including layouts, structural plans, and technical specifications for all our active developments.", color: "text-green-600", bg: "bg-green-50" },
+    { title: "WORK PORTFOLIO", icon: Briefcase, content: "Browse our gallery of completed villas, commercial spaces, and multi-story apartment complexes across the country.", color: "text-purple-600", bg: "bg-purple-50" },
+    { title: "TESTIMONIAL", icon: Star, content: "What our clients say about our commitment to quality, transparency, and timely delivery of their dream projects.", color: "text-rose-600", bg: "bg-rose-50" },
   ];
 
   return (
@@ -68,7 +32,6 @@ export default function ArkitonPage() {
           </div>
         </div>
       </div>
-
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {sections.map((s) => (
           <Card key={s.title} className="p-8 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-500 border-slate-100 group flex flex-col justify-between">
@@ -78,14 +41,11 @@ export default function ArkitonPage() {
               </div>
               <div className="space-y-3">
                 <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-indigo-600 transition-colors">{s.title}</h3>
-                <p className="text-base text-slate-600 leading-relaxed font-semibold">
-                  {s.content}
-                </p>
+                <p className="text-base text-slate-600 leading-relaxed font-semibold">{s.content}</p>
               </div>
             </div>
             <button className="mt-8 flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-widest hover:gap-3 transition-all">
-              Learn More
-              <ChevronRight className="w-4 h-4" />
+              Learn More <ChevronRight className="w-4 h-4" />
             </button>
           </Card>
         ))}

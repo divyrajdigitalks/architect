@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = (role: Role, userData?: Partial<User>) => {
-    // Use provided userData or fall back to demo user or generate one
     const base = DEMO_USERS[role] ?? {
       id: "custom_" + Date.now(),
       name: userData?.name ?? role,
@@ -71,7 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const finalUser: User = { ...base, ...userData, role };
     setUser(finalUser);
     localStorage.setItem("auth_user", JSON.stringify(finalUser));
-    router.push("/");
+    // Guest goes to their own home, others go to admin dashboard
+    router.push(role === "guest" ? "/guest/home" : "/");
   };
 
   const logout = () => {
@@ -81,8 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!isLoading && !user && pathname !== "/login") {
+    if (isLoading) return;
+    const isLoginPage = pathname === "/login";
+    const isGuestPage = pathname.startsWith("/guest");
+    if (!user && !isLoginPage) {
       router.push("/login");
+    } else if (user?.role === "guest" && !isGuestPage) {
+      // Guest trying to access admin pages → redirect to guest home
+      router.push("/guest/home");
     }
   }, [user, isLoading, pathname, router]);
 

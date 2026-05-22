@@ -2,21 +2,19 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
-import { supervisors, workers, clients, WORKER_SPECIALIZATIONS } from "@/lib/dummy-data";
+import { supervisors, workers, clients } from "@/lib/dummy-data";
 import {
-  MoreHorizontal, MapPin, Calendar, ChevronRight, Plus, ArrowUpRight,
-  LayoutGrid, List, Search, X, HardHat, Users, CheckCircle2
+  MapPin, ChevronRight, Plus, Search, HardHat, Users, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
 
-type Project = typeof initialProjects[0];
+type Project = ReturnType<typeof useProjects>["projects"][0];
 
 const defaultStages = [
   "Layout", "Excavation", "Foundation", "Structure", "Brick Work",
@@ -45,9 +43,7 @@ export default function ProjectsPage() {
   });
 
   const canAdd = user?.role === "architect";
-
-  const getSupervisorName = (id?: string) =>
-    supervisors.find(s => s.id === id)?.name || "—";
+  const getSupervisorName = (id?: string) => supervisors.find(s => s.id === id)?.name || "—";
 
   const columns: Column<Project>[] = [
     {
@@ -169,18 +165,12 @@ export default function ProjectsPage() {
             )}
           </div>
         </div>
-
-        {/* <Card className="overflow-hidden p-0"> */}
-          <DataTable columns={columns} data={filteredProjects} />
-        {/* </Card> */}
+        <DataTable columns={columns} data={filteredProjects} />
       </div>
 
-      {/* Create Project Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}
         title="Create New Project" className="max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
-
-          {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Project Name *</label>
@@ -197,23 +187,19 @@ export default function ProjectsPage() {
               </select>
             </div>
           </div>
-
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 ml-1">Location</label>
             <Input placeholder="e.g., Beverly Hills, CA" value={form.location}
               onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Start Date</label>
-              <Input type="date" value={form.startDate}
-                onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+              <Input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Expected Completion</label>
-              <Input type="date" value={form.expectedCompletion}
-                onChange={e => setForm(f => ({ ...f, expectedCompletion: e.target.value }))} />
+              <Input type="date" value={form.expectedCompletion} onChange={e => setForm(f => ({ ...f, expectedCompletion: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Budget</label>
@@ -221,8 +207,6 @@ export default function ProjectsPage() {
                 onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} className="font-mono" />
             </div>
           </div>
-
-          {/* Supervisor Assign */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
               <HardHat className="w-4 h-4 text-indigo-600" /> Assign Supervisor
@@ -231,12 +215,8 @@ export default function ProjectsPage() {
               {supervisors.map(sup => (
                 <button key={sup.id} type="button"
                   onClick={() => setForm(f => ({ ...f, supervisorId: f.supervisorId === sup.id ? "" : sup.id }))}
-                  className={cn(
-                    "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                    form.supervisorId === sup.id
-                      ? "bg-indigo-50 border-indigo-400"
-                      : "bg-white border-slate-100 hover:border-slate-300"
-                  )}>
+                  className={cn("flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                    form.supervisorId === sup.id ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300")}>
                   <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium transition-all",
                     form.supervisorId === sup.id ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
                     {sup.name.split(" ").map(n => n[0]).join("")}
@@ -245,61 +225,46 @@ export default function ProjectsPage() {
                     <p className="text-sm font-medium text-slate-900 truncate">{sup.name}</p>
                     <p className="text-[10px] text-slate-500 font-medium">{sup.experience}</p>
                   </div>
-                  {form.supervisorId === sup.id && (
-                    <CheckCircle2 className="w-4 h-4 text-indigo-600 ml-auto flex-shrink-0" />
-                  )}
+                  {form.supervisorId === sup.id && <CheckCircle2 className="w-4 h-4 text-indigo-600 ml-auto flex-shrink-0" />}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Workers Assign */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" />
-              Assign Workers
+              <Users className="w-4 h-4 text-indigo-600" /> Assign Workers
               {form.workerIds.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-medium rounded-full font-mono">
-                  {form.workerIds.length} selected
-                </span>
+                <span className="ml-1 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-medium rounded-full font-mono">{form.workerIds.length} selected</span>
               )}
             </label>
-            <Input placeholder="Filter by name or specialization..."
-              value={specFilter} onChange={e => setSpecFilter(e.target.value)} icon={Search} />
+            <Input placeholder="Filter by name or specialization..." value={specFilter} onChange={e => setSpecFilter(e.target.value)} icon={Search} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto pr-1">
               {filteredWorkersForForm.map(w => {
-                const selected = form.workerIds.includes(w.id);
+                const sel = form.workerIds.includes(w.id);
                 return (
                   <button key={w.id} type="button" onClick={() => toggleWorker(w.id)}
-                    className={cn(
-                      "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                      selected ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300"
-                    )}>
+                    className={cn("flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                      sel ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300")}>
                     <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium flex-shrink-0 transition-all font-mono",
-                      selected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
+                      sel ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
                       {w.name.split(" ").map(n => n[0]).join("")}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900 truncate">{w.name}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {w.specializations.map(s => (
-                          <span key={s} className="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
-                            {s}
-                          </span>
+                          <span key={s} className="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">{s}</span>
                         ))}
                       </div>
                     </div>
-                    {selected && <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
+                    {sel && <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
                   </button>
                 );
               })}
             </div>
           </div>
-
           <div className="flex justify-end gap-4 pt-4 border-t border-slate-100">
-            <Button variant="secondary" type="button" onClick={() => { setIsAddModalOpen(false); setForm(emptyForm); }}>
-              Cancel
-            </Button>
+            <Button variant="secondary" type="button" onClick={() => { setIsAddModalOpen(false); setForm(emptyForm); }}>Cancel</Button>
             <Button type="submit">Create Project</Button>
           </div>
         </form>

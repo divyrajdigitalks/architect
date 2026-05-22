@@ -416,6 +416,7 @@ export default function AttendancePage() {
               </TableRow>
             </TableFooter>
           </Table>
+         </Card> 
       </div>
 
       {/* Overlay to close dropdown when clicking outside */}

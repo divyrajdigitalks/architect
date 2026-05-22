@@ -3,22 +3,21 @@
 import { useAuth } from "@/lib/auth-context";
 import { projects, tasks, siteUpdates, messages, payments } from "@/lib/dummy-data";
 import {
-  Briefcase, 
-  Construction, 
-  Clock, 
+  Briefcase,
+  Construction,
+  Clock,
   CreditCard,
   MessageSquare,
   HardHat,
-  ChevronRight, 
+  ChevronRight,
   Camera,
   Calendar,
   CircleCheck,
   CircleAlert,
   MapPin,
   Phone,
-  LayoutDashboard,
   Users,
-  Plus
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -49,146 +48,19 @@ export default function Dashboard() {
     case "client":
       return <ClientDashboard projectId={user.projectId} />;
     case "guest":
-      return <GuestDashboard />;
     default:
-      return <GuestDashboard />;
+      return <ArchitectDashboard />;
   }
-}
-
-// --- Guest Dashboard ---
-function GuestDashboard() {
-  const showcaseItems = [
-    { 
-      title: "Work Portfolio", 
-      icon: Briefcase,
-      content: "Explore our diverse portfolio of residential villas, commercial landmarks, and urban apartment complexes that showcase our design philosophy.",
-      stats: "50+ Projects"
-    },
-    { 
-      title: "Arkiton Design", 
-      icon: LayoutDashboard,
-      content: "Arkiton is a premier design-build firm committed to transforming architectural visions into structural realities through innovation.",
-      stats: "Award Winning"
-    },
-    { 
-      title: "Working Style", 
-      icon: Construction,
-      content: "Our collaborative approach integrates architecture, engineering, and on-site management to ensure seamless project execution.",
-      stats: "Pro Process"
-    },
-    { 
-      title: "Agency Network", 
-      icon: Users,
-      content: "Contact our verified agencies for specialized services in plumbing, electrical, and structural engineering.",
-      stats: "Verified Leads"
-    },
-  ];
-
-  return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      {/* Hero Section */}
-      <div className="relative h-[400px] rounded-3xl overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent z-10" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=2000')] bg-cover bg-center" />
-        
-        <div className="relative z-20 h-full flex flex-col justify-center px-12 space-y-6 max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
-            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" />
-            <span className="text-xs font-medium text-indigo-100 uppercase tracking-widest">Public Showcase Mode</span>
-          </div>
-          <h1 className="text-5xl font-bold text-white leading-tight tracking-tight">
-            Crafting Spaces, <br />
-            <span className="text-indigo-400">Building Legacies.</span>
-          </h1>
-          <p className="text-slate-300 text-lg font-medium leading-relaxed">
-            Welcome to ArchiSite. Experience the future of construction management and architectural excellence.
-          </p>
-          <div className="flex items-center gap-4 pt-4">
-            <Button className="bg-white text-slate-900 hover:bg-slate-100 h-12 px-8 rounded-xl font-bold shadow-lg shadow-white/10">
-              Explore Portfolio
-            </Button>
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 h-12 px-8 rounded-xl font-bold">
-              Our Process
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Showcase Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {showcaseItems.map((item) => (
-          <Card key={item.title} className="border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white group rounded-3xl p-2">
-            <CardHeader className="p-6">
-              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:rotate-6 transition-all duration-500">
-                <item.icon className="w-6 h-6 text-indigo-600 group-hover:text-white" />
-              </div>
-              <CardTitle className="text-lg font-bold text-slate-900">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">
-                {item.content}
-              </p>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider">{item.stats}</span>
-                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Featured Projects */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Featured Masterpieces</h3>
-          <Button variant="ghost" className="text-indigo-600 font-bold">View Gallery</Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.slice(0, 3).map(p => (
-            <div key={p.id} className="group relative rounded-3xl overflow-hidden shadow-lg aspect-[4/5]">
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent z-10" />
-              <div className="absolute inset-0 bg-slate-200" /> {/* Placeholder for image */}
-              <div className="relative z-20 h-full flex flex-col justify-end p-8 space-y-2">
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">{p.location}</span>
-                <h4 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">{p.name}</h4>
-                <p className="text-slate-300 text-sm line-clamp-2 font-medium">{p.status} • {p.progress}% Complete</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <div className="bg-indigo-600 rounded-[3rem] p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8">
-        <div className="space-y-4 max-w-xl text-center md:text-left">
-          <h2 className="text-3xl font-bold leading-tight">Ready to build your dream?</h2>
-          <p className="text-indigo-100 text-lg">Contact our team today for a free consultation and project estimation.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20">
-            <Phone className="w-6 h-6 text-white" />
-            <div>
-              <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">Direct Line</p>
-              <p className="text-xl font-bold font-mono">+91 98765 43210</p>
-            </div>
-          </div>
-          <Button className="bg-white text-indigo-600 hover:bg-slate-50 h-full py-4 px-8 rounded-2xl font-bold text-lg shadow-xl">
-            Book Appointment
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // --- Architect Dashboard ---
 function ArchitectDashboard({ role = "architect" }: { role?: string }) {
   const todayTasks = tasks.slice(0, 3);
-  
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader 
-        title={role === "director" ? "Director Console" : "Architect Console"} 
+      <PageHeader
+        title={role === "director" ? "Director Console" : "Architect Console"}
         description="Monitor projects, tasks, and team performance across all sites."
       >
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-slate-200 shadow-sm">
@@ -274,7 +146,7 @@ function ArchitectDashboard({ role = "architect" }: { role?: string }) {
 // --- Client Dashboard ---
 function ClientDashboard({ projectId }: { projectId?: string }) {
   const project = projects.find(p => p.id === projectId) || projects[0];
-  
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <Card className="bg-white p-6 shadow-sm">
@@ -306,7 +178,7 @@ function ClientDashboard({ projectId }: { projectId?: string }) {
                   <div className={cn(
                     "absolute -left-8 w-7 h-7 rounded border-2 border-white flex items-center justify-center z-10 shadow-sm",
                     stage.status === "Completed" ? "bg-emerald-500" :
-                    stage.status === "In Progress" ? "bg-primary-600 animate-pulse" : "bg-slate-100"
+                      stage.status === "In Progress" ? "bg-primary-600 animate-pulse" : "bg-slate-100"
                   )}>
                     {stage.status === "Completed" ? <CircleCheck className="w-3.5 h-3.5 text-white" /> : <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </div>
@@ -357,8 +229,8 @@ function ClientDashboard({ projectId }: { projectId?: string }) {
 function OfficeTeamDashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader 
-        title="Office Team Console" 
+      <PageHeader
+        title="Office Team Console"
         description="Manage communications, documentation, and office-site coordination."
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -413,8 +285,8 @@ function OfficeTeamDashboard() {
 function SiteEngineerDashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader 
-        title="Site Engineer Console" 
+      <PageHeader
+        title="Site Engineer Console"
         description="Technical oversight and site progress management."
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -477,8 +349,8 @@ function SupervisorDashboard({ projectId }: { projectId?: string }) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader 
-        title={project.name} 
+      <PageHeader
+        title={project.name}
         description={`${project.location} • Supervisor View`}
       >
         <div className="flex items-center gap-2">
@@ -541,7 +413,7 @@ function SupervisorDashboard({ projectId }: { projectId?: string }) {
               </Button>
             </div>
           </Card>
-          
+
           <Card className="p-6 rounded-[2rem]">
             <CardTitle className="mb-4 text-xs uppercase tracking-widest text-slate-500 font-bold">Project Health</CardTitle>
             <div className="space-y-6">
@@ -604,8 +476,8 @@ function WorkerDashboard({ projectId }: { projectId?: string }) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 pt-6 border-t border-slate-100">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-12 gap-2 font-medium text-xs uppercase tracking-wider"
                 onClick={() => window.location.href = "/site-photos"}
               >
@@ -613,7 +485,7 @@ function WorkerDashboard({ projectId }: { projectId?: string }) {
                 Upload Photo
               </Button>
 
-              <Button 
+              <Button
                 variant="primary"
                 className="h-12 gap-2 font-medium text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
                 onClick={() => window.location.href = "/tasks"}
@@ -631,8 +503,8 @@ function WorkerDashboard({ projectId }: { projectId?: string }) {
           <p className="text-slate-500 font-medium text-[10px] uppercase tracking-widest">Need Support?</p>
           <p className="text-base font-medium">Contact Site Supervisor</p>
         </div>
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           className="w-10 h-10 p-0 rounded bg-white/10 hover:bg-white/20 border-white/10"
           onClick={() => window.location.href = "tel:911"}
         >
@@ -651,8 +523,8 @@ function AccountantDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <PageHeader 
-        title="Financial Console" 
+      <PageHeader
+        title="Financial Console"
         description="Monitor payments, project budgets, and receivables."
       />
 
