@@ -124,9 +124,9 @@ export const clients = [
 ];
 
 export const siteUpdates = [
-  { id: "1", project: "Modern Villa", update: "Foundation completed, moving to structure.", date: "2024-03-12", progress: 40, photos: 4 },
-  { id: "2", project: "City Heights Apartment", update: "Plastering in progress on floor 2.", date: "2024-03-13", progress: 75, photos: 6 },
-  { id: "3", project: "Lakeview Residence", update: "Excavation started today.", date: "2024-03-14", progress: 10, photos: 2 },
+  { id: "1", project: "Modern Villa", update: "Foundation completed, moving to structure.", date: "2024-03-12", timestamp: "2024-03-12 10:30 AM", user: "Mike Ross", progress: 40, photos: 4 },
+  { id: "2", project: "City Heights Apartment", update: "Plastering in progress on floor 2.", date: "2024-03-13", timestamp: "2024-03-13 02:15 PM", user: "Ali Hassan", progress: 75, photos: 6 },
+  { id: "3", project: "Lakeview Residence", update: "Excavation started today.", date: "2024-03-14", timestamp: "2024-03-14 09:00 AM", user: "John Doe", progress: 10, photos: 2 },
 ];
 
 export const messages = [
