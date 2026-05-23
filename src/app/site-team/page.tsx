@@ -22,7 +22,7 @@ export default function SiteTeamPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", type: "Site Supervisor", phone: "", experience: "" });
 
-  const canEdit = user?.role === "architect" || user?.role === "super-admin";
+  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin";
 
   const columns: Column<SiteMember>[] = [
     {

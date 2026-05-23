@@ -37,7 +37,7 @@ export default function SupervisorsPage() {
   const [newForm, setNewForm] = useState({ name: "", phone: "", email: "", experience: "" });
 
   const { roles } = useRoles();
-  const canEdit = user?.role === "architect";
+  const canEdit = user?.role === "architect" || user?.role === "director";
 
   const getProjectName = (id: string) => projects.find(p => p.id === id)?.name || id;
 

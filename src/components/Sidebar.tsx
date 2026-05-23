@@ -25,7 +25,6 @@ const PAGE_ICONS: Record<string, React.ElementType> = {
   "site-updates": ClipboardList,
   "site-photos":  Camera,
   attendance:   BookOpen,
-  arkiton:      BookOpen,
   "working-sop": ClipboardList,
   payments:     CreditCard,
   calendar:     Calendar,
@@ -46,7 +45,6 @@ const PAGE_LABELS: Record<string, string> = {
   "site-updates": "Site Updates",
   "site-photos":  "Site Photos",
   attendance:     "Attendance",
-  arkiton:        "Arkiton",
   "working-sop":  "Working SOP",
   payments:       "Payments",
   calendar:       "Calendar",
@@ -79,7 +77,6 @@ const ROLE_PAGE_LABELS: Record<string, Record<string, string>> = {
   guest: {
     dashboard: "Showcase",
     projects: "Work Portfolio",
-    arkiton: "Arkiton Intro",
     "working-sop": "Our Process",
   }
 };

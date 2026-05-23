@@ -28,7 +28,11 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function OfficeWorkPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", project: "", priority: "Medium", status: "In Design" });
 
@@ -57,9 +61,11 @@ export default function OfficeWorkPage() {
         title="OFFICE WORK" 
         description="Manage designs, documentation, and office-side project coordination."
       >
-        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2">
-          <Plus className="w-4 h-4" /> New Office Task
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2">
+            <Plus className="w-4 h-4" /> New Office Task
+          </Button>
+        )}
       </PageHeader>
 
       <Modal 

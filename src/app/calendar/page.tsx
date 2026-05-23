@@ -33,7 +33,11 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function CalendarPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "supervisor";
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 2, 1)); // March 2024 as default to match dummy data
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,13 +72,15 @@ export default function CalendarPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => { setSelectedDate(new Date()); setIsModalOpen(true); }} 
-              className="gap-2 shadow-lg shadow-indigo-200"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="hidden sm:inline">Schedule Work</span>
-            </Button>
+            {isAdmin && (
+              <Button 
+                onClick={() => { setSelectedDate(new Date()); setIsModalOpen(true); }} 
+                className="gap-2 shadow-lg shadow-indigo-200"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Schedule Work</span>
+              </Button>
+            )}
           </div>
         </div>
 

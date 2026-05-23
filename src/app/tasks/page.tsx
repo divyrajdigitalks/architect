@@ -25,7 +25,7 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [newTask, setNewTask] = useState({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
 
-  const canEdit = user?.role === "architect" || user?.role === "supervisor";
+  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "supervisor";
 
   const columns: Column<Task>[] = [
     {

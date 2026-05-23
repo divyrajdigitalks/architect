@@ -24,7 +24,6 @@ export const ALL_PAGES = [
   { key: "site-updates", label: "Site Updates" },
   { key: "site-photos",  label: "Site Photos" },
   { key: "attendance",   label: "Attendance" },
-  { key: "arkiton",      label: "Arkiton" },
   { key: "working-sop",  label: "Working SOP" },
   { key: "payments",     label: "Payments" },
   { key: "calendar",     label: "Calendar" },
@@ -40,7 +39,7 @@ export const DEFAULT_ROLES: RoleConfig[] = [
   },
   {
     id: "architect", name: "ARCHITECT", color: "indigo", canDelete: false,
-    pages: ["dashboard", "projects", "office-work", "site-work", "tasks", "office-team", "site-team", "clients", "site-updates", "site-photos", "attendance", "arkiton", "working-sop"],
+    pages: ALL_PAGES.map(p => p.key),
   },
   {
     id: "office-team", name: "OFFICE TEAM", color: "blue", canDelete: false,
@@ -56,7 +55,7 @@ export const DEFAULT_ROLES: RoleConfig[] = [
   },
   {
     id: "accountant", name: "ACCOUNTANT", color: "purple", canDelete: false,
-    pages: ["dashboard", "payments", "reports", "arkiton", "working-sop"],
+    pages: ["dashboard", "payments", "reports", "working-sop"],
   },
   {
     id: "client", name: "CLIENT PORTAL", color: "blue", canDelete: false,
@@ -64,7 +63,7 @@ export const DEFAULT_ROLES: RoleConfig[] = [
   },
   {
     id: "guest", name: "GUEST MODE", color: "rose", canDelete: false,
-    pages: ["dashboard", "projects", "arkiton", "working-sop"],
+    pages: ["dashboard", "projects", "working-sop"],
   },
 ];
 
@@ -135,7 +134,9 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateRolePages = (id: string, pages: string[]) => {
-    setRoles(prev => prev.map(r => r.id === id && r.id !== "architect" ? { ...r, pages } : r));
+    // System roles (director, architect) have all-page access locked
+    const isSystemRole = id === "architect" || id === "director";
+    setRoles(prev => prev.map(r => r.id === id && !isSystemRole ? { ...r, pages } : r));
   };
 
   const getRoleById = (id: string) => roles.find(r => r.id === id);

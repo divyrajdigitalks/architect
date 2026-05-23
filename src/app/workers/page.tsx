@@ -28,8 +28,9 @@ export default function WorkersPage() {
   const [showSpecDropdown, setShowSpecDropdown] = useState(false);
 
   const { roles } = useRoles();
-  const canEdit = user?.role === "architect" || user?.role === "supervisor";
-  const isArchitect = user?.role === "architect";
+  const isAdmin = user?.role === "architect" || user?.role === "director";
+  const canEdit = isAdmin || user?.role === "supervisor";
+  const isArchitect = isAdmin;
 
   const columns: Column<Worker>[] = [
     {

@@ -39,14 +39,14 @@ export default function SettingsPage() {
   const [newRoleColor, setNewRoleColor] = useState("teal");
   const [savedMsg, setSavedMsg] = useState(false);
 
-  const isArchitect = user?.role === "architect";
+  const isAdmin = user?.role === "architect" || user?.role === "director";
 
   const tabs = [
     { id: "profile",       label: "My Profile",      icon: UserCircle2 },
     { id: "company",       label: "Company Info",     icon: Building2 },
     { id: "notifications", label: "Notifications",    icon: Bell },
     { id: "security",      label: "Security",         icon: ShieldCheck },
-    ...(isArchitect ? [{ id: "roles", label: "Role Management", icon: Users }] : []),
+    ...(isAdmin ? [{ id: "roles", label: "Role Management", icon: Users }] : []),
   ];
 
   const handleSave = () => {
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   };
 
   const handleTogglePage = (role: RoleConfig, pageKey: string) => {
-    if (role.id === "architect") return;
+    if (role.id === "architect" || role.id === "director") return;
     const has = role.pages.includes(pageKey);
     const updated = has ? role.pages.filter(p => p !== pageKey) : [...role.pages, pageKey];
     updateRolePages(role.id, updated);
@@ -204,7 +204,7 @@ export default function SettingsPage() {
             )}
 
             {/* ── ROLE MANAGEMENT ── */}
-            {activeTab === "roles" && isArchitect && (
+            {activeTab === "roles" && isAdmin && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -296,12 +296,14 @@ export default function SettingsPage() {
                         {isExpanded && (
                           <div className="px-5 pb-5 pt-3 border-t border-slate-100 bg-slate-50 space-y-4 animate-in slide-in-from-top-1 duration-150">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              {role.id === "architect" ? "Architect has access to all pages (locked)" : "Toggle pages to grant or revoke access"}
+                              {(role.id === "architect" || role.id === "director") 
+                                ? `${role.name} has access to all pages (locked)` 
+                                : "Toggle pages to grant or revoke access"}
                             </p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                               {ALL_PAGES.map(page => {
                                 const hasAccess = role.pages.includes(page.key);
-                                const locked = role.id === "architect";
+                                const locked = role.id === "architect" || role.id === "director";
                                 return (
                                   <button key={page.key} type="button"
                                     disabled={locked}

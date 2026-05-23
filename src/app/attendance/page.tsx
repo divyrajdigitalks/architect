@@ -63,8 +63,9 @@ const initialStaff: StaffAttendance[] = [
 
 export default function AttendancePage() {
   const { user } = useAuth();
+  const isAdmin = user?.role === "architect" || user?.role === "director";
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 20)); // May 20, 2026 as in image
-  const [activeTab, setActiveTab] = useState<"office" | "site">("office");
+  const [activeTab, setActiveTab] = useState<"office">("office");
   const [staffList, setStaffList] = useState<StaffAttendance[]>(initialStaff);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMenuId, setShowMenuId] = useState<string | null>(null);
@@ -203,50 +204,29 @@ export default function AttendancePage() {
           <h1 className="text-xl font-medium text-slate-900 tracking-tight">Staff Attendance & Payroll</h1>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-slate-100 p-1 rounded-xl mr-4">
-            <button 
-              onClick={() => {
-                setActiveTab("office");
-                setNewStaff(s => ({ ...s, team: "office" }));
-              }}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
-                activeTab === "office" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              Office Team
-            </button>
-            <button 
-              onClick={() => {
-                setActiveTab("site");
-                setNewStaff(s => ({ ...s, team: "site" }));
-              }}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
-                activeTab === "site" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              Site Team
-            </button>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-9 gap-2 text-slate-600 font-medium text-xs tracking-wider"
-            onClick={() => setIsSettingsModalOpen(true)}
-          >
-            Attendance settings
-            <Settings className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="primary" 
-            size="sm" 
-            className="h-9 gap-2 font-medium text-xs tracking-wider shadow-lg shadow-indigo-100"
-            onClick={() => setIsAddStaffModalOpen(true)}
-          >
-            <Plus className="w-4 h-4" />
-            Add staff
-          </Button>
+          {/* Tabs removed as per requirement */}
+          {isAdmin && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 gap-2 text-slate-600 font-medium text-xs tracking-wider"
+                onClick={() => setIsSettingsModalOpen(true)}
+              >
+                Attendance settings
+                <Settings className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="primary" 
+                size="sm" 
+                className="h-9 gap-2 font-medium text-xs tracking-wider shadow-lg shadow-indigo-100"
+                onClick={() => setIsAddStaffModalOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add staff
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

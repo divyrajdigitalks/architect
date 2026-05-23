@@ -24,7 +24,7 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
 
-  const canAdd = user?.role === "architect";
+  const canAdd = user?.role === "architect" || user?.role === "director";
 
   const columns: Column<Client>[] = [
     {

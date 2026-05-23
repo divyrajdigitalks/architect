@@ -33,7 +33,11 @@ const payments = [
   { id: "3", project: "Lakeview Residence", client: "Charlie Brown", amount: "$15,000", status: "Overdue", date: "2024-03-01" },
 ];
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function PaymentsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "accountant";
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
@@ -45,13 +49,15 @@ export default function PaymentsPage() {
             <p className="text-sm font-medium text-slate-500 hidden sm:block">Track project budgets and pending payments</p>
           </div>
           
-          <Button 
-            onClick={() => setIsAddModalOpen(true)} 
-            className="gap-2 shadow-lg shadow-indigo-200"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Add Payment</span>
-          </Button>
+          {isAdmin && (
+            <Button 
+              onClick={() => setIsAddModalOpen(true)} 
+              className="gap-2 shadow-lg shadow-indigo-200"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Add Payment</span>
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

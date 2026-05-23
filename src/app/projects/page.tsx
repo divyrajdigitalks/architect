@@ -42,7 +42,7 @@ export default function ProjectsPage() {
     return match;
   });
 
-  const canAdd = user?.role === "architect";
+  const canAdd = user?.role === "architect" || user?.role === "director";
   const getSupervisorName = (id?: string) => supervisors.find(s => s.id === id)?.name || "—";
 
   const columns: Column<Project>[] = [

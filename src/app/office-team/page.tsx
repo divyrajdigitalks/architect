@@ -21,7 +21,7 @@ export default function OfficeTeamPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", type: "Architect", email: "", phone: "", experience: "" });
 
-  const canEdit = user?.role === "architect" || user?.role === "super-admin";
+  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin";
 
   const columns: Column<Employee>[] = [
     {

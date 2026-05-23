@@ -28,7 +28,7 @@ export default function SiteUpdatesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ project: projects[0].name, update: "", stage: stageOptions[0], progress: "" });
 
-  const canAdd = user?.role === "supervisor" || user?.role === "architect";
+  const canAdd = user?.role === "supervisor" || user?.role === "architect" || user?.role === "director";
 
   const visibleUpdates = user?.role === "client"
     ? updates.filter(u => u.project === projects.find(p => p.id === user.projectId)?.name)

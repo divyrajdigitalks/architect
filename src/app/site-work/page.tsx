@@ -30,7 +30,11 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function SiteWorkPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "site-engineer" || user?.role === "supervisor";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newLog, setNewLog] = useState({ project: "", task: "", status: "On Track" });
 
@@ -59,9 +63,11 @@ export default function SiteWorkPage() {
         title="SITE WORK" 
         description="Track on-site execution, daily logs, and technical implementation."
       >
-        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-blue-600 hover:bg-blue-500">
-          <Plus className="w-4 h-4" /> Log Site Activity
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-blue-600 hover:bg-blue-500">
+            <Plus className="w-4 h-4" /> Log Site Activity
+          </Button>
+        )}
       </PageHeader>
 
       <Modal 

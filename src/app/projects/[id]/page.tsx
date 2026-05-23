@@ -44,7 +44,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 
-type Tab = "overview" | "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
+type Tab = "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
 
 export default function ProjectDetailsPage({ params }: { params: any }) {
   const resolvedParams = params instanceof Promise ? use(params) : params;
@@ -54,7 +54,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const { tasks: allTasks } = useTasks();
   
   const project = getProjectById(id);
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<Tab>("office-work");
   const [stages, setStages] = useState(project?.stages ?? []);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const projectWorkers = workers.filter(w => w.assignedProjects.includes(project.name));
   const projectPayments = payments.filter(p => p.project === project.name);
 
-  const canEdit = user?.role === "architect" || user?.role === "super-admin" || user?.role === "supervisor";
+  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin" || user?.role === "supervisor";
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -125,7 +125,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
       <div className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-x-auto scrollbar-hide sticky top-20 z-10">
         {[
-          { id: "overview", label: "Overview", icon: Construction },
           { id: "office-work", label: "Office Work", icon: PenTool },
           { id: "site-work", label: "Site Work", icon: Hammer },
           { id: "tasks", label: "Tasks", icon: CheckCircle2 },
@@ -152,115 +151,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
       </div>
 
       <div className="min-h-[500px] animate-in fade-in slide-in-from-top-4 duration-500">
-        {activeTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <div className="lg:col-span-2 space-y-10">
-              <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-10">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-medium text-slate-900 tracking-tight">Construction roadmap</h3>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-indigo-600 uppercase tracking-widest font-mono">{project.progress}% Complete</span>
-                    <div className="w-40 h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                      <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-200" style={{ width: `${project.progress}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative pl-10 space-y-10">
-                  <div className="absolute left-4 top-2 bottom-2 w-px bg-slate-100" />
-                  {stages.map((stage, idx) => (
-                    <div key={idx} className="relative flex items-center gap-8 group">
-                      <div className={cn(
-                        "absolute -left-10 w-8 h-8 rounded-2xl border-4 border-white flex items-center justify-center z-10 transition-all duration-500 shadow-sm",
-                        stage.status === "Completed" ? "bg-green-500 scale-110" :
-                        stage.status === "In Progress" ? "bg-indigo-600 animate-pulse scale-110 shadow-lg shadow-indigo-100" :
-                        "bg-slate-100"
-                      )}>
-                        {stage.status === "Completed" ? <CircleCheck className="w-4 h-4 text-white" /> :
-                         stage.status === "In Progress" ? <CircleDot className="w-4 h-4 text-white" /> :
-                         <CircleDashed className="w-4 h-4 text-slate-400" />}
-                      </div>
-                      <div className={cn(
-                        "flex-1 p-6 rounded-[2rem] border transition-all duration-300",
-                        stage.status === "Completed" ? "bg-green-50/20 border-green-100/30" :
-                        stage.status === "In Progress" ? "bg-indigo-50/50 border-indigo-200 shadow-md" :
-                        "bg-slate-50/30 border-slate-100 opacity-50 group-hover:opacity-100"
-                      )}>
-                        <div className="flex items-center justify-between">
-                          <p className={cn(
-                            "font-medium text-base tracking-tight",
-                            stage.status === "Completed" ? "text-green-800" :
-                            stage.status === "In Progress" ? "text-indigo-900" :
-                            "text-slate-500"
-                          )}>
-                            {stage.name}
-                          </p>
-                          {canEdit ? (
-                            <select
-                              value={stage.status}
-                              onChange={(e) => handleUpdateStageStatus(stage.name, e.target.value)}
-                              className={cn(
-                                "text-[10px] font-medium uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm border cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white",
-                                stage.status === "Completed" ? "text-green-600 border-green-100" :
-                                stage.status === "In Progress" ? "text-indigo-600 border-indigo-100" :
-                                "text-slate-400 border-slate-100"
-                              )}
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Completed">Completed</option>
-                            </select>
-                          ) : (
-                            <span className={cn(
-                              "text-[10px] font-medium uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm bg-white border",
-                              stage.status === "Completed" ? "text-green-600 border-green-100" :
-                              stage.status === "In Progress" ? "text-indigo-600 border-indigo-100" :
-                              "text-slate-400 border-slate-100"
-                            )}>
-                              {stage.status}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-8">
-              <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
-                <h3 className="text-xl font-medium text-slate-900 tracking-tight">Financial Health</h3>
-                <div className="space-y-6">
-                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-2">
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Total Budget</p>
-                    <p className="text-2xl font-medium text-slate-900 font-mono">{project.budget}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-green-50/50 rounded-2xl border border-green-100">
-                      <p className="text-[9px] font-medium text-green-600 uppercase tracking-widest mb-1">Received</p>
-                      <p className="text-lg font-medium text-green-700 font-mono">{project.received}</p>
-                    </div>
-                    <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                      <p className="text-[9px] font-medium text-indigo-600 uppercase tracking-widest mb-1">Pending</p>
-                      <p className="text-lg font-medium text-indigo-700 font-mono">{project.pending}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-indigo-600 p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-100 space-y-6 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <TrendingUp className="w-10 h-10 text-white/40" />
-                <h3 className="text-xl font-medium text-white relative z-10 leading-tight">Project is ahead <br /> of schedule by 4 days</h3>
-                <button className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl text-sm font-medium shadow-lg hover:bg-indigo-50 transition-all relative z-10">
-                  View Timeline
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {activeTab === "office-work" && project.flow && (
           <DesignModule data={project.flow.officeWork} projectId={project.id} />
         )}
