@@ -20,7 +20,7 @@ type Project = ReturnType<typeof useProjects>["projects"][0];
 const defaultStages = [
   "Layout", "Excavation", "Foundation", "Structure", "Brick Work",
   "Plumbing", "Electrical", "Plaster", "Flooring", "Painting", "Interior", "Final Handover",
-].map(name => ({ name, status: "Pending" }));
+].map(name => ({ name, status: "Pending" as const }));
 
 const emptyForm = {
   name: "", clientId: "", location: "",
