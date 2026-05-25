@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteTask } from "@/lib/site-tasks-store";
+import { SiteTask, SiteTaskStatus } from "@/lib/site-tasks-store";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -10,9 +10,10 @@ import { useState } from "react";
 interface ExecutionModuleProps {
   tasks: SiteTask[];
   projectId: string;
+  updateTaskStatus?: (id: string, status: SiteTaskStatus) => void;
 }
 
-export function ExecutionModule({ tasks, projectId }: ExecutionModuleProps) {
+export function ExecutionModule({ tasks, projectId, updateTaskStatus }: ExecutionModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
   if (!tasks) return <div className="p-10 text-center text-slate-500">Execution data not available.</div>;
@@ -30,7 +31,7 @@ export function ExecutionModule({ tasks, projectId }: ExecutionModuleProps) {
             activeSubTab === "civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
-          Civil Work (40%)
+          Civil Work
         </button>
         <button
           onClick={() => setActiveSubTab("interior")}
@@ -39,20 +40,20 @@ export function ExecutionModule({ tasks, projectId }: ExecutionModuleProps) {
             activeSubTab === "interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-900"
           )}
         >
-          Interior Work (50%)
+          Interior Work
         </button>
       </div>
 
       <div className="space-y-4">
         {(activeSubTab === "civil" ? civilStages : interiorStages).map((stage) => (
-          <ExecutionStageCard key={stage.id} stage={stage} />
+          <ExecutionStageCard key={stage.id} stage={stage} onStatusChange={(status) => updateTaskStatus?.(stage.id, status)} />
         ))}
       </div>
     </div>
   );
 }
 
-function ExecutionStageCard({ stage }: { stage: SiteTask }) {
+function ExecutionStageCard({ stage, onStatusChange }: { stage: SiteTask, onStatusChange?: (status: SiteTaskStatus) => void }) {
   const statusColors = {
     "Pending": "bg-slate-100 text-slate-500 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
@@ -61,6 +62,8 @@ function ExecutionStageCard({ stage }: { stage: SiteTask }) {
     "Delayed": "bg-orange-50 text-orange-600 border-orange-200",
     "On Track": "bg-blue-50 text-blue-600 border-blue-200",
   };
+
+  const statusOptions: SiteTaskStatus[] = ["On Track", "In Progress", "Completed", "Critical", "Delayed", "Pending"];
 
   return (
     <Card className="p-6 hover:shadow-md transition-all border-slate-200">
@@ -77,9 +80,16 @@ function ExecutionStageCard({ stage }: { stage: SiteTask }) {
           <div>
             <h4 className="text-base font-medium text-slate-900">{stage.title}</h4>
             <div className="flex items-center gap-3 mt-1">
-              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[stage.status as keyof typeof statusColors])}>
-                {stage.status}
-              </span>
+              <select
+                value={stage.status}
+                onChange={(e) => onStatusChange?.(e.target.value as SiteTaskStatus)}
+                className={cn(
+                  "text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
+                  statusColors[stage.status as keyof typeof statusColors] || statusColors["Pending"]
+                )}
+              >
+                {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
               <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest flex items-center gap-1 font-mono">
                 <Camera className="w-3 h-3" />
                 0 Photos

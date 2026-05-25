@@ -47,6 +47,7 @@ export interface EndPointApi {
   // Tasks (General/Legacy)
   tasks: string;
   taskById: (id: string) => string;
+  tasksByProject: (projectId: string) => string;
 }
 
 const endPointApi: EndPointApi = {
@@ -95,6 +96,7 @@ const endPointApi: EndPointApi = {
   // Tasks (General/Legacy)
   tasks: "/tasks",
   taskById: (id: string) => `/tasks/${id}`,
+  tasksByProject: (projectId: string) => `/tasks?project=${projectId}`,
 };
 
 export default endPointApi;

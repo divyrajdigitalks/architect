@@ -1,103 +1,94 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { taskService } from "@/services/task.service";
 
-export type TaskStatus = "Pending" | "In Progress" | "Completed";
+export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Critical" | "Delayed" | "On Track";
 
 export type Task = {
   id: string;
   name: string;
-  projectId?: string;
+  projectId: string;
   project: string;
-  stage: string;
-  officeTeam: string;
-  officeStatus: TaskStatus;
-  siteTeam: string;
-  siteStatus: TaskStatus;
-  worker?: string; // for backward compatibility
-  deadline: string;
-  status?: TaskStatus; // for backward compatibility
+  type: "Site" | "Office";
+  category?: string;
+  assignee: string;
+  status: TaskStatus;
+  deadline?: string;
+  progress?: number;
+  stage?: string;
+  officeTeam?: string;
+  officeStatus?: TaskStatus;
+  siteTeam?: string;
+  siteStatus?: TaskStatus;
   createdAt?: string;
-};
-
-type CreateTaskInput = Omit<Task, "id" | "status" | "createdAt"> & {
-  id?: string;
-  status?: TaskStatus;
 };
 
 type TasksContextType = {
   tasks: Task[];
   isHydrated: boolean;
   getTasksByProjectId: (projectId: string) => Task[];
-  createTask: (input: CreateTaskInput) => Task;
-  updateTask: (id: string, patch: Partial<Task>) => void;
-  updateTaskStatus: (id: string, status: TaskStatus) => void;
-  deleteTask: (id: string) => void;
+  fetchTasks: () => Promise<void>;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
+
+function mapTask(t: any): Task {
+  const assignedNames = Array.isArray(t.assignedTo)
+    ? t.assignedTo.map((u: any) => u?.name || u).filter(Boolean).join(", ")
+    : t.assignedTo?.name || t.assignedTo || "Unassigned";
+
+  return {
+    id: t._id || t.id,
+    name: t.title || t.name || "",
+    projectId: t.project?._id || t.project || "",
+    project: t.project?.name || t.project || "",
+    type: t.type || "Office",
+    category: t.category,
+    assignee: assignedNames || "Unassigned",
+    status: t.status || "Pending",
+    deadline: t.deadline || t.endDate,
+    progress: t.progress,
+    stage: t.stage,
+    officeTeam: t.type === "Office" ? assignedNames : undefined,
+    officeStatus: t.type === "Office" ? t.status : undefined,
+    siteTeam: t.type === "Site" ? assignedNames : undefined,
+    siteStatus: t.type === "Site" ? t.status : undefined,
+    createdAt: t.createdAt,
+  };
+}
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = await taskService.getAllTasks();
-        if (data && data.length > 0) {
-          const mappedTasks = data.map((t: any) => ({
-            ...t,
-            id: t._id,
-          }));
-          setTasks(mappedTasks);
-        }
-      } catch (error) {
-        console.error("Failed to fetch tasks from backend", error);
-      } finally {
-        setIsHydrated(true);
+  const fetchTasks = useCallback(async () => {
+    try {
+      const data = await taskService.getAllTasks() as any[];
+      if (Array.isArray(data)) {
+        setTasks(data.map(mapTask));
       }
-    };
-
-    fetchTasks();
+    } catch (error) {
+      console.error("Failed to fetch tasks from backend", error);
+    } finally {
+      setIsHydrated(true);
+    }
   }, []);
 
-  const api = useMemo<TasksContextType>(() => {
-    const getTasksByProjectId = (projectId: string) => tasks.filter((t) => t.projectId === projectId);
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
-    const createTask = (input: CreateTaskInput): Task => {
-      const created: Task = {
-        id: input.id ?? String(Date.now()),
-        name: input.name,
-        projectId: input.projectId,
-        project: input.project,
-        stage: input.stage,
-        officeTeam: input.officeTeam,
-        officeStatus: input.officeStatus ?? "Pending",
-        siteTeam: input.siteTeam,
-        siteStatus: input.siteStatus ?? "Pending",
-        worker: input.worker ?? input.siteTeam,
-        deadline: input.deadline,
-        status: input.status ?? input.officeStatus ?? "Pending",
-        createdAt: new Date().toISOString(),
-      };
-      setTasks((prev) => [created, ...prev]);
-      return created;
-    };
+  const getTasksByProjectId = useCallback(
+    (projectId: string) => tasks.filter((t) => t.projectId === projectId),
+    [tasks]
+  );
 
-    const updateTask = (id: string, patch: Partial<Task>) => {
-      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-    };
-
-    const updateTaskStatus = (id: string, status: TaskStatus) => updateTask(id, { status });
-
-    const deleteTask = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
-
-    return { tasks, isHydrated, getTasksByProjectId, createTask, updateTask, updateTaskStatus, deleteTask };
-  }, [tasks, isHydrated]);
-
-  return <TasksContext.Provider value={api}>{children}</TasksContext.Provider>;
+  return (
+    <TasksContext.Provider value={{ tasks, isHydrated, getTasksByProjectId, fetchTasks }}>
+      {children}
+    </TasksContext.Provider>
+  );
 }
 
 export function useTasks() {
@@ -105,4 +96,3 @@ export function useTasks() {
   if (!ctx) throw new Error("useTasks must be used within a TasksProvider");
   return ctx;
 }
-

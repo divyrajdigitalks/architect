@@ -1,6 +1,6 @@
 "use client";
 
-import { OfficeTask } from "@/lib/office-tasks-store";
+import { OfficeTask, OfficeTaskStatus } from "@/lib/office-tasks-store";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -11,9 +11,10 @@ import { useState } from "react";
 interface DesignModuleProps {
   tasks: OfficeTask[];
   projectId: string;
+  updateTaskStatus?: (id: string, status: OfficeTaskStatus) => void;
 }
 
-export function DesignModule({ tasks, projectId }: DesignModuleProps) {
+export function DesignModule({ tasks, projectId, updateTaskStatus }: DesignModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
   if (!tasks) return <div className="p-10 text-center text-slate-500">Design data not available.</div>;
@@ -46,28 +47,37 @@ export function DesignModule({ tasks, projectId }: DesignModuleProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(activeSubTab === "civil" ? civilTasks : interiorTasks).map((task) => (
-          <DesignTaskCard key={task.id} task={task} />
+          <DesignTaskCard key={task.id} task={task} onStatusChange={(status) => updateTaskStatus?.(task.id, status)} />
         ))}
       </div>
     </div>
   );
 }
 
-function DesignTaskCard({ task }: { task: OfficeTask }) {
+function DesignTaskCard({ task, onStatusChange }: { task: OfficeTask, onStatusChange?: (status: OfficeTaskStatus) => void }) {
   const statusColors = {
     "Pending": "bg-slate-100 text-slate-500 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
     "Completed": "bg-green-50 text-green-600 border-green-200",
   };
 
+  const statusOptions: OfficeTaskStatus[] = ["Pending", "In Progress", "Completed"];
+
   return (
     <Card className="p-6 space-y-4 hover:shadow-lg transition-all group border-slate-200">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <h4 className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
-          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[task.status])}>
-            {task.status}
-          </span>
+          <select
+            value={task.status}
+            onChange={(e) => onStatusChange?.(e.target.value as OfficeTaskStatus)}
+            className={cn(
+              "text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
+              statusColors[task.status]
+            )}
+          >
+            {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
         </div>
         <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
           <FileText className="w-4 h-4 text-slate-400" />

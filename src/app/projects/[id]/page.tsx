@@ -1,13 +1,13 @@
 "use client";
 
-import { 
-  ArrowLeft, 
-  MapPin, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  ClipboardList, 
-  Camera, 
+import {
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  ClipboardList,
+  Camera,
   ChevronRight,
   Construction,
   CircleCheck,
@@ -29,10 +29,10 @@ import { useState, use, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
-import { useTasks } from "@/lib/tasks-store";
 import { useOfficeTasks } from "@/lib/office-tasks-store";
 import { useSiteTasks } from "@/lib/site-tasks-store";
 import { useSiteUpdates } from "@/lib/site-updates-store";
+import { useTasks } from "@/lib/tasks-store";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
@@ -53,19 +53,16 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const id = resolvedParams?.id;
   const { user } = useAuth();
   const { getProjectById, updateStageStatus } = useProjects();
-  const { tasks: allTasks } = useTasks();
-  const { officeTasks } = useOfficeTasks();
-  const { siteTasks } = useSiteTasks();
+  const { officeTasks, updateOfficeTaskStatus } = useOfficeTasks();
+  const { siteTasks, updateSiteTaskStatus } = useSiteTasks();
+  const { getTasksByProjectId } = useTasks();
   const { updates: allSiteUpdates } = useSiteUpdates();
-  
+
   const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
   const [stages, setStages] = useState(project?.stages ?? []);
-
   useEffect(() => {
-    if (project) {
-      setStages(project.stages);
-    }
+    if (project) setStages(project.stages);
   }, [project]);
 
   if (!project) {
@@ -81,33 +78,85 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     updateStageStatus(project.id, stageName, newStatus);
   };
 
-  const projectTasks = allTasks.filter(t => t.projectId === project.id || t.project === project.name);
-  const projectOfficeTasks = officeTasks.filter(t => 
-    t.projectId === project.id || 
-    t.project === project.id || 
-    (t.project as any)?._id === project.id || 
-    (t.project as any)?.name === project.name || 
+  const projectOfficeTasks = officeTasks.filter(t =>
+    t.projectId === project.id ||
+    t.project === project.id ||
+    (t.project as any)?._id === project.id ||
+    (t.project as any)?.name === project.name ||
     t.project === project.name
   );
-  const projectSiteTasks = siteTasks.filter(t => 
-    t.projectId === project.id || 
-    t.project === project.id || 
-    (t.project as any)?._id === project.id || 
-    (t.project as any)?.name === project.name || 
+  const projectSiteTasks = siteTasks.filter(t =>
+    t.projectId === project.id ||
+    t.project === project.id ||
+    (t.project as any)?._id === project.id ||
+    (t.project as any)?.name === project.name ||
     t.project === project.name
   );
-  const projectUpdates = allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
-  const projectWorkers: any[] = []; // Fetch from staff service if needed
-  const projectPayments: any[] = []; // Fetch from payment service if needed
 
-  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin" || user?.role === "supervisor";
+  // Combine Office and Site tasks for the Tasks tab
+  // Also include projectSpecificTasks from the global tasks API
+  const projectTasks = [
+    ...projectOfficeTasks.map(t => ({
+      id: t.id,
+      name: t.title,
+      stage: t.category,
+      assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
+      status: t.status,
+      type: "Office" as const,
+      deadline: t.deadline
+    })),
+    ...projectSiteTasks.map(t => ({
+      id: t.id,
+      name: t.title,
+      stage: t.category,
+      assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
+      status: t.status,
+      type: "Site" as const,
+      deadline: t.endDate
+    }))
+  ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i); // Remove duplicates
+  const projectUpdates = allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
+  
+  // Extract all unique assigned staff from office, site and global tasks
+  const staffFromOffice = projectOfficeTasks.flatMap(t => t.assignedTo || []);
+  const staffFromSite = projectSiteTasks.flatMap(t => t.assignedTo || []);
+  const allAssignedStaff = [...staffFromOffice, ...staffFromSite];
+  
+  // Use a Map to keep unique staff by ID
+  const uniqueStaffMap = new Map();
+  
+  // Also include supervisor and project workers as a fallback/additional list if needed,
+  // but prioritize staff assigned to tasks.
+  if (project.supervisor) {
+    const s = project.supervisor;
+    uniqueStaffMap.set(s._id || s.id, { ...s, type: "Supervisor" });
+  }
+  
+  allAssignedStaff.forEach((s: any) => {
+    if (!s) return;
+    const id = s._id || s.id || (typeof s === 'string' ? s : null);
+    if (!id) return;
+    
+    if (!uniqueStaffMap.has(id)) {
+      uniqueStaffMap.set(id, {
+        id,
+        name: s.name || (typeof s === 'string' ? s : "Unknown"),
+        type: s.role?.name || s.role || "Staff",
+        rate: s.rate || "N/A"
+      });
+    }
+  });
+
+  const projectWorkers = Array.from(uniqueStaffMap.values());
+
+  const projectPayments: any[] = []; // Fetch from payment service if needed
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
         <div className="space-y-6">
-          <Link 
-            href="/projects" 
+          <Link
+            href="/projects"
             className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors group uppercase tracking-widest"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -158,8 +207,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
             onClick={() => setActiveTab(tab.id as Tab)}
             className={cn(
               "flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-medium transition-all duration-300 whitespace-nowrap",
-              activeTab === tab.id 
-                ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100" 
+              activeTab === tab.id
+                ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100"
                 : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
@@ -171,11 +220,19 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
       <div className="min-h-[500px] animate-in fade-in slide-in-from-top-4 duration-500">
         {activeTab === "office-work" && (
-          <DesignModule tasks={projectOfficeTasks} projectId={project.id} />
+          <DesignModule 
+            tasks={projectOfficeTasks} 
+            projectId={project.id} 
+            updateTaskStatus={updateOfficeTaskStatus}
+          />
         )}
 
         {activeTab === "site-work" && (
-          <ExecutionModule tasks={projectSiteTasks} projectId={project.id} />
+          <ExecutionModule 
+            tasks={projectSiteTasks} 
+            projectId={project.id} 
+            updateTaskStatus={updateSiteTaskStatus}
+          />
         )}
 
         {activeTab === "tasks" && (
@@ -194,28 +251,36 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                 {projectTasks.map((task) => (
                   <TableRow key={task.id} className="group hover:bg-slate-50/30 transition-all">
                     <TableCell className="px-10 py-8">
-                      <p className="text-sm font-bold text-slate-900 mb-1">{task.name}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-bold text-slate-900">{task.name}</p>
+                        <span className={cn(
+                          "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+                          task.type === "Office" ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-orange-50 text-orange-600 border-orange-100"
+                        )}>
+                          {task.type}
+                        </span>
+                      </div>
                       <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest border border-indigo-100/50">{task.stage}</span>
                     </TableCell>
                     <TableCell className="px-10 py-8">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-600 border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-500 shadow-inner">
-                          {task.siteTeam?.split(' ').map(n => n[0]).join('') || "U"}
+                          {task.assignee?.split(',')[0]?.split(' ').map((n: string) => n[0]).join('') || "U"}
                         </div>
-                        <span className="text-sm font-bold text-slate-700">{task.siteTeam || "Unassigned"}</span>
+                        <span className="text-sm font-bold text-slate-700">{task.assignee || "Unassigned"}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-10 py-8">
-                      <span className="text-sm font-bold text-slate-500">{task.deadline}</span>
+                      <span className="text-sm font-bold text-slate-500">{task.deadline || "N/A"}</span>
                     </TableCell>
                     <TableCell className="px-10 py-8">
                       <span className={cn(
                         "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
-                        task.officeStatus === "In Progress" ? "bg-white text-blue-600 border-blue-100" :
-                        task.officeStatus === "Completed" ? "bg-white text-green-600 border-green-100" :
-                        "bg-white text-slate-400 border-slate-100"
+                        task.status === "In Progress" || task.status === "On Track" ? "bg-white text-blue-600 border-blue-100" :
+                          task.status === "Completed" ? "bg-white text-green-600 border-green-100" :
+                            "bg-white text-slate-400 border-slate-100"
                       )}>
-                        {task.officeStatus}
+                        {task.status}
                       </span>
                     </TableCell>
                     <TableCell className="px-10 py-8 text-right">
@@ -384,7 +449,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                   <div className={cn(
                     "absolute -left-10 w-8 h-8 rounded-xl border-4 border-white flex items-center justify-center z-10 transition-all duration-500 shadow-sm",
                     item.status === "Completed" ? "bg-green-500" :
-                    item.status === "In Progress" ? "bg-indigo-600" : "bg-slate-200"
+                      item.status === "In Progress" ? "bg-indigo-600" : "bg-slate-200"
                   )}>
                     <div className="w-2 h-2 bg-white rounded-full" />
                   </div>
@@ -394,7 +459,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                     <span className={cn(
                       "text-[9px] font-black uppercase tracking-widest",
                       item.status === "Completed" ? "text-green-600" :
-                      item.status === "In Progress" ? "text-indigo-600" : "text-slate-400"
+                        item.status === "In Progress" ? "text-indigo-600" : "text-slate-400"
                     )}>{item.status}</span>
                   </div>
                 </div>

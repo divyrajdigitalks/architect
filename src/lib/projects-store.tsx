@@ -31,7 +31,9 @@ export type Project = {
   received: string;
   pending: string;
   supervisorId?: string;
+  supervisor?: any;
   workerIds?: string[];
+  workers?: any[];
   phase?: string;
   lifecycle?: ProjectLifecyclePhase[];
   stages: ProjectStage[];
@@ -179,9 +181,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
         const mappedProjects = data.map((p: any) => ({
           ...p,
           id: p._id,
-          workerIds: p.workers?.map((w: any) => w._id) || [],
-          supervisorId: p.supervisor?._id,
-          designerId: p.designer?._id,
+          workerIds: p.workers?.map((w: any) => typeof w === 'string' ? w : w._id) || [],
+          supervisorId: typeof p.supervisor === 'string' ? p.supervisor : p.supervisor?._id,
           client: p.client?.name || p.client,
         }));
         setProjects(mappedProjects);

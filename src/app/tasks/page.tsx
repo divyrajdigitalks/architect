@@ -1,53 +1,69 @@
 "use client";
 
-import { tasks as initialTasks } from "@/lib/dummy-data";
 import {
-  Plus, Search, CircleCheck, CircleAlert, Clock
+  Plus, Search, CircleCheck, CircleAlert, Clock, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import Modal from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { useAuth } from "@/lib/auth-context";
 import { useTasks } from "@/lib/tasks-store";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
-type Task = typeof initialTasks[0];
 const statusOptions = ["Pending", "In Progress", "Completed"];
 
 export default function TasksPage() {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { tasks, isHydrated, fetchTasks } = useTasks();
   const [searchQuery, setSearchQuery] = useState("");
-  const [newTask, setNewTask] = useState({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
 
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const combinedTasks = useMemo(() => {
+    return tasks.map(t => ({
+      id: t.id,
+      name: t.name,
+      project: t.project || "Unknown",
+      stage: t.stage || t.category || "-",
+      assignee: t.assignee || "Unassigned",
+      status: t.status || "Pending",
+      type: t.type || "Office",
+      deadline: t.deadline,
+    }));
+  }, [tasks]);
   const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "supervisor";
 
-  const columns: Column<Task>[] = [
+  const columns: Column<any>[] = [
     {
       header: "TASK NAME",
       render: (task) => (
         <div>
-          <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.name}</p>
+            <span className={cn(
+              "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+              task.type === "Office" ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-orange-50 text-orange-600 border-orange-100"
+            )}>
+              {task.type}
+            </span>
+          </div>
           <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{task.project} • {task.stage}</p>
         </div>
       ),
     },
     {
-      header: "ASSIGNED OFFICE TEAM",
+      header: "ASSIGNEE",
       render: (task) => (
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
-            {task.officeTeam.split(" ").map(n => n[0]).join("")}
+            {task.assignee?.split(",")[0]?.split(" ").map((n: string) => n[0]).join("") || "U"}
           </div>
-          <div>
-            <p className="text-sm font-medium text-slate-700">{task.officeTeam}</p>
-            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">DESIGNER NAME AVSE</p>
-          </div>
+          <p className="text-sm font-medium text-slate-700">{task.assignee}</p>
         </div>
       ),
     },
@@ -56,34 +72,21 @@ export default function TasksPage() {
       render: (task) => (
         canEdit ? (
           <select
-            value={task.officeStatus}
-            onChange={(e) => updateStatus(task.id, "officeStatus", e.target.value)}
+            value={task.status}
+            onChange={() => {}}
             className={cn(
               "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-              task.officeStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
-              task.officeStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+              task.status === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
+              task.status === "In Progress" || task.status === "On Track" ? "bg-blue-50 text-blue-700 border-blue-200" :
               "bg-slate-100 text-slate-600 border-slate-200"
             )}
           >
             {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            {task.type === "Site" && ["Critical", "Delayed", "On Track"].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
-          <StatusBadge status={task.officeStatus} />
+          <StatusBadge status={task.status} />
         )
-      ),
-    },
-    {
-      header: "ASSIGNED SITE TEAM",
-      render: (task) => (
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
-            {task.siteTeam.split(" ").map(n => n[0]).join("")}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-700">{task.siteTeam}</p>
-            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">SITE NA LABOR NU NAME AVSE</p>
-          </div>
-        </div>
       ),
     },
     {
@@ -91,56 +94,25 @@ export default function TasksPage() {
       render: (task) => (
         <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
           <Clock className="w-4 h-4" />
-          {task.deadline}
+          {task.deadline || "No deadline"}
         </div>
-      ),
-    },
-    {
-      header: "STATUS",
-      render: (task) => (
-        canEdit ? (
-          <select
-            value={task.siteStatus}
-            onChange={(e) => updateStatus(task.id, "siteStatus", e.target.value)}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500",
-              task.siteStatus === "Completed" ? "bg-green-50 text-green-700 border-green-200" :
-              task.siteStatus === "In Progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
-              "bg-slate-100 text-slate-600 border-slate-200"
-            )}
-          >
-            {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        ) : (
-          <StatusBadge status={task.siteStatus} />
-        )
       ),
     },
   ];
 
-  const filteredTasks = tasks.filter(t =>
+  const filteredTasks = combinedTasks.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.officeTeam.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.siteTeam.toLowerCase().includes(searchQuery.toLowerCase())
+    t.assignee.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const updateStatus = (id: string, statusKey: "officeStatus" | "siteStatus", status: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, [statusKey]: status } : t));
-  };
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.name.trim()) return;
-    setTasks(prev => [...prev, {
-      ...newTask,
-      id: String(Date.now()),
-      officeStatus: "Pending",
-      siteStatus: "Pending"
-    }] as Task[]);
-    setNewTask({ name: "", project: "", stage: "", officeTeam: "", siteTeam: "", deadline: "" });
-    setIsAddModalOpen(false);
-  };
+  if (!isHydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -160,12 +132,6 @@ export default function TasksPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {canEdit && (
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">New Task</span>
-              </Button>
-            )}
           </div>
         </div>
 
@@ -173,45 +139,6 @@ export default function TasksPage() {
           <DataTable columns={columns} data={filteredTasks} />
         </Card>
       </div>
-
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Create New Task">
-        <form onSubmit={handleAdd} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">Task Name</label>
-            <Input placeholder="e.g., Foundation Inspection" value={newTask.name} onChange={e => setNewTask(f => ({ ...f, name: e.target.value }))} required />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Project</label>
-              <Input placeholder="e.g., Modern Villa" value={newTask.project} onChange={e => setNewTask(f => ({ ...f, project: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Stage</label>
-              <Input placeholder="e.g., Foundation" value={newTask.stage} onChange={e => setNewTask(f => ({ ...f, stage: e.target.value }))} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Office Team</label>
-              <Input placeholder="e.g., Designer Name" value={newTask.officeTeam} onChange={e => setNewTask(f => ({ ...f, officeTeam: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Site Team</label>
-              <Input placeholder="e.g., Labor Name" value={newTask.siteTeam} onChange={e => setNewTask(f => ({ ...f, siteTeam: e.target.value }))} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">Deadline</label>
-              <Input type="date" value={newTask.deadline} onChange={e => setNewTask(f => ({ ...f, deadline: e.target.value }))} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-4 pt-4 border-t border-slate-100">
-            <Button variant="secondary" onClick={() => setIsAddModalOpen(false)} type="button">Cancel</Button>
-            <Button type="submit">Create Task</Button>
-          </div>
-        </form>
-      </Modal>
     </>
   );
 }
