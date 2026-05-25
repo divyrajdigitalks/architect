@@ -2,12 +2,13 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
-import { supervisors, workers, clients } from "@/lib/dummy-data";
+import { staffService, StaffMember } from "@/services/staff.service";
+import { projectService } from "@/services/project.service";
 import {
-  MapPin, ChevronRight, Plus, Search, HardHat, Users, CheckCircle2,
+  MapPin, ChevronRight, Plus, Search, HardHat, CheckCircle2, UserCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -22,28 +23,57 @@ const defaultStages = [
 ].map(name => ({ name, status: "Pending" }));
 
 const emptyForm = {
-  name: "", client: "", clientId: "", location: "",
+  name: "", clientId: "", location: "",
   startDate: "", expectedCompletion: "", budget: "",
-  supervisorId: "", workerIds: [] as string[],
+  designerId: "",
 };
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, fetchProjects } = useProjects() as any;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [specFilter, setSpecFilter] = useState("");
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
-  const filteredProjects = projects.filter(p => {
-    const match = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.client.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    const loadData = async () => {
+      if (isAddModalOpen) {
+        setIsLoadingData(true);
+        try {
+          const staffData = await staffService.getAllStaff();
+          setStaff(staffData);
+        } catch (error) {
+          console.error("Error loading modal data:", error);
+        } finally {
+          setIsLoadingData(false);
+        }
+      }
+    };
+    loadData();
+  }, [isAddModalOpen]);
+
+  // Staff with "client" role
+  const clientStaff = staff.filter(s =>
+    s.role?.name?.toLowerCase() === "client"
+  );
+
+  // Staff with designer/architect/director roles
+  const designers = staff.filter(s => {
+    const rn = s.role?.name?.toLowerCase() ?? "";
+    return rn === "designer";
+  });
+
+  const filteredProjects = projects.filter((p: any) => {
+    const match =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.client?.toLowerCase().includes(searchQuery.toLowerCase());
     if (user?.role === "client") return match && p.id === user.projectId;
     return match;
   });
 
   const canAdd = user?.role === "architect" || user?.role === "director";
-  const getSupervisorName = (id?: string) => supervisors.find(s => s.id === id)?.name || "—";
 
   const columns: Column<Project>[] = [
     {
@@ -60,13 +90,13 @@ export default function ProjectsPage() {
       render: (project) => <span className="text-sm font-medium text-slate-600">{project.location}</span>,
     },
     {
-      header: "Supervisor",
-      render: (project) => (
+      header: "Designer",
+      render: (project: any) => (
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-medium text-indigo-600 border border-indigo-100 font-mono">
-            {getSupervisorName(project.supervisorId).split(" ").map(n => n[0]).join("")}
+            {project.designer?.name?.[0] || "—"}
           </div>
-          <span className="text-sm font-medium text-slate-700">{getSupervisorName(project.supervisorId)}</span>
+          <span className="text-sm font-medium text-slate-700">{project.designer?.name || "—"}</span>
         </div>
       ),
     },
@@ -104,38 +134,34 @@ export default function ProjectsPage() {
     },
   ];
 
-  const filteredWorkersForForm = workers.filter(w =>
-    specFilter === "" || w.specializations.some(s => s.toLowerCase().includes(specFilter.toLowerCase())) ||
-    w.name.toLowerCase().includes(specFilter.toLowerCase())
-  );
-
-  const toggleWorker = (id: string) => {
-    setForm(f => ({
-      ...f,
-      workerIds: f.workerIds.includes(id)
-        ? f.workerIds.filter(w => w !== id)
-        : [...f.workerIds, id],
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-    const clientObj = clients.find(c => c.id === form.clientId);
-    createProject({
-      name: form.name,
-      client: clientObj?.name || form.client,
-      clientId: form.clientId,
-      location: form.location,
-      startDate: form.startDate,
-      expectedCompletion: form.expectedCompletion,
-      budget: form.budget,
-      supervisorId: form.supervisorId,
-      workerIds: form.workerIds,
-      stages: defaultStages,
-    });
-    setForm(emptyForm);
-    setIsAddModalOpen(false);
+    
+    if (!form.clientId) {
+      alert("Please select a client for this project");
+      return;
+    }
+
+    try {
+      await projectService.createProject({
+        name: form.name,
+        client: form.clientId,
+        location: form.location,
+        startDate: form.startDate,
+        expectedCompletion: form.expectedCompletion,
+        budget: form.budget,
+        designer: form.designerId,
+        stages: defaultStages,
+      });
+
+      if (fetchProjects) await fetchProjects();
+      setForm(emptyForm);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      alert("Failed to create project");
+    }
   };
 
   return (
@@ -171,27 +197,60 @@ export default function ProjectsPage() {
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}
         title="Create New Project" className="max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
+
+          {/* Project Name & Client Selection - Side by Side */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Project Name *</label>
-              <Input placeholder="e.g., Modern Villa" value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+              <Input 
+                placeholder="e.g., Modern Villa" 
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
+                required 
+              />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1">Client</label>
-              <select value={form.clientId}
-                onChange={e => setForm(f => ({ ...f, clientId: e.target.value, client: clients.find(c => c.id === e.target.value)?.name || "" }))}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Select client...</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
+                <UserCircle2 className="w-4 h-4 text-indigo-600" /> Select Client *
+              </label>
+              {isLoadingData ? (
+                <div className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50">
+                  Loading clients...
+                </div>
+              ) : clientStaff.length === 0 ? (
+                <div className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50">
+                  No clients found
+                </div>
+              ) : (
+                <select
+                  value={form.clientId}
+                  onChange={e => setForm(f => ({ ...f, clientId: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select a client...</option>
+                  {clientStaff.map(client => (
+                    <option key={client._id} value={client._id}>
+                      {client.name} ({client.email})
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
+
+          {/* Location */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 ml-1">Location</label>
-            <Input placeholder="e.g., Beverly Hills, CA" value={form.location}
-              onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+            <Input 
+              placeholder="e.g., Ahmedabad, Gujarat" 
+              value={form.location}
+              onChange={e => setForm(f => ({ ...f, location: e.target.value }))} 
+            />
           </div>
+
+          {/* Dates & Budget */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Start Date</label>
@@ -203,69 +262,75 @@ export default function ProjectsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 ml-1">Budget</label>
-              <Input placeholder="e.g., $850,000" value={form.budget}
+              <Input placeholder="e.g., ₹85,00,000" value={form.budget}
                 onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} className="font-mono" />
             </div>
           </div>
+
+          {/* Designer Selection */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
-              <HardHat className="w-4 h-4 text-indigo-600" /> Assign Supervisor
+              <HardHat className="w-4 h-4 text-indigo-600" /> Assign Designer (Optional)
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {supervisors.map(sup => (
-                <button key={sup.id} type="button"
-                  onClick={() => setForm(f => ({ ...f, supervisorId: f.supervisorId === sup.id ? "" : sup.id }))}
-                  className={cn("flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                    form.supervisorId === sup.id ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300")}>
-                  <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium transition-all",
-                    form.supervisorId === sup.id ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
-                    {sup.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{sup.name}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">{sup.experience}</p>
-                  </div>
-                  {form.supervisorId === sup.id && <CheckCircle2 className="w-4 h-4 text-indigo-600 ml-auto flex-shrink-0" />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-3 pt-2 border-t border-slate-100">
-            <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" /> Assign Workers
-              {form.workerIds.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-medium rounded-full font-mono">{form.workerIds.length} selected</span>
-              )}
-            </label>
-            <Input placeholder="Filter by name or specialization..." value={specFilter} onChange={e => setSpecFilter(e.target.value)} icon={Search} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto pr-1">
-              {filteredWorkersForForm.map(w => {
-                const sel = form.workerIds.includes(w.id);
-                return (
-                  <button key={w.id} type="button" onClick={() => toggleWorker(w.id)}
-                    className={cn("flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                      sel ? "bg-indigo-50 border-indigo-400" : "bg-white border-slate-100 hover:border-slate-300")}>
-                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium flex-shrink-0 transition-all font-mono",
-                      sel ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
-                      {w.name.split(" ").map(n => n[0]).join("")}
+            {isLoadingData ? (
+              <p className="text-xs text-slate-400 ml-1">Loading designers…</p>
+            ) : designers.length === 0 ? (
+              <p className="text-xs text-slate-400 ml-1 italic">No designers found. Add staff with Architect / Designer / Director role.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {designers.map(des => (
+                  <button
+                    key={des._id}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, designerId: f.designerId === des._id ? "" : des._id }))}
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                      form.designerId === des._id
+                        ? "bg-indigo-50 border-indigo-400 shadow-sm"
+                        : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all flex-shrink-0",
+                      form.designerId === des._id 
+                        ? "bg-indigo-600 text-white shadow-sm" 
+                        : "bg-slate-100 text-slate-600"
+                    )}>
+                      {des.name?.[0]?.toUpperCase() || "D"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 truncate">{w.name}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {w.specializations.map(s => (
-                          <span key={s} className="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">{s}</span>
-                        ))}
-                      </div>
+                      <p className="text-sm font-semibold text-slate-900 truncate">{des.name}</p>
+                      <p className="text-xs text-slate-500">{des.role?.name}</p>
+                      {des.email && (
+                        <p className="text-xs text-slate-400 truncate">{des.email}</p>
+                      )}
                     </div>
-                    {sel && <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
+                    {form.designerId === des._id && (
+                      <CheckCircle2 className="w-5 h-5 text-indigo-600 ml-auto flex-shrink-0" />
+                    )}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+
           <div className="flex justify-end gap-4 pt-4 border-t border-slate-100">
-            <Button variant="secondary" type="button" onClick={() => { setIsAddModalOpen(false); setForm(emptyForm); }}>Cancel</Button>
-            <Button type="submit">Create Project</Button>
+            <Button 
+              variant="secondary" 
+              type="button" 
+              onClick={() => { 
+                setIsAddModalOpen(false); 
+                setForm(emptyForm); 
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={!form.name.trim() || !form.clientId}
+            >
+              Create Project
+            </Button>
           </div>
         </form>
       </Modal>

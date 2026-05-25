@@ -1,40 +1,44 @@
 "use client";
 
-import { supervisors as initialSupervisors } from "@/lib/dummy-data";
-import { useState } from "react";
-import { Plus, Search, MapPin, Phone, HardHat, MoreVertical, ShieldCheck, CheckCircle2, Construction } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { useState, useEffect } from "react";
+import { Search, Phone, Briefcase, Shield, HardHat } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import Modal from "@/components/ui/Modal";
-import { useAuth } from "@/lib/auth-context";
-
-type SiteMember = typeof initialSupervisors[0];
-
 import { Badge } from "@/components/ui/Badge";
 import { DataTable, Column } from "@/components/ui/DataTable";
+import { staffService, StaffMember } from "@/services/staff.service";
 
 export default function SiteTeamPage() {
-  const { user } = useAuth();
-  const [members, setMembers] = useState<SiteMember[]>(initialSupervisors);
+  const [members, setMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newMember, setNewMember] = useState({ name: "", type: "Site Supervisor", phone: "", experience: "" });
 
-  const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin";
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setIsLoading(true);
+        const allStaff = await staffService.getAllStaff();
+        setMembers(allStaff.filter((s) => s.team === "Site"));
+      } catch (err) {
+        console.error("Failed to load site team:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-  const columns: Column<SiteMember>[] = [
+  const columns: Column<StaffMember>[] = [
     {
       header: "Member",
       className: "py-4 px-6",
       render: (member) => (
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-medium text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono">
-            {member.name.split(" ").map(n => n[0]).join("")}
+          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-sm font-bold text-amber-600 border border-amber-100 group-hover:bg-amber-500 group-hover:text-white transition-all">
+            {member.name.split(" ").map((n) => n[0]).join("")}
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-900">{member.name}</p>
+            <p className="text-sm font-semibold text-slate-900">{member.name}</p>
             <p className="text-[10px] font-normal text-slate-500 font-mono">{member.email}</p>
           </div>
         </div>
@@ -44,8 +48,9 @@ export default function SiteTeamPage() {
       header: "Role",
       className: "py-4 px-6",
       render: (member) => (
-        <Badge variant="outline" className="text-[10px] font-medium text-indigo-600 bg-indigo-50 border-indigo-100 uppercase">
-          {member.type}
+        <Badge variant="outline" className="text-[10px] font-black uppercase bg-amber-50 text-amber-700 border-amber-100">
+          <HardHat className="w-3 h-3 mr-1" />
+          {member.role?.name || "—"}
         </Badge>
       ),
     },
@@ -55,132 +60,75 @@ export default function SiteTeamPage() {
       render: (member) => (
         <div className="flex items-center gap-2 text-slate-600">
           <Phone className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-xs font-normal font-mono">{member.phone}</span>
+          <span className="text-xs font-mono">{member.phone || "—"}</span>
         </div>
       ),
     },
     {
       header: "Experience",
       className: "py-4 px-6",
-      render: (member) => <span className="text-xs font-medium text-slate-700">{member.experience || "—"}</span>,
-    },
-    {
-      header: "Assigned Sites",
-      className: "py-4 px-6",
       render: (member) => (
-        <div className="flex flex-wrap gap-1">
-          {member.assignedProjects.length > 0 ? member.assignedProjects.map(p => (
-            <span key={p} className="px-1.5 py-0.5 bg-slate-100 text-[9px] font-medium text-slate-600 rounded-md border border-slate-200">
-              {p}
-            </span>
-          )) : (
-            <span className="text-[10px] font-medium text-slate-400 italic">None</span>
-          )}
+        <div className="flex items-center gap-1.5">
+          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-xs font-semibold text-slate-700 font-mono">
+            {member.experience != null ? `${member.experience} yrs` : "—"}
+          </span>
         </div>
       ),
     },
     {
-      header: "Actions",
-      className: "py-4 px-6 text-right",
-      headerClassName: "text-right",
+      header: "Status",
+      className: "py-4 px-6",
       render: (member) => (
-        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-          <MoreVertical className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
+          <span className="text-xs font-medium text-slate-600">{member.isActive ? "Active" : "Inactive"}</span>
+        </div>
       ),
     },
   ];
 
-  const filteredMembers = members.filter(m =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMembers = members.filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.role?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMember.name.trim()) return;
-    const created: SiteMember = {
-      id: String(Date.now()),
-      ...newMember,
-      assignedProjects: [],
-      joinDate: new Date().toISOString().split("T")[0],
-      address: "",
-      rate: "₹800/day",
-      email: `${newMember.name.toLowerCase().replace(/\s+/g, ".")}@archisite.pro`
-    } as any;
-    setMembers(prev => [...prev, created]);
-    setNewMember({ name: "", type: "Site Supervisor", phone: "", experience: "" });
-    setIsAddModalOpen(false);
-  };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-medium text-slate-900 tracking-tight">Site Team</h2>
-          <p className="text-sm font-medium text-slate-500 hidden sm:block">Manage supervisors, engineers, and site contractors</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Site Team</h2>
+          <p className="text-sm font-medium text-slate-500 uppercase tracking-widest mt-1">
+            Supervisors, engineers &amp; site staff
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden md:block">
-            <Input 
-              placeholder="Search site team..." 
-              icon={Search} 
-              className="w-64"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          {canEdit && (
-            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 shadow-lg shadow-indigo-200 bg-indigo-600 hover:bg-indigo-700 border-indigo-700 font-medium">
-              <Plus className="w-5 h-5" />
-              Add Member
-            </Button>
-          )}
+          <Input
+            placeholder="Search site team..."
+            icon={Search}
+            className="w-64"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
-      <Card className="overflow-hidden p-0 border-slate-200">
-        <DataTable columns={columns} data={filteredMembers} />
-      </Card>
-
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Site Team Member">
-        <form onSubmit={handleAdd} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1">Full Name</label>
-              <Input placeholder="e.g., Mike Ross" value={newMember.name} onChange={e => setNewMember(f => ({ ...f, name: e.target.value }))} required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1">Role</label>
-              <select 
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newMember.type}
-                onChange={e => setNewMember(f => ({ ...f, type: e.target.value }))}
-                required
-              >
-                <option>Site Supervisor</option>
-                <option>Civil Engineer</option>
-                <option>Site Contractor</option>
-                <option>Quality Inspector</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1">Phone</label>
-              <Input placeholder="+1 (555) 000-0000" value={newMember.phone} onChange={e => setNewMember(f => ({ ...f, phone: e.target.value }))} className="font-mono" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1">Experience</label>
-              <Input placeholder="e.g., 5 Years" value={newMember.experience} onChange={e => setNewMember(f => ({ ...f, experience: e.target.value }))} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-4 pt-4 border-t border-slate-100">
-            <Button variant="secondary" type="button" onClick={() => setIsAddModalOpen(false)} className="font-medium">Cancel</Button>
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 border-indigo-700 font-medium">Add Member</Button>
-          </div>
-        </form>
-      </Modal>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20 text-slate-400 text-sm font-medium">
+          Loading site team…
+        </div>
+      ) : filteredMembers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <p className="text-slate-400 text-sm font-medium">No site team members found.</p>
+          <p className="text-slate-300 text-xs">Add staff with &quot;Site&quot; team from Staff Management.</p>
+        </div>
+      ) : (
+        <Card className="overflow-hidden p-0 border-slate-200">
+          <DataTable columns={columns} data={filteredMembers} />
+        </Card>
+      )}
     </div>
   );
 }

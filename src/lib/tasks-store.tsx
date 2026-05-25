@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { tasks as seedTasks } from "@/lib/dummy-data";
+import { taskService } from "@/services/task.service";
 
 export type TaskStatus = "Pending" | "In Progress" | "Completed";
 
@@ -62,15 +62,26 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const saved = safeParse<Task[]>(localStorage.getItem(STORAGE_KEY));
-    if (saved && Array.isArray(saved)) {
-      setTasks(saved);
-    } else {
-      const seeded = normalizeSeed();
-      setTasks(seeded);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    }
-    setIsHydrated(true);
+    const fetchTasks = async () => {
+      try {
+        const data = await taskService.getAllTasks();
+        if (data && data.length > 0) {
+          const mappedTasks = data.map((t: any) => ({
+            ...t,
+            id: t._id,
+          }));
+          setTasks(mappedTasks);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tasks from backend", error);
+        const saved = safeParse<Task[]>(localStorage.getItem(STORAGE_KEY));
+        if (saved) setTasks(saved);
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+
+    fetchTasks();
   }, []);
 
   useEffect(() => {

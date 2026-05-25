@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+import { roleService } from "@/services/role.service";
+
 export type RoleId = string; // supports dynamic roles too
 
 export type RoleConfig = {
@@ -29,6 +31,8 @@ export const ALL_PAGES = [
   { key: "calendar",     label: "Calendar" },
   { key: "reports",      label: "Reports" },
   { key: "messages",     label: "Messages" },
+  { key: "staff",        label: "Staff Management" },
+  { key: "roles",        label: "Role Management" },
   { key: "settings",     label: "Settings" },
 ];
 
@@ -39,6 +43,10 @@ export const DEFAULT_ROLES: RoleConfig[] = [
   },
   {
     id: "architect", name: "ARCHITECT", color: "indigo", canDelete: false,
+    pages: ALL_PAGES.map(p => p.key),
+  },
+  {
+    id: "admin", name: "ADMIN", color: "rose", canDelete: false,
     pages: ALL_PAGES.map(p => p.key),
   },
   {
@@ -82,32 +90,54 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<RoleConfig[]>(DEFAULT_ROLES);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage or Backend
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const savedRoles: RoleConfig[] = JSON.parse(saved);
-        // Merge saved roles with DEFAULT_ROLES to update system role names/pages
-        const mergedRoles = DEFAULT_ROLES.map(defRole => {
-          const savedRole = savedRoles.find(r => r.id === defRole.id);
-          if (savedRole && !defRole.canDelete) {
-            // Keep the default name and id for system roles, but allow pages to be saved if needed
-            // Actually, the user wants the names updated, so we prioritize DEFAULT_ROLES for system roles
-            return defRole; 
-          }
-          return savedRole || defRole;
-        });
+    const fetchRoles = async () => {
+      try {
+        const backendRoles = await roleService.getAllRoles();
+        if (backendRoles && Array.isArray(backendRoles)) {
+          // Map backend roles to RoleConfig
+          const mappedRoles: RoleConfig[] = backendRoles.map((r: any) => {
+            const hasAll = r.permissions.includes("all");
+            
+            // Derive pages from permissions
+            const derivedPages = hasAll 
+              ? ALL_PAGES.map(p => p.key) 
+              : ALL_PAGES.filter(p => {
+                  if (p.key === "dashboard") return true; // Everyone sees dashboard
+                  return r.permissions.includes(`${p.key}.view`) || r.permissions.includes("all");
+                }).map(p => p.key);
 
-        // Add any custom roles that were saved
-        const customRoles = savedRoles.filter(sr => sr.canDelete && !DEFAULT_ROLES.find(dr => dr.id === sr.id));
-        
-        setRoles([...mergedRoles, ...customRoles]);
+            return {
+              id: r.name.toLowerCase().replace(/\s+/g, '-'),
+              backendId: r._id,
+              name: r.name.toUpperCase(),
+              color: r.name.toLowerCase() === "director" ? "slate" : "indigo",
+              pages: derivedPages,
+              canDelete: !["admin", "director", "architect"].includes(r.name.toLowerCase())
+            };
+          });
+          setRoles(mappedRoles);
+          setIsInitialized(true);
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to fetch roles from backend", error);
       }
-    } catch (e) {
-      console.error("Failed to load roles from localStorage", e);
-    }
-    setIsInitialized(true);
+
+      // Fallback to local storage or defaults
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          setRoles(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error("Failed to load roles from localStorage", e);
+      }
+      setIsInitialized(true);
+    };
+
+    fetchRoles();
   }, []);
 
   // Persist to localStorage whenever roles change, but only after initialization

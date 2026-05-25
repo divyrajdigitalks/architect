@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { siteUpdates as seedUpdates } from "@/lib/dummy-data";
+import { siteUpdateService } from "@/services/site-update.service";
 
 export type SiteUpdate = {
   id: string;
@@ -55,15 +55,26 @@ export function SiteUpdatesProvider({ children }: { children: React.ReactNode })
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const saved = safeParse<SiteUpdate[]>(localStorage.getItem(STORAGE_KEY));
-    if (saved && Array.isArray(saved)) {
-      setUpdates(saved);
-    } else {
-      const seeded = normalizeSeed();
-      setUpdates(seeded);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    }
-    setIsHydrated(true);
+    const fetchUpdates = async () => {
+      try {
+        const data = await siteUpdateService.getAllUpdates();
+        if (data && data.length > 0) {
+          const mappedUpdates = data.map((u: any) => ({
+            ...u,
+            id: u._id,
+          }));
+          setUpdates(mappedUpdates);
+        }
+      } catch (error) {
+        console.error("Failed to fetch site updates from backend", error);
+        const saved = safeParse<SiteUpdate[]>(localStorage.getItem(STORAGE_KEY));
+        if (saved) setUpdates(saved);
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+
+    fetchUpdates();
   }, []);
 
   useEffect(() => {

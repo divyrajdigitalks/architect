@@ -37,24 +37,23 @@ export default function LoginPage() {
     "client@gmail.com": "client",
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (isGuest) {
-      if (mobile.length < 10) {
-        setError("Please enter a valid mobile number.");
+    try {
+      if (isGuest) {
+        if (mobile.length < 10) {
+          setError("Please enter a valid mobile number.");
+          return;
+        }
+        await login("", "", true, mobile);
         return;
       }
-      login("guest", { name: "Guest User", mobile });
-      return;
-    }
 
-    const matchedRole = roleCredentials[email.trim().toLowerCase()];
-    if (matchedRole && password === "123456") {
-      login(matchedRole);
-    } else {
-      setError("Invalid email or password.");
+      await login(email, password);
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password.");
     }
   };
 

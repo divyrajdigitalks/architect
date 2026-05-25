@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+import { authService } from "@/services/auth.service";
+
 // Role is now a string to support dynamic custom roles
 export type Role = string;
 
@@ -10,14 +12,14 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: Role;
+  role: string | any; // role can be ID or populated object
   projectId?: string;
   mobile?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (role: Role, userData?: Partial<User>) => void;
+  login: (email: string, password?: string, isGuest?: boolean, mobile?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -60,23 +62,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (role: Role, userData?: Partial<User>) => {
-    const base = DEMO_USERS[role] ?? {
-      id: "custom_" + Date.now(),
-      name: userData?.name ?? role,
-      email: userData?.email ?? `${role}@archisite.pro`,
-      role,
-    };
-    const finalUser: User = { ...base, ...userData, role };
-    setUser(finalUser);
-    localStorage.setItem("auth_user", JSON.stringify(finalUser));
-    // Guest goes to their own home, others go to admin dashboard
-    router.push(role === "guest" ? "/guest/home" : "/");
+  const login = async (email: string, password?: string, isGuest?: boolean, mobile?: string) => {
+    if (isGuest) {
+      const guestUser: User = {
+        id: "guest_" + Date.now(),
+        name: "Guest User",
+        email: "guest@archisite.pro",
+        role: "guest",
+        mobile
+      };
+      setUser(guestUser);
+      localStorage.setItem("auth_user", JSON.stringify(guestUser));
+      router.push("/guest/home");
+      return;
+    }
+
+    try {
+      const data = await authService.login({ email, password });
+
+      const finalUser: User = {
+        id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role?.name || data.role, // Handle both ID and object
+      };
+
+      setUser(finalUser);
+      localStorage.setItem("auth_user", JSON.stringify(finalUser));
+      localStorage.setItem("token", data.token);
+      router.push("/");
+    } catch (error: any) {
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("token");
     router.push("/login");
   };
 

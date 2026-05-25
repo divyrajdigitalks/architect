@@ -88,7 +88,8 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
 
   if (pathname === "/login") return null;
 
-  const roleId = typeof user?.role === 'string' ? user.role : "";
+  const roleName = typeof user?.role === 'string' ? user.role : "";
+  const roleId = roleName.toLowerCase().replace(/\s+/g, '-');
   const roleConfig = getRoleById(roleId);
   const allowedPages = roleConfig?.pages ?? [];
 

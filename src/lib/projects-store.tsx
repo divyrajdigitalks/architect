@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { projects as seedProjects } from "@/lib/dummy-data";
+import { projectService } from "@/services/project.service";
 import { ProjectManagementFlow, DesignTask, SiteExecutionTask } from "./types/project-flow";
 
 export type StageStatus = "Pending" | "In Progress" | "Completed";
@@ -57,6 +57,7 @@ type ProjectsContextType = {
   createProject: (input: CreateProjectInput) => Project;
   updateProject: (id: string, patch: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+  fetchProjects: () => Promise<void>;
   updateStageStatus: (projectId: string, stageName: string, status: StageStatus) => void;
   updateLifecycleStatus: (projectId: string, phaseName: string, status: LifecycleStatus) => void;
 };
@@ -188,17 +189,34 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage or seed
-  useEffect(() => {
-    const saved = safeParse<Project[]>(localStorage.getItem(STORAGE_KEY));
-    if (saved && Array.isArray(saved) && saved.length > 0) {
-      setProjects(saved);
-    } else {
-      const seeded = normalizeSeed();
-      setProjects(seeded);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+  // Hydrate from Backend
+  const fetchProjects = async () => {
+    try {
+      const data = await projectService.getAllProjects();
+      if (data && data.length > 0) {
+        // Map backend _id to id for frontend compatibility
+        const mappedProjects = data.map((p: any) => ({
+          ...p,
+          id: p._id,
+          workerIds: p.workers?.map((w: any) => w._id) || [],
+          supervisorId: p.supervisor?._id,
+          designerId: p.designer?._id,
+          client: p.client?.name || p.client,
+        }));
+        setProjects(mappedProjects);
+      }
+    } catch (error) {
+      console.error("Failed to fetch projects from backend", error);
+      // Fallback to local storage if needed
+      const saved = safeParse<Project[]>(localStorage.getItem(STORAGE_KEY));
+      if (saved) setProjects(saved);
+    } finally {
+      setIsHydrated(true);
     }
-    setIsHydrated(true);
+  };
+
+  useEffect(() => {
+    fetchProjects();
   }, []);
 
   // Persist updates
@@ -283,7 +301,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       deleteProject,
       updateStageStatus,
       updateLifecycleStatus,
-    };
+    fetchProjects,
+  };
   }, [projects, isHydrated]);
 
   return <ProjectsContext.Provider value={api}>{children}</ProjectsContext.Provider>;
