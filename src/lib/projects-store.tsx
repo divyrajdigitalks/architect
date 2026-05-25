@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { projectService } from "@/services/project.service";
 import { ProjectManagementFlow, DesignTask, SiteExecutionTask } from "./types/project-flow";
+import { projects as seedProjects } from "./dummy-data";
 
 export type StageStatus = "Pending" | "In Progress" | "Completed";
 export type LifecycleStatus = "Pending" | "In Progress" | "Completed";

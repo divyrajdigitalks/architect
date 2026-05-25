@@ -6,6 +6,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { RoleProvider } from "@/lib/role-context";
 import { ProjectsProvider } from "@/lib/projects-store";
 import { TasksProvider } from "@/lib/tasks-store";
+import { OfficeTasksProvider } from "@/lib/office-tasks-store";
+import { SiteTasksProvider } from "@/lib/site-tasks-store";
 import { SiteUpdatesProvider } from "@/lib/site-updates-store";
 
 const geistSans = Geist({
@@ -42,9 +44,13 @@ export default function RootLayout({
           <AuthProvider>
             <ProjectsProvider>
               <TasksProvider>
+                <OfficeTasksProvider>
+                  <SiteTasksProvider>
                 <SiteUpdatesProvider>
                   <ClientLayout>{children}</ClientLayout>
                 </SiteUpdatesProvider>
+                  </SiteTasksProvider>
+                </OfficeTasksProvider>
               </TasksProvider>
             </ProjectsProvider>
           </AuthProvider>

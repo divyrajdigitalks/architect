@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { useTasks } from "@/lib/tasks-store";
+import { useOfficeTasks } from "@/lib/office-tasks-store";
+import { useSiteTasks } from "@/lib/site-tasks-store";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
@@ -52,6 +54,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const { user } = useAuth();
   const { getProjectById, updateStageStatus } = useProjects();
   const { tasks: allTasks } = useTasks();
+  const { officeTasks } = useOfficeTasks();
+  const { siteTasks } = useSiteTasks();
   
   const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
@@ -77,6 +81,20 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   };
 
   const projectTasks = allTasks.filter(t => t.projectId === project.id || t.project === project.name);
+  const projectOfficeTasks = officeTasks.filter(t => 
+    t.projectId === project.id || 
+    t.project === project.id || 
+    (t.project as any)?._id === project.id || 
+    (t.project as any)?.name === project.name || 
+    t.project === project.name
+  );
+  const projectSiteTasks = siteTasks.filter(t => 
+    t.projectId === project.id || 
+    t.project === project.id || 
+    (t.project as any)?._id === project.id || 
+    (t.project as any)?.name === project.name || 
+    t.project === project.name
+  );
   const projectUpdates = siteUpdates.filter(u => u.project === project.name);
   const projectWorkers = workers.filter(w => w.assignedProjects.includes(project.name));
   const projectPayments = payments.filter(p => p.project === project.name);
@@ -151,12 +169,12 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
       </div>
 
       <div className="min-h-[500px] animate-in fade-in slide-in-from-top-4 duration-500">
-        {activeTab === "office-work" && project.flow && (
-          <DesignModule data={project.flow.officeWork} projectId={project.id} />
+        {activeTab === "office-work" && (
+          <DesignModule tasks={projectOfficeTasks} projectId={project.id} />
         )}
 
-        {activeTab === "site-work" && project.flow && (
-          <ExecutionModule data={project.flow.siteWork} projectId={project.id} />
+        {activeTab === "site-work" && (
+          <ExecutionModule tasks={projectSiteTasks} projectId={project.id} />
         )}
 
         {activeTab === "tasks" && (

@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const data = await authService.login({ email, password });
+      const data = (await authService.login({ email, password })) as any;
 
       const finalUser: User = {
         id: data._id,

@@ -1,6 +1,6 @@
 "use client";
 
-import { DesignTask, CivilDesigning, InteriorDesigning } from "@/lib/types/project-flow";
+import { OfficeTask } from "@/lib/office-tasks-store";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -9,21 +9,18 @@ import { CheckCircle2, Clock, AlertCircle, FileText, Plus, ChevronRight } from "
 import { useState } from "react";
 
 interface DesignModuleProps {
-  data: {
-    civil: CivilDesigning;
-    interior: InteriorDesigning;
-  };
+  tasks: OfficeTask[];
   projectId: string;
 }
 
-export function DesignModule({ data, projectId }: DesignModuleProps) {
+export function DesignModule({ tasks, projectId }: DesignModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
-  if (!data) return <div className="p-10 text-center text-slate-500">Design data not available.</div>;
+  if (!tasks) return <div className="p-10 text-center text-slate-500">Design data not available.</div>;
 
-  const civilTasks = Object.entries(data.civil || {});
-  const interiorTasks = Object.entries(data.interior || {});
-
+  const civilTasks = tasks.filter(t => t.category === "Civil");
+  const interiorTasks = tasks.filter(t => t.category === "Interior");
+  console.log("DesignModule tasks:", tasks);
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 w-fit">
@@ -48,15 +45,15 @@ export function DesignModule({ data, projectId }: DesignModuleProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(activeSubTab === "civil" ? civilTasks : interiorTasks).map(([key, task]) => (
-          <DesignTaskCard key={key} task={task as DesignTask} />
+        {(activeSubTab === "civil" ? civilTasks : interiorTasks).map((task) => (
+          <DesignTaskCard key={task.id} task={task} />
         ))}
       </div>
     </div>
   );
 }
 
-function DesignTaskCard({ task }: { task: DesignTask }) {
+function DesignTaskCard({ task }: { task: OfficeTask }) {
   const statusColors = {
     "Pending": "bg-slate-100 text-slate-500 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
@@ -92,10 +89,10 @@ function DesignTaskCard({ task }: { task: DesignTask }) {
 
       <div className="flex items-center justify-between pt-4 border-t border-slate-50">
         <div className="flex -space-x-2">
-          {task.assignedTo.length > 0 ? (
+          {task.assignedTo && task.assignedTo.length > 0 ? (
             task.assignedTo.map((user, i) => (
-              <div key={i} className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[10px] font-medium text-indigo-600 font-mono">
-                {user[0]}
+              <div key={i} className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[10px] font-medium text-indigo-600 font-mono" title={user.name}>
+                {(user.name || user)[0]}
               </div>
             ))
           ) : (

@@ -1,59 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { 
-  PenTool, 
-  FileText, 
-  Layers, 
-  Clock, 
-  CheckCircle2, 
-  Plus, 
-  Search,
-  Filter,
-  ArrowRight,
-  X
-} from "lucide-react";
+import { PenTool, FileText, Clock, CheckCircle2, Plus, Search, Filter, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { useAuth } from "@/lib/auth-context";
+import { useOfficeTasks, OfficeTaskCategory } from "@/lib/office-tasks-store";
+import { useProjects } from "@/lib/projects-store";
+import { staffService, StaffMember } from "@/services/staff.service";
+import { cn } from "@/lib/utils";
 
 export default function OfficeWorkPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
+  const { officeTasks, createOfficeTask } = useOfficeTasks();
+  const { projects } = useProjects();
+  
+  const [activeTab, setActiveTab] = useState<OfficeTaskCategory>("Civil");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ title: "", project: "", priority: "Medium", status: "In Design" });
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  
+  const [newTask, setNewTask] = useState({
+    title: "",
+    project: "",
+    assignedTo: [] as string[],
+    priority: "Medium",
+  });
+
+  useEffect(() => {
+    staffService.getAllStaff().then(setStaffList).catch(console.error);
+  }, []);
+
+  const officeStaff = staffList.filter(s => s.role?.name?.toLowerCase().includes("designer"));
 
   const categories = [
-    { title: "Design Phase", count: 12, icon: PenTool, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { title: "Documentation", count: 8, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Approvals", count: 5, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-    { title: "Revisions", count: 3, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
+    { title: "Design Phase", count: officeTasks.filter(t => t.status === "In Progress").length, icon: PenTool, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { title: "Documentation", count: officeTasks.filter(t => t.status === "Pending").length, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Approvals", count: officeTasks.filter(t => t.status === "Completed").length, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
+    { title: "Revisions", count: officeTasks.filter(t => t.priority === "High" || t.priority === "Critical").length, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
   ];
 
-  const recentTasks = [
-    { id: "OW-101", title: "Modern Villa - Interior Layout", project: "Modern Villa", priority: "High", status: "In Design", deadine: "2024-05-25" },
-    { id: "OW-102", title: "City Heights - Structural Review", project: "City Heights Apartment", priority: "Medium", status: "Review", deadine: "2024-05-28" },
-    { id: "OW-103", title: "Lakeview - Electrical Mapping", project: "Lakeview Residence", priority: "High", status: "In Design", deadine: "2024-06-02" },
-  ];
-
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New Task:", newTask);
+    const selectedProject = projects.find(p => p.id === newTask.project);
+    if (!selectedProject) return;
+
+    await createOfficeTask({
+      title: newTask.title,
+      projectId: selectedProject.id,
+      project: selectedProject.name,
+      category: activeTab,
+      assignedTo: newTask.assignedTo,
+      priority: newTask.priority,
+      status: "Pending",
+      progress: 0,
+    });
+    
     setIsModalOpen(false);
+    setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
   };
+
+  const filteredTasks = officeTasks.filter(t => t.category === activeTab);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -62,16 +74,31 @@ export default function OfficeWorkPage() {
         description="Manage designs, documentation, and office-side project coordination."
       >
         {isAdmin && (
-          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2">
+          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-indigo-600 hover:bg-indigo-500">
             <Plus className="w-4 h-4" /> New Office Task
           </Button>
         )}
       </PageHeader>
 
+      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 w-fit shadow-sm">
+        <button
+          onClick={() => setActiveTab("Civil")}
+          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+        >
+          Civil Designing
+        </button>
+        <button
+          onClick={() => setActiveTab("Interior")}
+          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+        >
+          Interior Designing
+        </button>
+      </div>
+
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Create New Office Task"
+        title={`Create New ${activeTab} Task`}
       >
         <form onSubmit={handleAddTask} className="space-y-6">
           <div className="space-y-2">
@@ -83,18 +110,33 @@ export default function OfficeWorkPage() {
               required
             />
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Project</label>
+            <select 
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              value={newTask.project}
+              onChange={(e) => setNewTask({...newTask, project: e.target.value})}
+              required
+            >
+              <option value="">Select Project</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Project</label>
+              <label className="text-sm font-medium text-slate-700">Assign To (Staff)</label>
               <select 
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                value={newTask.project}
-                onChange={(e) => setNewTask({...newTask, project: e.target.value})}
+                value={newTask.assignedTo[0] || ""}
+                onChange={(e) => setNewTask({...newTask, assignedTo: [e.target.value]})}
+                required
               >
-                <option value="">Select Project</option>
-                <option value="Modern Villa">Modern Villa</option>
-                <option value="City Heights">City Heights</option>
-                <option value="Lakeview">Lakeview</option>
+                <option value="">Select Staff</option>
+                {officeStaff.map(s => (
+                  <option key={s._id} value={s._id}>{s.name} ({s.role?.name || s.team})</option>
+                ))}
               </select>
             </div>
             <div className="space-y-2">
@@ -113,7 +155,7 @@ export default function OfficeWorkPage() {
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="font-medium">Create Task</Button>
+            <Button type="submit" className="font-medium bg-indigo-600 hover:bg-indigo-500">Create Task</Button>
           </div>
         </form>
       </Modal>
@@ -135,11 +177,10 @@ export default function OfficeWorkPage() {
         ))}
       </div>
 
-      <div className="grid  gap-8">
-        {/* Active Tasks Table */}
+      <div className="grid gap-8">
         <Card className=" border-slate-100 shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">
-            <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-widest">Active Office Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-widest">Active {activeTab} Tasks</CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
                 <Search className="w-4 h-4" />
@@ -153,36 +194,68 @@ export default function OfficeWorkPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="px-6">Task ID</TableHead>
-                  <TableHead className="px-6">Task Detail</TableHead>
-                  <TableHead className="px-6">Project</TableHead>
-                  <TableHead className="px-6 text-right">Action</TableHead>
+                  <TableHead className="px-6 py-4">Task Detail</TableHead>
+                  <TableHead className="px-6 py-4">Project</TableHead>
+                  <TableHead className="px-6 py-4">Status & Progress</TableHead>
+                  <TableHead className="px-6 py-4">Assigned To</TableHead>
+                  <TableHead className="px-6 py-4 text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTasks.map((task) => (
+                {filteredTasks.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">No active tasks found in this category.</TableCell>
+                  </TableRow>
+                )}
+                {filteredTasks.map((task) => (
                   <TableRow key={task.id} className="hover:bg-slate-50/50 transition-colors group">
                     <TableCell className="px-6 py-4">
-                      <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded font-mono">
-                        {task.id}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-slate-900">{task.title}</p>
+                        <p className="text-sm font-bold text-slate-900">{task.title}</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant={task.priority === "High" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
-                            {task.priority}
+                          <Badge variant={task.priority === "High" || task.priority === "Critical" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
+                            {task.priority || "Medium"}
                           </Badge>
-                          <span className="text-[10px] text-slate-400 font-medium font-mono">Due: {task.deadine}</span>
+                          <span className="text-[10px] text-slate-400 font-medium font-mono">ID: {task.id.slice(-6)}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <p className="text-xs font-medium text-slate-600">{task.project}</p>
+                      <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-2 max-w-[150px]">
+                        <div className="flex justify-between items-center text-[10px] font-bold">
+                          <span className={cn(
+                            "uppercase tracking-widest",
+                            task.status === "Completed" ? "text-green-600" :
+                            task.status === "In Progress" ? "text-blue-600" : "text-slate-500"
+                          )}>{task.status}</span>
+                          <span className="text-slate-500 font-mono">{task.progress}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-indigo-600 transition-all duration-500" 
+                            style={{ width: `${task.progress}%` }} 
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex -space-x-2">
+                        {task.assignedTo && task.assignedTo.length > 0 ? (
+                          task.assignedTo.map((user, i) => (
+                            <div key={i} className="w-8 h-8 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-xs font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
+                              {(user.name || user)[0]}
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600 shadow-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                         <ArrowRight className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -192,34 +265,7 @@ export default function OfficeWorkPage() {
             </Table>
           </CardContent>
         </Card>
-
-        {/* Modules/Quick Access */}
-        {/* <div className="space-y-6">
-          <Card className="p-6 bg-slate-900 text-white border-slate-800 shadow-xl overflow-hidden relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-indigo-600/30 transition-all" />
-            <div className="relative z-10 space-y-4">
-              <Layers className="w-8 h-8 text-indigo-400" />
-              <h3 className="text-lg font-black tracking-tight">Design Library</h3>
-              <p className="text-sm text-slate-400 font-medium">Access master blocks, previous project layouts, and design standards.</p>
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-500 border-none rounded-xl font-bold h-10 mt-2">Open Library</Button>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-slate-100">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">Quick Documentation</h3>
-            <div className="space-y-3">
-              {["Material Specification", "Client Quotation", "Structural NOC", "Interior BOQ"].map((doc) => (
-                <button key={doc} className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group text-left">
-                  <span className="text-xs font-bold text-slate-600 group-hover:text-indigo-600">{doc}</span>
-                  <Plus className="w-3 h-3 text-slate-300 group-hover:text-indigo-400" />
-                </button>
-              ))}
-            </div>
-          </Card>
-        </div> */}
       </div>
     </div>
   );
 }
-
-import { cn } from "@/lib/utils";

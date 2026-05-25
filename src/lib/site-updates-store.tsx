@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { siteUpdateService } from "@/services/site-update.service";
+import { siteUpdates as seedUpdates } from "./dummy-data";
 
 export type SiteUpdate = {
   id: string;
@@ -57,7 +58,7 @@ export function SiteUpdatesProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     const fetchUpdates = async () => {
       try {
-        const data = await siteUpdateService.getAllUpdates();
+        const data = (await siteUpdateService.getAllUpdates()) as any;
         if (data && data.length > 0) {
           const mappedUpdates = data.map((u: any) => ({
             ...u,

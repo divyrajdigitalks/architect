@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteExecutionTask, CivilExecution, InteriorExecution } from "@/lib/types/project-flow";
+import { SiteTask } from "@/lib/site-tasks-store";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -8,20 +8,17 @@ import { HardHat, Camera, Hammer, CheckCircle2, AlertCircle, ChevronRight, MapPi
 import { useState } from "react";
 
 interface ExecutionModuleProps {
-  data: {
-    civil: CivilExecution;
-    interior: InteriorExecution;
-  };
+  tasks: SiteTask[];
   projectId: string;
 }
 
-export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
+export function ExecutionModule({ tasks, projectId }: ExecutionModuleProps) {
   const [activeSubTab, setActiveSubTab] = useState<"civil" | "interior">("civil");
 
-  if (!data) return <div className="p-10 text-center text-slate-500">Execution data not available.</div>;
+  if (!tasks) return <div className="p-10 text-center text-slate-500">Execution data not available.</div>;
 
-  const civilStages = Object.entries(data.civil || {});
-  const interiorStages = Object.entries(data.interior || {});
+  const civilStages = tasks.filter(t => t.category === "Civil");
+  const interiorStages = tasks.filter(t => t.category === "Interior");
 
   return (
     <div className="space-y-8">
@@ -47,19 +44,22 @@ export function ExecutionModule({ data, projectId }: ExecutionModuleProps) {
       </div>
 
       <div className="space-y-4">
-        {(activeSubTab === "civil" ? civilStages : interiorStages).map(([key, stage]) => (
-          <ExecutionStageCard key={key} stage={stage as SiteExecutionTask} />
+        {(activeSubTab === "civil" ? civilStages : interiorStages).map((stage) => (
+          <ExecutionStageCard key={stage.id} stage={stage} />
         ))}
       </div>
     </div>
   );
 }
 
-function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
+function ExecutionStageCard({ stage }: { stage: SiteTask }) {
   const statusColors = {
     "Pending": "bg-slate-100 text-slate-500 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
     "Completed": "bg-green-50 text-green-600 border-green-200",
+    "Critical": "bg-red-50 text-red-600 border-red-200",
+    "Delayed": "bg-orange-50 text-orange-600 border-orange-200",
+    "On Track": "bg-blue-50 text-blue-600 border-blue-200",
   };
 
   return (
@@ -75,14 +75,14 @@ function ExecutionStageCard({ stage }: { stage: SiteExecutionTask }) {
             {stage.status === "Completed" ? <CheckCircle2 className="w-6 h-6" /> : <HardHat className="w-6 h-6" />}
           </div>
           <div>
-            <h4 className="text-base font-medium text-slate-900">{stage.stage}</h4>
+            <h4 className="text-base font-medium text-slate-900">{stage.title}</h4>
             <div className="flex items-center gap-3 mt-1">
-              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[stage.status])}>
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest", statusColors[stage.status as keyof typeof statusColors])}>
                 {stage.status}
               </span>
               <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest flex items-center gap-1 font-mono">
                 <Camera className="w-3 h-3" />
-                {stage.images.length} Photos
+                0 Photos
               </span>
             </div>
           </div>
