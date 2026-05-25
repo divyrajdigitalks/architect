@@ -1,6 +1,5 @@
 "use client";
 
-import { siteUpdates, workers, payments } from "@/lib/dummy-data";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -33,6 +32,7 @@ import { useProjects } from "@/lib/projects-store";
 import { useTasks } from "@/lib/tasks-store";
 import { useOfficeTasks } from "@/lib/office-tasks-store";
 import { useSiteTasks } from "@/lib/site-tasks-store";
+import { useSiteUpdates } from "@/lib/site-updates-store";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
@@ -56,6 +56,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const { tasks: allTasks } = useTasks();
   const { officeTasks } = useOfficeTasks();
   const { siteTasks } = useSiteTasks();
+  const { updates: allSiteUpdates } = useSiteUpdates();
   
   const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
@@ -95,9 +96,9 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     (t.project as any)?.name === project.name || 
     t.project === project.name
   );
-  const projectUpdates = siteUpdates.filter(u => u.project === project.name);
-  const projectWorkers = workers.filter(w => w.assignedProjects.includes(project.name));
-  const projectPayments = payments.filter(p => p.project === project.name);
+  const projectUpdates = allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
+  const projectWorkers: any[] = []; // Fetch from staff service if needed
+  const projectPayments: any[] = []; // Fetch from payment service if needed
 
   const canEdit = user?.role === "architect" || user?.role === "director" || user?.role === "super-admin" || user?.role === "supervisor";
 

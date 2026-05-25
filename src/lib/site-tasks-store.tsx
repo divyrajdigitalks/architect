@@ -35,17 +35,7 @@ type SiteTasksContextType = {
   deleteSiteTask: (id: string) => void;
 };
 
-const STORAGE_KEY = "archisite_site_tasks";
 const SiteTasksContext = createContext<SiteTasksContextType | undefined>(undefined);
-
-function safeParse<T>(raw: string | null): T | undefined {
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
 
 export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
   const [siteTasks, setSiteTasks] = useState<SiteTask[]>([]);
@@ -64,8 +54,6 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Failed to fetch site tasks from backend", error);
-        const saved = safeParse<SiteTask[]>(localStorage.getItem(STORAGE_KEY));
-        if (saved) setSiteTasks(saved);
       } finally {
         setIsHydrated(true);
       }
@@ -73,11 +61,6 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
 
     fetchTasks();
   }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(siteTasks));
-  }, [siteTasks, isHydrated]);
 
   const api = useMemo<SiteTasksContextType>(() => {
     const getSiteTasksByProjectId = (projectId: string) => siteTasks.filter((t) => t.projectId === projectId || (t.project as any)?._id === projectId);

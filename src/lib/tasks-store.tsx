@@ -36,26 +36,7 @@ type TasksContextType = {
   deleteTask: (id: string) => void;
 };
 
-const STORAGE_KEY = "archisite_tasks";
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
-
-function safeParse<T>(raw: string | null): T | undefined {
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function normalizeSeed(): Task[] {
-  return (seedTasks as unknown as any[]).map((t) => ({
-    ...t,
-    id: String(t.id),
-    status: (t.status ?? "Pending") as TaskStatus,
-    createdAt: new Date().toISOString(),
-  }));
-}
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -74,8 +55,6 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Failed to fetch tasks from backend", error);
-        const saved = safeParse<Task[]>(localStorage.getItem(STORAGE_KEY));
-        if (saved) setTasks(saved);
       } finally {
         setIsHydrated(true);
       }
@@ -83,11 +62,6 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
     fetchTasks();
   }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  }, [tasks, isHydrated]);
 
   const api = useMemo<TasksContextType>(() => {
     const getTasksByProjectId = (projectId: string) => tasks.filter((t) => t.projectId === projectId);

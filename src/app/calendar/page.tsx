@@ -1,6 +1,5 @@
 "use client";
 
-import { calendarEvents } from "@/lib/dummy-data";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -226,3 +225,4 @@ export default function CalendarPage() {
     </>
   );
 }
+

@@ -1,4 +1,5 @@
 import { api } from "./api";
+import endPointApi from "@/lib/endpoints";
 
 export interface Project {
   _id: string;
@@ -20,26 +21,26 @@ export interface Project {
 
 export const projectService = {
   async getAllProjects(): Promise<Project[]> {
-    return api.get("/projects");
+    return api.get(endPointApi.projects);
   },
 
   async getProjectById(id: string): Promise<Project> {
-    return api.get(`/projects/${id}`);
+    return api.get(endPointApi.projectById(id));
   },
 
   async createProject(projectData: any): Promise<Project> {
-    return api.post("/projects", projectData);
+    return api.post(endPointApi.projects, projectData);
   },
 
   async updateProject(id: string, projectData: any): Promise<Project> {
-    return api.put(`/projects/${id}`, projectData);
+    return api.put(endPointApi.projectById(id), projectData);
   },
 
   async deleteProject(id: string): Promise<any> {
-    return api.delete(`/projects/${id}`);
+    return api.delete(endPointApi.projectById(id));
   },
 
   async updateStage(id: string, stageData: { stageName: string; status: string }): Promise<Project> {
-    return api.post(`/projects/${id}/stage`, stageData); // Backend uses updateStage controller
+    return api.post(endPointApi.updateProjectStage(id), stageData); // Backend uses updateStage controller
   },
 };

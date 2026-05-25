@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { projectService } from "@/services/project.service";
 import { ProjectManagementFlow, DesignTask, SiteExecutionTask } from "./types/project-flow";
-import { projects as seedProjects } from "./dummy-data";
 
 export type StageStatus = "Pending" | "In Progress" | "Completed";
 export type LifecycleStatus = "Pending" | "In Progress" | "Completed";
@@ -63,17 +62,7 @@ type ProjectsContextType = {
   updateLifecycleStatus: (projectId: string, phaseName: string, status: LifecycleStatus) => void;
 };
 
-const STORAGE_KEY = "archisite_projects";
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
-
-function safeParse<T>(raw: string | null): T | undefined {
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
 
 function createDesignTask(title: string): DesignTask {
   return {
@@ -159,15 +148,6 @@ function initializeFlow(): ProjectManagementFlow {
   };
 }
 
-function normalizeSeed(): Project[] {
-  return (seedProjects as unknown as Project[]).map((p) => ({
-    ...p,
-    workerIds: p.workerIds ?? [],
-    stages: p.stages ?? [],
-    flow: p.flow ?? initializeFlow(),
-  }));
-}
-
 function computeProgressFromStages(stages: ProjectStage[]): number {
   if (!stages || stages.length === 0) return 0;
   const completed = stages.filter((s) => s.status === "Completed").length;
@@ -208,9 +188,6 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to fetch projects from backend", error);
-      // Fallback to local storage if needed
-      const saved = safeParse<Project[]>(localStorage.getItem(STORAGE_KEY));
-      if (saved) setProjects(saved);
     } finally {
       setIsHydrated(true);
     }
@@ -219,12 +196,6 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchProjects();
   }, []);
-
-  // Persist updates
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  }, [projects, isHydrated]);
 
   const api = useMemo<ProjectsContextType>(() => {
     const getProjectById = (id: string) => projects.find((p) => p.id === id);

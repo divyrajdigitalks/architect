@@ -35,17 +35,7 @@ type OfficeTasksContextType = {
   deleteOfficeTask: (id: string) => void;
 };
 
-const STORAGE_KEY = "archisite_office_tasks";
 const OfficeTasksContext = createContext<OfficeTasksContextType | undefined>(undefined);
-
-function safeParse<T>(raw: string | null): T | undefined {
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
 
 export function OfficeTasksProvider({ children }: { children: React.ReactNode }) {
   const [officeTasks, setOfficeTasks] = useState<OfficeTask[]>([]);
@@ -64,8 +54,6 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
         }
       } catch (error) {
         console.error("Failed to fetch office tasks from backend", error);
-        const saved = safeParse<OfficeTask[]>(localStorage.getItem(STORAGE_KEY));
-        if (saved) setOfficeTasks(saved);
       } finally {
         setIsHydrated(true);
       }
@@ -73,11 +61,6 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
 
     fetchTasks();
   }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(officeTasks));
-  }, [officeTasks, isHydrated]);
 
   const api = useMemo<OfficeTasksContextType>(() => {
     const getOfficeTasksByProjectId = (projectId: string) => officeTasks.filter((t) => t.projectId === projectId || (t.project as any)?._id === projectId);

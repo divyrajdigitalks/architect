@@ -1,4 +1,5 @@
 import { api } from "./api";
+import endPointApi from "@/lib/endpoints";
 
 export interface Role {
   _id: string;
@@ -9,22 +10,22 @@ export interface Role {
 
 export const roleService = {
   async getAllRoles(): Promise<Role[]> {
-    return api.get("/roles");
+    return api.get(endPointApi.roles);
   },
 
   async getRoleById(id: string): Promise<Role> {
-    return api.get(`/roles/${id}`);
+    return api.get(endPointApi.roleById(id));
   },
 
   async createRole(roleData: Partial<Role>): Promise<Role> {
-    return api.post("/roles", roleData);
+    return api.post(endPointApi.roles, roleData);
   },
 
   async updateRole(id: string, roleData: Partial<Role>): Promise<Role> {
-    return api.put(`/roles/${id}`, roleData);
+    return api.put(endPointApi.roleById(id), roleData);
   },
 
   async deleteRole(id: string): Promise<any> {
-    return api.delete(`/roles/${id}`);
+    return api.delete(endPointApi.roleById(id));
   },
 };

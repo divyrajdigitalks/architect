@@ -1,16 +1,17 @@
 import { api } from "./api";
+import endPointApi from "@/lib/endpoints";
 
 export const siteUpdateService = {
   async getAllUpdates() {
-    return api.get("/site-updates");
+    return api.get(endPointApi.siteUpdates);
   },
   async getUpdatesByProject(projectId: string) {
-    return api.get(`/site-updates?projectId=${projectId}`);
+    return api.get(`${endPointApi.siteUpdates}?projectId=${projectId}`);
   },
   async createUpdate(updateData: any) {
-    return api.post("/site-updates", updateData);
+    return api.post(endPointApi.siteUpdates, updateData);
   },
   async deleteUpdate(id: string) {
-    return api.delete(`/site-updates/${id}`);
+    return api.delete(endPointApi.siteUpdateById(id));
   },
 };

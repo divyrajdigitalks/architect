@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { Role } from "./role.service";
+import endPointApi from "@/lib/endpoints";
 
 export interface StaffMember {
   _id: string;
@@ -14,24 +15,24 @@ export interface StaffMember {
 
 export const staffService = {
   async getAllStaff(): Promise<StaffMember[]> {
-    return api.get("/users");
+    return api.get(endPointApi.users);
   },
 
   async getStaffById(id: string): Promise<StaffMember> {
-    return api.get(`/users/${id}`);
+    return api.get(endPointApi.userById(id));
   },
 
   async updateStaff(id: string, staffData: any): Promise<StaffMember> {
-    return api.put(`/users/${id}`, staffData);
+    return api.put(endPointApi.userById(id), staffData);
   },
 
   async deleteStaff(id: string): Promise<any> {
-    return api.delete(`/users/${id}`);
+    return api.delete(endPointApi.userById(id));
   },
 
   async createStaff(staffData: any): Promise<StaffMember> {
     // Staff creation is usually through registration or a specific admin endpoint
     // Here we use the auth register endpoint for adding staff
-    return api.post("/auth/register", staffData);
+    return api.post(endPointApi.register, staffData);
   },
 };

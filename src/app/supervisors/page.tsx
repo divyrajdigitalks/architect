@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supervisors as initialSupervisors, projects } from "@/lib/dummy-data";
 import {
   Plus, Search, Phone, Mail, Briefcase, X, LayoutGrid, List,
   Calendar, HardHat, UserCircle2, CheckCircle2, ShieldCheck
@@ -424,3 +423,4 @@ export default function SupervisorsPage() {
     </>
   );
 }
+

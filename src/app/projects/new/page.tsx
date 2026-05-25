@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
-import { clients, supervisors, workers } from "@/lib/dummy-data";
 import { useProjects } from "@/lib/projects-store";
 
 type Step = "client" | "project" | "team" | "review";
@@ -384,3 +383,4 @@ export default function NewProjectPage() {
     </div>
   );
 }
+

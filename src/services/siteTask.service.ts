@@ -1,19 +1,20 @@
 import { api } from "./api";
+import endPointApi from "@/lib/endpoints";
 
 export const siteTaskService = {
   async getAllTasks() {
-    return api.get("/site-tasks");
+    return api.get(endPointApi.siteTasks);
   },
   async getTaskById(id: string) {
-    return api.get(`/site-tasks/${id}`);
+    return api.get(endPointApi.siteTaskById(id));
   },
   async createTask(taskData: any) {
-    return api.post("/site-tasks", taskData);
+    return api.post(endPointApi.siteTasks, taskData);
   },
   async updateTask(id: string, taskData: any) {
-    return api.put(`/site-tasks/${id}`, taskData);
+    return api.put(endPointApi.siteTaskById(id), taskData);
   },
   async deleteTask(id: string) {
-    return api.delete(`/site-tasks/${id}`);
+    return api.delete(endPointApi.siteTaskById(id));
   },
 };

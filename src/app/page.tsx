@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { projects, tasks, siteUpdates, messages, payments } from "@/lib/dummy-data";
+import { useProjects } from "@/lib/projects-store";
+import { useTasks } from "@/lib/tasks-store";
+import { useSiteUpdates } from "@/lib/site-updates-store";
 import {
   Briefcase,
   Construction,
@@ -30,6 +32,9 @@ import DashboardCards from "@/components/DashboardCards";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { projects } = useProjects();
+  const { tasks } = useTasks();
+  const { updates: siteUpdates } = useSiteUpdates();
 
   if (!user) return null;
 
@@ -55,7 +60,9 @@ export default function Dashboard() {
 
 // --- Architect Dashboard ---
 function ArchitectDashboard({ role = "architect" }: { role?: string }) {
+  const { tasks } = useTasks();
   const todayTasks = tasks.slice(0, 3);
+  const messages: { id: string; from: string; text: string; date: string; unread: boolean }[] = [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

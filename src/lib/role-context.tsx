@@ -84,13 +84,12 @@ interface RoleContextType {
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
-const STORAGE_KEY = "archisite_roles";
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<RoleConfig[]>(DEFAULT_ROLES);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load from localStorage or Backend
+  // Load from Backend
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -124,28 +123,11 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Failed to fetch roles from backend", error);
       }
-
-      // Fallback to local storage or defaults
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          setRoles(JSON.parse(saved));
-        }
-      } catch (e) {
-        console.error("Failed to load roles from localStorage", e);
-      }
       setIsInitialized(true);
     };
 
     fetchRoles();
   }, []);
-
-  // Persist to localStorage whenever roles change, but only after initialization
-  useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(roles));
-    }
-  }, [roles, isInitialized]);
 
   const addRole = (name: string, color: string): RoleConfig => {
     const newRole: RoleConfig = {

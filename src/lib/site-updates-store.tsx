@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { siteUpdateService } from "@/services/site-update.service";
-import { siteUpdates as seedUpdates } from "./dummy-data";
 
 export type SiteUpdate = {
   id: string;
@@ -31,25 +30,7 @@ type SiteUpdatesContextType = {
   deleteUpdate: (id: string) => void;
 };
 
-const STORAGE_KEY = "archisite_site_updates";
 const SiteUpdatesContext = createContext<SiteUpdatesContextType | undefined>(undefined);
-
-function safeParse<T>(raw: string | null): T | undefined {
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function normalizeSeed(): SiteUpdate[] {
-  return (seedUpdates as unknown as any[]).map((u) => ({
-    ...u,
-    id: String(u.id),
-    createdAt: new Date().toISOString(),
-  }));
-}
 
 export function SiteUpdatesProvider({ children }: { children: React.ReactNode }) {
   const [updates, setUpdates] = useState<SiteUpdate[]>([]);
@@ -68,8 +49,6 @@ export function SiteUpdatesProvider({ children }: { children: React.ReactNode })
         }
       } catch (error) {
         console.error("Failed to fetch site updates from backend", error);
-        const saved = safeParse<SiteUpdate[]>(localStorage.getItem(STORAGE_KEY));
-        if (saved) setUpdates(saved);
       } finally {
         setIsHydrated(true);
       }
@@ -77,11 +56,6 @@ export function SiteUpdatesProvider({ children }: { children: React.ReactNode })
 
     fetchUpdates();
   }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updates));
-  }, [updates, isHydrated]);
 
   const api = useMemo<SiteUpdatesContextType>(() => {
     const getUpdatesByProjectId = (projectId: string) => updates.filter((u) => u.projectId === projectId);
