@@ -91,11 +91,11 @@ body {
 }
 
 .pro-table th {
-  @apply bg-slate-50 px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider border-b border-t border-slate-200 first:border-l last:border-r first:rounded-tl-sm last:rounded-tr-sm;
+  @apply bg-slate-50 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-wider border-b border-t border-slate-200 first:border-l last:border-r first:rounded-tl-sm last:rounded-tr-sm;
 }
 
 .pro-table td {
-  @apply px-4 py-3 text-sm text-slate-700 border-b border-slate-200 first:border-l last:border-r group-hover:bg-slate-50 transition-colors;
+  @apply px-3 py-2 text-xs text-slate-700 border-b border-slate-200 first:border-l last:border-r group-hover:bg-slate-50 transition-colors;
 }
 
 .pro-table tr:last-child td:first-child {

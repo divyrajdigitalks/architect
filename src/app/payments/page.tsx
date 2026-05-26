@@ -42,66 +42,67 @@ export default function PaymentsPage() {
 
   return (
     <>
-      <div className="space-y-10 animate-in fade-in duration-500">
-        <div className="flex flex-row items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Overview</h2>
-            <p className="text-sm font-medium text-slate-500 hidden sm:block">Track project budgets and pending payments</p>
+      <div className="space-y-6 animate-in fade-in duration-500 w-full p-4 sm:p-6">
+        <div className="flex flex-row items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Financial Overview</h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Budget & Payment Tracking</p>
           </div>
           
           {isAdmin && (
             <Button 
               onClick={() => setIsAddModalOpen(true)} 
-              className="gap-2 shadow-lg shadow-indigo-200"
+              size="sm"
+              className="gap-2 shadow-md shadow-indigo-100 font-bold text-xs"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Payment</span>
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { label: "Total Revenue", value: "$425,000", icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
             { label: "Pending Payments", value: "$12,250", icon: CreditCard, color: "text-indigo-600", bg: "bg-indigo-50" },
             { label: "Outstanding Costs", value: "$8,500", icon: TrendingDown, color: "text-orange-600", bg: "bg-orange-50" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-              <div className={cn("p-4 rounded-2xl", stat.bg)}>
-                <stat.icon className={cn("w-7 h-7", stat.color)} />
+            <div key={stat.label} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
+              <div className={cn("p-3 rounded-xl", stat.bg)}>
+                <stat.icon className={cn("w-5 h-5", stat.color)} />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-500 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
+                <p className="text-xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50">
-                <TableHead className="px-8 py-5">Project / Client</TableHead>
-                <TableHead className="px-8 py-5">Amount</TableHead>
-                <TableHead className="px-8 py-5">Status</TableHead>
-                <TableHead className="px-8 py-5">Date</TableHead>
-                <TableHead className="px-8 py-5 text-right">Action</TableHead>
+                <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Project / Client</TableHead>
+                <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Amount</TableHead>
+                <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Status</TableHead>
+                <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Date</TableHead>
+                <TableHead className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-100">
               {payments.map((payment) => (
                 <TableRow key={payment.id} className="group hover:bg-slate-50/30 transition-colors">
-                  <TableCell className="px-8 py-6">
-                    <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{payment.project}</p>
-                    <p className="text-xs font-medium text-slate-500">{payment.client}</p>
+                  <TableCell className="px-6 py-4">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{payment.project}</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{payment.client}</p>
                   </TableCell>
-                  <TableCell className="px-8 py-6">
-                    <span className="text-sm font-bold text-slate-900">{payment.amount}</span>
+                  <TableCell className="px-6 py-4">
+                    <span className="text-xs font-bold text-slate-900">{payment.amount}</span>
                   </TableCell>
-                  <TableCell className="px-8 py-6">
+                  <TableCell className="px-6 py-4">
                     <span className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider",
+                      "px-2 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest",
                       payment.status === "Paid" ? "bg-green-50 text-green-700 border-green-100" :
                       payment.status === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
                       "bg-red-50 text-red-700 border-red-100"
@@ -109,10 +110,10 @@ export default function PaymentsPage() {
                       {payment.status}
                     </span>
                   </TableCell>
-                  <TableCell className="px-8 py-6 text-sm font-medium text-slate-500">{payment.date}</TableCell>
-                  <TableCell className="px-8 py-6 text-right">
-                    <button className="p-2 text-slate-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-all">
-                      <ArrowUpRight className="w-5 h-5" />
+                  <TableCell className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">{payment.date}</TableCell>
+                  <TableCell className="px-6 py-4 text-right">
+                    <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                      <ArrowUpRight className="w-4 h-4" />
                     </button>
                   </TableCell>
                 </TableRow>

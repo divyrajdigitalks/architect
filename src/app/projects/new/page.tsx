@@ -12,6 +12,9 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/lib/projects-store";
+import { clients, supervisors, workers } from "@/lib/dummy-data";
+import { Select } from "@/components/ui/Select";
+import toast from "react-hot-toast";
 
 type Step = "client" | "project" | "team" | "review";
 const STEPS: Step[] = ["client", "project", "team", "review"];
@@ -20,6 +23,7 @@ export default function NewProjectPage() {
   const router = useRouter();
   const { createProject } = useProjects();
   const [step, setStep] = useState<Step>("client");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     clientId: "", clientName: "", clientEmail: "", clientPhone: "",
     projectName: "", projectType: "Residential", location: "", budget: "",
@@ -29,7 +33,24 @@ export default function NewProjectPage() {
 
   const stepIndex = STEPS.indexOf(step);
 
-  const next = () => setStep(STEPS[stepIndex + 1]);
+  const next = () => {
+    const newErrors: Record<string, string> = {};
+    if (step === "client" && !form.clientName) {
+      newErrors.clientName = "Client name is required";
+    }
+    if (step === "project" && !form.projectName) {
+      newErrors.projectName = "Project name is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in required fields");
+      return;
+    }
+
+    setErrors({});
+    setStep(STEPS[stepIndex + 1]);
+  };
   const prev = () => setStep(STEPS[stepIndex - 1]);
 
   const handleClientSelect = (id: string) => {
@@ -59,21 +80,27 @@ export default function NewProjectPage() {
   ];
 
   const handleSubmit = () => {
-    const budgetStr = form.budget?.trim() ? `$${form.budget.replace(/^\$/, "")}` : "$0";
-    const created = createProject({
-      name: form.projectName || "Untitled Project",
-      client: form.clientName || "Unknown Client",
-      clientId: form.clientId || undefined,
-      location: form.location || "—",
-      startDate: form.startDate,
-      expectedCompletion: form.expectedCompletion || "—",
-      budget: budgetStr,
-      supervisorId: form.supervisorId || undefined,
-      workerIds: form.workerIds,
-      lifecycle: defaultLifecycle,
-      stages: defaultStages,
-    });
-    router.push(`/projects/${created.id}`);
+    try {
+      const budgetStr = form.budget?.trim() ? `$${form.budget.replace(/^\$/, "")}` : "$0";
+      const created = createProject({
+        name: form.projectName || "Untitled Project",
+        client: form.clientName || "Unknown Client",
+        clientId: form.clientId || undefined,
+        location: form.location || "—",
+        startDate: form.startDate,
+        expectedCompletion: form.expectedCompletion || "—",
+        budget: budgetStr,
+        supervisorId: form.supervisorId || undefined,
+        workerIds: form.workerIds,
+        lifecycle: defaultLifecycle,
+        stages: defaultStages,
+      });
+      toast.success("Project launched successfully!");
+      router.push(`/projects/${created.id}`);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast.error("Failed to launch project");
+    }
   };
 
   return (
@@ -147,9 +174,19 @@ export default function NewProjectPage() {
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Or Enter New Client</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
-                <Input placeholder="e.g., Ratan Tata" value={form.clientName}
-                  onChange={e => setForm(f => ({ ...f, clientName: e.target.value, clientId: "" }))} />
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name *</label>
+                <Input 
+                   placeholder="e.g., Ratan Tata" 
+                   value={form.clientName}
+                   onChange={e => {
+                     setForm(f => ({ ...f, clientName: e.target.value, clientId: "" }));
+                     if (errors.clientName) setErrors(prev => {
+                       const { clientName, ...rest } = prev;
+                       return rest;
+                     });
+                   }} 
+                   error={errors.clientName}
+                 />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
@@ -186,18 +223,31 @@ export default function NewProjectPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Project Name *</label>
-              <Input placeholder="e.g., Sharma Residence" value={form.projectName}
-                onChange={e => setForm(f => ({ ...f, projectName: e.target.value }))} />
+              <Input 
+                 placeholder="e.g., Sharma Residence" 
+                 value={form.projectName}
+                 onChange={e => {
+                   setForm(f => ({ ...f, projectName: e.target.value }));
+                   if (errors.projectName) setErrors(prev => {
+                     const { projectName, ...rest } = prev;
+                     return rest;
+                   });
+                 }} 
+                 error={errors.projectName}
+               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Project Type</label>
-              <select className="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={form.projectType} onChange={e => setForm(f => ({ ...f, projectType: e.target.value }))}>
-                <option>Residential</option>
-                <option>Commercial</option>
-                <option>Industrial</option>
-                <option>Interior Design</option>
-              </select>
+              <Select
+                label="Project Type"
+                options={[
+                  { value: "Residential", label: "Residential" },
+                  { value: "Commercial", label: "Commercial" },
+                  { value: "Industrial", label: "Industrial" },
+                  { value: "Interior Design", label: "Interior Design" },
+                ]}
+                value={form.projectType}
+                onChange={val => setForm(f => ({ ...f, projectType: val }))}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</label>

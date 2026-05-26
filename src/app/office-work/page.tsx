@@ -15,6 +15,8 @@ import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
 import { cn } from "@/lib/utils";
 import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
+import { Select } from "@/components/ui/Select";
+import toast from "react-hot-toast";
 
 export default function OfficeWorkPage() {
   const { user } = useAuth();
@@ -28,6 +30,7 @@ export default function OfficeWorkPage() {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   const [newTask, setNewTask] = useState({
     title: "",
@@ -51,22 +54,41 @@ export default function OfficeWorkPage() {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    
+    if (!newTask.title.trim()) newErrors.title = "Task title is required";
+    if (!newTask.project) newErrors.project = "Please select a project";
+    if (newTask.assignedTo.length === 0) newErrors.assignedTo = "Please assign to staff";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     const selectedProject = projects.find(p => p.id === newTask.project);
     if (!selectedProject) return;
 
-    await createOfficeTask({
-      title: newTask.title,
-      projectId: selectedProject.id,
-      project: selectedProject.name,
-      category: activeTab,
-      assignedTo: newTask.assignedTo,
-      priority: newTask.priority,
-      status: "Pending",
-      progress: 0,
-    });
-    
-    setIsModalOpen(false);
-    setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+    try {
+      await createOfficeTask({
+        title: newTask.title,
+        projectId: selectedProject.id,
+        project: selectedProject.name,
+        category: activeTab,
+        assignedTo: newTask.assignedTo,
+        priority: newTask.priority,
+        status: "Pending",
+        progress: 0,
+      });
+      
+      toast.success("Office task created successfully!");
+      setIsModalOpen(false);
+      setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+      setErrors({});
+    } catch (error) {
+      console.error("Error creating office task:", error);
+      toast.error("Failed to create task");
+    }
   };
 
   const filteredTasks = officeTasks.filter(t => {
@@ -79,125 +101,62 @@ export default function OfficeWorkPage() {
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <PageHeader 
-        title="OFFICE WORK" 
-        description="Manage designs, documentation, and office-side project coordination."
-      >
-        {isViewOnly ? null : canCreate && (
-          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-indigo-600 hover:bg-indigo-500">
-            <Plus className="w-4 h-4" /> New Office Task
+    <div className="space-y-6 animate-in fade-in duration-500 w-full p-4 sm:p-6">
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">OFFICE WORK</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Designs & Documentation</p>
+        </div>
+        
+        {canCreate && (
+          <Button onClick={() => setIsModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+            <Plus className="w-4 h-4" /> New Task
           </Button>
         )}
-      </PageHeader>
+      </div>
 
-      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 w-fit shadow-sm">
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit shadow-sm">
         <button
           onClick={() => setActiveTab("Civil")}
-          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Civil Designing
         </button>
         <button
           onClick={() => setActiveTab("Interior")}
-          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Interior Designing
         </button>
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={`Create New ${activeTab} Task`}
-      >
-        <form onSubmit={handleAddTask} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Task Title</label>
-            <Input 
-              placeholder="e.g., Interior Layout Design" 
-              value={newTask.title}
-              onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Project</label>
-            <select 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              value={newTask.project}
-              onChange={(e) => setNewTask({...newTask, project: e.target.value})}
-              required
-            >
-              <option value="">Select Project</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Assign To (Staff)</label>
-              <select 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                value={newTask.assignedTo[0] || ""}
-                onChange={(e) => setNewTask({...newTask, assignedTo: [e.target.value]})}
-                required
-              >
-                <option value="">Select Staff</option>
-                {officeStaff.map(s => (
-                  <option key={s._id} value={s._id}>{s.name} ({s.role?.name || s.team})</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Priority</label>
-              <select 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                value={newTask.priority}
-                onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="font-medium bg-indigo-600 hover:bg-indigo-500">Create Task</Button>
-          </div>
-        </form>
-      </Modal>
-
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {categories.map((cat) => (
-          <Card key={cat.title} className="p-6 border-slate-100 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", cat.bg)}>
-                <cat.icon className={cn("w-6 h-6", cat.color)} />
+          <Card key={cat.title} className="p-4 border-slate-100 hover:shadow-md transition-all">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", cat.bg)}>
+                <cat.icon className={cn("w-5 h-5", cat.color)} />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">{cat.title}</p>
-                <h3 className="text-2xl font-medium text-slate-900 font-mono">{cat.count}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cat.title}</p>
+                <h3 className="text-xl font-bold text-slate-900 font-mono leading-none mt-1">{cat.count}</h3>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-8">
-        <Card className=" border-slate-100 shadow-sm overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">
-            <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-widest">Active {activeTab} Tasks</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                <Search className="w-4 h-4" />
+      <div className="grid gap-6">
+        <Card className=" border-slate-200 shadow-sm overflow-hidden rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-3 bg-slate-50/30">
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active {activeTab} Tasks</CardTitle>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
+                <Search className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                <Filter className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
+                <Filter className="w-3.5 h-3.5" />
               </Button>
             </div>
           </CardHeader>

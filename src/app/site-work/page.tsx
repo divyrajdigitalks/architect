@@ -16,6 +16,8 @@ import { useSiteTasks, SiteTaskCategory } from "@/lib/site-tasks-store";
 import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
 import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
+import { Select } from "@/components/ui/Select";
+import toast from "react-hot-toast";
 
 export default function SiteWorkPage() {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export default function SiteWorkPage() {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [newTask, setNewTask] = useState({
     title: "",
@@ -59,21 +62,40 @@ export default function SiteWorkPage() {
 
   const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: Record<string, string> = {};
+
+    if (!newTask.project) newErrors.project = "Please select a project";
+    if (!newTask.title.trim()) newErrors.title = "Activity title is required";
+    if (newTask.assignedTo.length === 0) newErrors.assignedTo = "Please assign to staff";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     const selectedProject = projects.find(p => p.id === newTask.project);
     if (!selectedProject) return;
 
-    await createSiteTask({
-      title: newTask.title,
-      projectId: selectedProject.id,
-      project: selectedProject.name,
-      category: activeTab,
-      assignedTo: newTask.assignedTo,
-      status: newTask.status as any,
-      progress: 0,
-    });
+    try {
+      await createSiteTask({
+        title: newTask.title,
+        projectId: selectedProject.id,
+        project: selectedProject.name,
+        category: activeTab,
+        assignedTo: newTask.assignedTo,
+        status: newTask.status as any,
+        progress: 0,
+      });
 
-    setIsModalOpen(false);
-    setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+      toast.success("Site task created successfully!");
+      setIsModalOpen(false);
+      setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+      setErrors({});
+    } catch (error) {
+      console.error("Error creating site task:", error);
+      toast.error("Failed to create task");
+    }
   };
 
   const filteredTasks = siteTasks.filter(t => {
@@ -86,124 +108,62 @@ export default function SiteWorkPage() {
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <PageHeader 
-        title="SITE WORK" 
-        description="Track on-site execution, daily logs, and technical implementation."
-      >
-        {isViewOnly ? null : canCreate && (
-          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-blue-600 hover:bg-blue-500">
-            <Plus className="w-4 h-4" /> Create Site Task
+    <div className="space-y-6 animate-in fade-in duration-500 w-full p-4 sm:p-6">
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">SITE WORK</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">On-site Execution & Logs</p>
+        </div>
+        
+        { canCreate && (
+          <Button onClick={() => setIsModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-100 text-white">
+            <Plus className="w-4 h-4" /> New Log
           </Button>
         )}
-      </PageHeader>
+      </div>
 
-      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 w-fit shadow-sm">
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit shadow-sm">
         <button
           onClick={() => setActiveTab("Civil")}
-          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Civil" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Civil" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Civil Work
         </button>
         <button
           onClick={() => setActiveTab("Interior")}
-          className={cn("px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300", activeTab === "Interior" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Interior" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Interior Work
         </button>
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={`Create New ${activeTab} Site Task`}
-      >
-        <form onSubmit={handleAddLog} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Project</label>
-            <select 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              value={newTask.project}
-              onChange={(e) => setNewTask({...newTask, project: e.target.value})}
-              required
-            >
-              <option value="">Select Project</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Current Task / Activity</label>
-            <Input 
-              placeholder="e.g., Foundation Casting" 
-              value={newTask.title}
-              onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Assign To (Supervisor)</label>
-              <select 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                value={newTask.assignedTo[0] || ""}
-                onChange={(e) => setNewTask({...newTask, assignedTo: [e.target.value]})}
-                required
-              >
-                <option value="">Select Staff</option>
-                {siteStaff.map(s => (
-                  <option key={s._id} value={s._id}>{s.name} ({s.role?.name || s.team})</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Status</label>
-              <select 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                value={newTask.status}
-                onChange={(e) => setNewTask({...newTask, status: e.target.value})}
-              >
-                <option value="On Track">On Track</option>
-                <option value="Delayed">Delayed</option>
-                <option value="Critical">Critical</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-medium">Save Task</Button>
-          </div>
-        </form>
-      </Modal>
-
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {siteStats.map((stat) => (
-          <Card key={stat.title} className="p-6 border-slate-100 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", stat.bg)}>
-                <stat.icon className={cn("w-6 h-6", stat.color)} />
+          <Card key={stat.title} className="p-4 border-slate-100 hover:shadow-md transition-all">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", stat.bg)}>
+                <stat.icon className={cn("w-5 h-5", stat.color)} />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">{stat.title}</p>
-                <h3 className="text-2xl font-medium text-slate-900 font-mono">{stat.count}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.title}</p>
+                <h3 className="text-xl font-bold text-slate-900 font-mono leading-none mt-1">{stat.count}</h3>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-8">
-        <Card className=" border-slate-100 shadow-sm overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">
-            <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-widest">Active Site Execution - {activeTab}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                <Search className="w-4 h-4" />
+      <div className="grid gap-6">
+        <Card className=" border-slate-200 shadow-sm overflow-hidden rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-3 bg-slate-50/30">
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Execution - {activeTab}</CardTitle>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
+                <Search className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                <Filter className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
+                <Filter className="w-3.5 h-3.5" />
               </Button>
             </div>
           </CardHeader>

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { roleService, Role } from "@/services/role.service";
+import toast from "react-hot-toast";
 
 const MODULES = [
   "projects", "tasks", "office-work", "site-work", "office-team", "site-team", 
@@ -26,6 +27,8 @@ export default function RolesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -49,6 +52,7 @@ export default function RolesPage() {
   }, []);
 
   const handleOpenModal = (role: Role | null = null) => {
+    setErrors({});
     if (role) {
       setEditingRole(role);
       setFormData({
@@ -78,17 +82,29 @@ export default function RolesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Role name is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     try {
       if (editingRole) {
         await roleService.updateRole(editingRole._id, formData);
+        toast.success("Role updated successfully");
       } else {
         await roleService.createRole(formData);
+        toast.success("Role created successfully");
       }
       fetchRoles();
       setIsModalOpen(false);
+      setErrors({});
     } catch (error) {
       console.error("Error saving role:", error);
-      alert(error instanceof Error ? error.message : "Failed to save role");
+      toast.error(error instanceof Error ? error.message : "Failed to save role");
     }
   };
 
@@ -96,66 +112,57 @@ export default function RolesPage() {
     if (!confirm("Are you sure you want to delete this role?")) return;
     try {
       await roleService.deleteRole(id);
+      toast.success("Role deleted successfully");
       fetchRoles();
     } catch (error) {
       console.error("Error deleting role:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete role");
+      toast.error(error instanceof Error ? error.message : "Failed to delete role");
     }
   };
 
   return (
-    <div className="space-y-8 p-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Role Management</h1>
-          <p className="text-slate-500 mt-1 uppercase text-xs font-black tracking-widest">Define roles and granular permissions</p>
+    <div className="space-y-6 animate-in fade-in duration-500 w-full p-4 sm:p-6">
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">ROLES & PERMISSIONS</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Access Control Management</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="gap-2 rounded-2xl shadow-lg shadow-indigo-100">
-          <Plus className="w-5 h-5" />
-          Create New Role
+        
+        <Button onClick={() => handleOpenModal()} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+          <Plus className="w-4 h-4" /> New Role
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          <div className="col-span-full text-center py-10 text-slate-500 font-medium">Loading roles...</div>
-        ) : (
-          roles.map((role) => (
-            <Card key={role._id} className="p-6 border-slate-200 hover:border-indigo-300 transition-colors group">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                  <Shield className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {roles.map((role) => (
+          <Card key={role._id} className="p-4 hover:shadow-md transition-all border-slate-200 group">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                  <Shield className="w-5 h-5" />
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleOpenModal(role)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(role._id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{role.name}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Permissions:</span>
+                    <Badge variant="outline" className="text-[8px] font-black px-1.5 py-0 bg-slate-50 border-slate-100">
+                      {role.permissions?.length || 0} Modules
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-slate-900">{role.name}</h3>
-              <p className="text-sm text-slate-500 mt-1 mb-4">{role.description || "No description provided."}</p>
               
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Permissions</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {role.permissions.slice(0, 5).map(p => (
-                    <Badge key={p} variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none px-2">
-                      {p}
-                    </Badge>
-                  ))}
-                  {role.permissions.length > 5 && (
-                    <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none px-2">
-                      +{role.permissions.length - 5} more
-                    </Badge>
-                  )}
-                </div>
+              <div className="flex gap-1">
+                <button onClick={() => handleOpenModal(role)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => handleDelete(role._id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
-            </Card>
-          ))
-        )}
+            </div>
+          </Card>
+        ))}
       </div>
 
       <Modal 
@@ -163,50 +170,58 @@ export default function RolesPage() {
         onClose={() => setIsModalOpen(false)} 
         title={editingRole ? "Edit Role" : "Create New Role"}
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <label className="text-sm font-bold text-slate-700 mb-1 block">Role Name</label>
+              <label className="text-xs font-bold text-slate-700 mb-1 block">Role Name</label>
               <Input 
                 placeholder="e.g., Project Manager" 
                 value={formData.name} 
-                onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                required
+                onChange={e => {
+                  setFormData(f => ({ ...f, name: e.target.value }));
+                  if (errors.name) setErrors(prev => {
+                    const { name, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+                error={errors.name}
+                className="h-9 text-xs"
               />
             </div>
             <div>
-              <label className="text-sm font-bold text-slate-700 mb-1 block">Description</label>
+              <label className="text-xs font-bold text-slate-700 mb-1 block">Description</label>
               <Input 
                 placeholder="What does this role do?" 
                 value={formData.description} 
                 onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                className="h-9 text-xs"
               />
             </div>
             <div>
-              <label className="text-sm font-bold text-slate-700 mb-3 block">Permissions</label>
+              <label className="text-xs font-bold text-slate-700 mb-2 block">Permissions</label>
               
-              <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                 {/* Special Permissions */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">System Access</p>
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">System Access</p>
+                  <div className="grid grid-cols-2 gap-2">
                     {["all", "dashboard.view"].map(perm => (
                       <button
                         key={perm}
                         type="button"
                         onClick={() => handleTogglePermission(perm)}
-                        className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${
+                        className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${
                           formData.permissions.includes(perm)
-                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
                             : "bg-white border-slate-200 text-slate-600 hover:border-indigo-100"
                         }`}
                       >
                         {formData.permissions.includes(perm) ? (
-                          <ShieldCheck className="w-4 h-4 text-white" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
                         ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-slate-200" />
+                          <div className="w-3.5 h-3.5 rounded-full border border-slate-200" />
                         )}
-                        <span className="text-xs font-bold capitalize">{perm.replace('.', ' ')}</span>
+                        <span className="text-[10px] font-bold capitalize">{perm.replace('.', ' ')}</span>
                       </button>
                     ))}
                   </div>
@@ -214,8 +229,8 @@ export default function RolesPage() {
 
                 {/* Module Permissions */}
                 {MODULES.map(module => (
-                  <div key={module} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{module.replace('-', ' ')} Module</p>
+                  <div key={module} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">{module.replace('-', ' ')} Module</p>
                     <div className="grid grid-cols-2 gap-2">
                       {["view", "create", "edit", "delete"].map(action => {
                         const perm = `${module}.${action}`;
@@ -226,18 +241,18 @@ export default function RolesPage() {
                             type="button"
                             onClick={() => handleTogglePermission(perm)}
                             disabled={formData.permissions.includes("all")}
-                            className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
+                            className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${
                               isSelected
                                 ? "bg-indigo-50 border-indigo-200 text-indigo-700"
                                 : "bg-white border-slate-100 text-slate-500 hover:border-indigo-100"
                             } ${formData.permissions.includes("all") ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {isSelected ? (
-                              <Check className="w-3.5 h-3.5 text-indigo-600" />
+                              <Check className="w-3 h-3 text-indigo-600" />
                             ) : (
-                              <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200" />
+                              <div className="w-3 h-3 rounded-full border border-slate-200" />
                             )}
-                            <span className="text-[11px] font-medium capitalize">{action}</span>
+                            <span className="text-[10px] font-medium capitalize">{action}</span>
                           </button>
                         );
                       })}
@@ -247,7 +262,7 @@ export default function RolesPage() {
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
             <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
             <Button type="submit">
               {editingRole ? "Update Role" : "Create Role"}

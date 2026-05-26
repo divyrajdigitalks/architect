@@ -67,32 +67,32 @@ function DesignTaskCard({ task, onStatusChange }: { task: OfficeTask, onStatusCh
 
   return (
     <>
-      <Card className="p-6 space-y-4 hover:shadow-lg transition-all group border-slate-200">
+      <Card className="p-4 space-y-3 hover:shadow-md transition-all group border-slate-200">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
+          <div className="space-y-0.5">
+            <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(e.target.value as OfficeTaskStatus)}
               className={cn(
-                "text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
+                "text-[8px] px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
                 statusColors[task.status]
               )}
             >
               {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           </div>
-          <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
-            <FileText className="w-4 h-4 text-slate-400" />
+          <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+            <FileText className="w-3.5 h-3.5 text-slate-400" />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 uppercase tracking-widest font-mono">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
             <span>Progress</span>
             <span>{task.progress}%</span>
           </div>
-          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
             <div 
               className="h-full bg-indigo-600 transition-all duration-500" 
               style={{ width: `${task.progress}%` }} 
@@ -101,39 +101,39 @@ function DesignTaskCard({ task, onStatusChange }: { task: OfficeTask, onStatusCh
         </div>
 
         {task.images && task.images.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-hide">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-hide">
             {task.images.slice(0, 3).map((img, i) => (
-              <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 flex-shrink-0">
+              <div key={i} className="w-8 h-8 rounded-md overflow-hidden border border-slate-100 flex-shrink-0">
                 <img src={img} alt="Design" className="w-full h-full object-cover" />
               </div>
             ))}
             {task.images.length > 3 && (
-              <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
+              <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400">
                 +{task.images.length - 3}
               </div>
             )}
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-          <div className="flex -space-x-2">
+        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+          <div className="flex -space-x-1.5">
             {task.assignedTo && task.assignedTo.length > 0 ? (
               task.assignedTo.map((user, i) => (
-                <div key={i} className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[10px] font-medium text-indigo-600 font-mono" title={user.name}>
+                <div key={i} className="w-5 h-5 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
                   {(user.name || user)[0]}
                 </div>
               ))
             ) : (
-              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
+              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">No Staff</span>
             )}
           </div>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 text-[10px] font-medium uppercase tracking-widest gap-1 hover:text-indigo-600 p-0"
+            className="h-6 text-[8px] font-bold uppercase tracking-widest gap-1 hover:text-indigo-600 p-0"
             onClick={() => setIsPreviewOpen(true)}
           >
-            Details <ChevronRight className="w-3 h-3" />
+            Details <ChevronRight className="w-2.5 h-2.5" />
           </Button>
         </div>
       </Card>

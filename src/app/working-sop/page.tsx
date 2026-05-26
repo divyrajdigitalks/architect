@@ -81,29 +81,32 @@ export default function WorkingSOPPage() {
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white p-12 rounded-[3rem] border border-slate-200 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-2 h-full bg-indigo-600" />
-        <div className="space-y-6 max-w-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100">
-              <ClipboardList className="w-5 h-5 text-indigo-600" />
+    <div className="w-full p-4 sm:p-6 space-y-8 animate-in fade-in duration-700">
+      {/* Header Section */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-indigo-600 p-8 sm:p-12 text-white shadow-2xl shadow-indigo-200">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.2em] mb-4 border border-white/10">
+              <ClipboardList className="w-3.5 h-3.5" /> Operations Manual
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">WORKING SOP</h2>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 uppercase">Working SOP</h1>
+            <p className="text-indigo-100 text-sm font-medium leading-relaxed opacity-90">
+              Standard Operating Procedures to maintain excellence across all project phases.
+            </p>
           </div>
-          <p className="text-lg font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
-            Standard operating procedures for project workflows and site execution.
-          </p>
+          {isAdmin && (
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="rounded-xl h-12 px-6 font-black uppercase tracking-widest gap-2 bg-white text-indigo-600 hover:bg-indigo-50 shadow-xl relative z-10 border-0"
+            >
+              <Plus className="w-4 h-4" />
+              Upload SOP
+            </Button>
+          )}
         </div>
-        {isAdmin && (
-          <Button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest gap-3 shadow-xl shadow-indigo-100 relative z-10"
-          >
-            <Plus className="w-5 h-5" />
-            Upload SOP Video
-          </Button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -131,43 +134,43 @@ export default function WorkingSOPPage() {
             const canSeeAny = stageVideos.some(v => v.allowedRoles.includes(user?.role || ""));
 
             return (
-              <div key={sop.title} className="p-8 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm group hover:border-indigo-300 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <Card key={sop.title} className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm group hover:border-indigo-300 transition-all duration-500 cursor-pointer relative overflow-hidden">
                 <div className="flex items-start justify-between relative z-10">
-                  <div className={`w-14 h-14 ${sop.bg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
-                    <sop.icon className={`w-7 h-7 ${sop.color}`} />
+                  <div className={`w-12 h-12 ${sop.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
+                    <sop.icon className={`w-6 h-6 ${sop.color}`} />
                   </div>
                   {canSeeAny ? (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-indigo-600 text-[10px] font-black text-white rounded-lg uppercase tracking-widest shadow-lg shadow-indigo-100">
-                      <PlayCircle className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-600 text-[9px] font-black text-white rounded-lg uppercase tracking-widest shadow-lg shadow-indigo-100">
+                      <PlayCircle className="w-3 h-3" />
                       {stageVideos.length} Video{stageVideos.length > 1 ? 's' : ''}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 text-[10px] font-black text-slate-400 rounded-lg uppercase tracking-widest border border-slate-100">
-                      <Lock className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 text-[9px] font-black text-slate-400 rounded-lg uppercase tracking-widest border border-slate-100">
+                      <Lock className="w-3 h-3" />
                       Restricted
                     </div>
                   )}
                 </div>
-                <div className="mt-8 space-y-3 relative z-10">
-                  <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{sop.title}</h3>
-                  <p className="text-sm text-slate-500 font-medium leading-relaxed line-clamp-2">{sop.desc}</p>
+                <div className="mt-6 space-y-2 relative z-10">
+                  <h3 className="text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{sop.title}</h3>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">{sop.desc}</p>
                 </div>
                 
                 {canSeeAny && (
-                  <div className="mt-6 pt-6 border-t border-slate-50 space-y-3 relative z-10">
+                  <div className="mt-5 pt-5 border-t border-slate-50 space-y-2.5 relative z-10">
                     {stageVideos.map(v => (
                       v.allowedRoles.includes(user?.role || "") && (
                         <div key={v.id} className="flex items-center justify-between group/video">
-                          <span className="text-xs font-bold text-slate-600 group-hover/video:text-indigo-600 truncate mr-4">{v.title}</span>
-                          <PlayCircle className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                          <span className="text-[10px] font-bold text-slate-600 group-hover/video:text-indigo-600 truncate mr-4">{v.title}</span>
+                          <PlayCircle className="w-3.5 h-3.5" />
                         </div>
                       )
                     ))}
                   </div>
                 )}
                 
-                <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-50/50 rounded-full group-hover:scale-150 transition-all duration-700 -z-0" />
-              </div>
+                <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-50/50 rounded-full group-hover:scale-150 transition-all duration-700 -z-0" />
+              </Card>
             );
           })}
         </div>

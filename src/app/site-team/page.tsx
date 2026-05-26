@@ -16,7 +16,7 @@ export default function SiteTeamPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        setIsLoading(true);
+        setIsLoading(true); 
         const allStaff = await staffService.getAllStaff();
         setMembers(allStaff.filter((s) => s.team === "Site"));
       } catch (err) {
@@ -31,24 +31,24 @@ export default function SiteTeamPage() {
   const columns: Column<StaffMember>[] = [
     {
       header: "Member",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-sm font-bold text-amber-600 border border-amber-100 group-hover:bg-amber-500 group-hover:text-white transition-all">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-[10px] font-bold text-amber-600 border border-amber-100 group-hover:bg-amber-500 group-hover:text-white transition-all">
             {member.name.split(" ").map((n) => n[0]).join("")}
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-            <p className="text-[10px] font-normal text-slate-500 font-mono">{member.email}</p>
+            <p className="text-xs font-semibold text-slate-900">{member.name}</p>
+            <p className="text-[9px] font-normal text-slate-500 font-mono">{member.email}</p>
           </div>
         </div>
       ),
     },
     {
       header: "Role",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <Badge variant="outline" className="text-[10px] font-black uppercase bg-amber-50 text-amber-700 border-amber-100">
+        <Badge variant="outline" className="text-[9px] font-bold uppercase bg-amber-50 text-amber-700 border-amber-100 px-1.5 py-0">
           <HardHat className="w-3 h-3 mr-1" />
           {member.role?.name || "—"}
         </Badge>
@@ -56,20 +56,20 @@ export default function SiteTeamPage() {
     },
     {
       header: "Contact",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="flex items-center gap-2 text-slate-600">
-          <Phone className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <Phone className="w-3 h-3 text-slate-400" />
           <span className="text-xs font-mono">{member.phone || "—"}</span>
         </div>
       ),
     },
     {
       header: "Experience",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="flex items-center gap-1.5">
-          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1">
+          <Briefcase className="w-3 h-3 text-slate-400" />
           <span className="text-xs font-semibold text-slate-700 font-mono">
             {member.experience != null ? `${member.experience} yrs` : "—"}
           </span>
@@ -78,11 +78,11 @@ export default function SiteTeamPage() {
     },
     {
       header: "Status",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
         <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-          <span className="text-xs font-medium text-slate-600">{member.isActive ? "Active" : "Inactive"}</span>
+          <div className={`w-1 h-1 rounded-full ${member.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
+          <span className="text-[11px] font-medium text-slate-600">{member.isActive ? "Active" : "Inactive"}</span>
         </div>
       ),
     },
@@ -96,19 +96,19 @@ export default function SiteTeamPage() {
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Site Team</h2>
-          <p className="text-sm font-medium text-slate-500 uppercase tracking-widest mt-1">
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Site Team</h2>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mt-0.5">
             Supervisors, engineers &amp; site staff
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Input
             placeholder="Search site team..."
             icon={Search}
-            className="w-64"
+            className="w-56 h-9 text-xs"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -125,7 +125,7 @@ export default function SiteTeamPage() {
           <p className="text-slate-300 text-xs">Add staff with &quot;Site&quot; team from Staff Management.</p>
         </div>
       ) : (
-        <Card className="overflow-hidden p-0 border-slate-200">
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
           <DataTable columns={columns} data={filteredMembers} />
         </Card>
       )}

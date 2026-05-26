@@ -12,8 +12,10 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import Modal from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
+import toast from "react-hot-toast";
 
 type Project = ReturnType<typeof useProjects>["projects"][0];
 
@@ -34,6 +36,7 @@ export default function ProjectsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
@@ -151,10 +154,14 @@ export default function ProjectsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    const newErrors: Record<string, string> = {};
     
-    if (!form.clientId) {
-      alert("Please select a client for this project");
+    if (!form.name.trim()) newErrors.name = "Project name is required";
+    if (!form.clientId) newErrors.clientId = "Please select a client";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -170,43 +177,59 @@ export default function ProjectsPage() {
         stages: defaultStages,
       });
 
+      toast.success("Project created successfully!");
       if (fetchProjects) await fetchProjects();
       setForm(emptyForm);
+      setErrors({});
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error creating project:", error);
-      alert("Failed to create project");
+      toast.error("Failed to create project");
     }
   };
 
   return (
     <>
-      <div className="space-y-10 animate-in fade-in duration-500">
-        <div className="flex flex-row items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-medium text-slate-900 tracking-tight">
+      <div className="space-y-4 animate-in fade-in duration-500 w-full p-4 sm:p-6">
+        <div className="flex flex-row items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               {user?.role === "client" ? "My Project" : "Project Portfolio"}
             </h2>
-            <p className="text-sm font-medium text-slate-500 hidden sm:block">
-              {user?.role === "client" ? "Track your construction progress" : "Manage and track active construction sites"}
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+              {user?.role === "client" ? "Construction Progress" : "Active Construction Sites"}
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            {user?.role !== "client" && (
-              <div className="hidden md:block">
-                <Input placeholder="Search projects..." icon={Search} className="w-64"
-                  value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-              </div>
-            )}
-            {canAdd && (
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 font-medium">
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">Add Project</span>
-              </Button>
-            )}
+          
+          {canAdd && (
+            <Button onClick={() => setIsAddModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+              <Plus className="w-4 h-4" /> New Project
+            </Button>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input 
+              placeholder="Search projects..." 
+              className="pl-9 h-9 text-xs border-none bg-transparent focus:ring-0 shadow-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">{filteredProjects.length} Projects</span>
           </div>
         </div>
-        <DataTable columns={columns} data={filteredProjects} />
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <DataTable 
+            columns={columns} 
+            data={filteredProjects} 
+            onRowClick={(p) => window.location.href = `/projects/${p.id}`}
+          />
+        </div>
       </div>
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}
@@ -220,38 +243,37 @@ export default function ProjectsPage() {
               <Input 
                 placeholder="e.g., Modern Villa" 
                 value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
-                required 
+                onChange={e => {
+                  setForm(f => ({ ...f, name: e.target.value }));
+                  if (errors.name) setErrors(prev => {
+                    const { name, ...rest } = prev;
+                    return rest;
+                  });
+                }} 
+                error={errors.name}
               />
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 ml-1 flex items-center gap-2">
-                <UserCircle2 className="w-4 h-4 text-indigo-600" /> Select Client *
-              </label>
-              {isLoadingData ? (
-                <div className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50">
-                  Loading clients...
-                </div>
-              ) : clientStaff.length === 0 ? (
-                <div className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50">
-                  No clients found
-                </div>
-              ) : (
-                <select
-                  value={form.clientId}
-                  onChange={e => setForm(f => ({ ...f, clientId: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Select a client...</option>
-                  {clientStaff.map(client => (
-                    <option key={client._id} value={client._id}>
-                      {client.name} ({client.email})
-                    </option>
-                  ))}
-                </select>
-              )}
+              <Select
+                label="Select Client *"
+                options={clientStaff.map(c => ({
+                  value: c._id,
+                  label: c.name,
+                  description: c.email
+                }))}
+                value={form.clientId}
+                onChange={val => {
+                  setForm(f => ({ ...f, clientId: val }));
+                  if (errors.clientId) setErrors(prev => {
+                    const { clientId, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+                placeholder={isLoadingData ? "Loading clients..." : "Select a client..."}
+                disabled={isLoadingData || clientStaff.length === 0}
+                error={errors.clientId}
+              />
             </div>
           </div>
 

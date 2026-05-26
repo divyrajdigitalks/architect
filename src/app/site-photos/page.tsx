@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { sitePhotoService } from "@/services/sitePhoto.service";
+import { Select } from "@/components/ui/Select";
+import toast from "react-hot-toast";
 
 type Photo = {
   id: string;
@@ -114,12 +116,13 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
       const blob = await (await fetch(previewPhoto)).blob();
       const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
       await sitePhotoService.uploadPhotos(selectedProjectId, [file]);
+      toast.success("Photo captured and saved!");
       await refreshPhotos();
       stopCamera();
       setShowUploadModal(false);
     } catch (err) {
       console.error("Failed to upload captured photo:", err);
-      alert("Failed to upload photo.");
+      toast.error("Failed to upload photo.");
     } finally {
       setIsUploading(false);
     }
@@ -131,11 +134,12 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
     setIsUploading(true);
     try {
       await sitePhotoService.uploadPhotos(selectedProjectId, files);
+      toast.success(`${files.length} photos uploaded!`);
       await refreshPhotos();
       setShowUploadModal(false);
     } catch (err) {
       console.error("Failed to upload photos:", err);
-      alert("Failed to upload photos.");
+      toast.error("Failed to upload photos.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -143,90 +147,96 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this photo?")) return;
     try {
       await sitePhotoService.deletePhoto(id);
+      toast.success("Photo deleted");
       setPhotos(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error("Failed to delete photo:", err);
+      toast.error("Failed to delete photo");
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-row items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Site Documentation</h2>
-          <p className="text-sm font-medium text-slate-500 hidden sm:block">Visual progress tracking and site photos</p>
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Site Documentation</h2>
+          <p className="text-xs font-medium text-slate-500 hidden sm:block">Visual progress tracking and site photos</p>
         </div>
         {canUpload && (
-          <Button onClick={() => setShowUploadModal(true)} className="gap-2">
-            <Plus className="w-5 h-5" />
+          <Button size="sm" onClick={() => setShowUploadModal(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Upload Photos</span>
           </Button>
         )}
       </div>
 
       {/* Project Selector */}
-      <div className="flex gap-3 flex-wrap">
-        {filteredProjects.map(p => (
-          <button
-            key={p.id}
-            onClick={() => setSelectedProjectId(p.id)}
-            className={cn(
-              "px-5 py-2.5 rounded-2xl text-sm font-bold border transition-all",
-              selectedProjectId === p.id
-                ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100"
-                : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
-            )}
-          >
-            {p.name}
-          </button>
-        ))}
+      <div className="flex gap-2 items-center flex-wrap">
+        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">Select Project:</label>
+        <Select
+          options={filteredProjects.map(p => ({ value: p.id, label: p.name }))}
+          value={selectedProjectId}
+          onChange={setSelectedProjectId}
+          className="w-64"
+          searchable={true}
+        />
       </div>
 
       {/* Photos Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center min-h-[300px]">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {photos.map(photo => (
-            <div key={photo.id} className="aspect-square rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-sm group relative">
-              <img src={photo.src} alt="Site photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                <p className="text-white text-[10px] font-bold uppercase tracking-widest">{photo.date}</p>
-                {photo.caption && <p className="text-white/70 text-[9px]">{photo.caption}</p>}
-              </div>
-              {canUpload && (
-                <button
-                  onClick={() => handleDelete(photo.id)}
-                  className="absolute top-3 right-3 w-8 h-8 bg-red-500 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                >
-                  <Trash2 className="w-4 h-4 text-white" />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {photos.length === 0 && [1, 2, 3, 4].map(i => (
-            <div key={i} className="aspect-square bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
-              <Camera className="w-8 h-8 text-slate-300" />
-              <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No Photos</p>
-            </div>
-          ))}
-
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {/* Upload Card */}
           {canUpload && (
             <button
               onClick={() => setShowUploadModal(true)}
-              className="aspect-square bg-indigo-50 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-3 hover:bg-indigo-100 transition-all group"
+              className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group bg-white shadow-sm"
             >
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <Plus className="w-6 h-6 text-indigo-600" />
+              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                <Plus className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
               </div>
-              <p className="text-xs font-black text-indigo-600 uppercase tracking-widest">Add Photo</p>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-600">Add Photo</span>
             </button>
           )}
+
+          {photos.map(photo => (
+            <div key={photo.id} className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+              <img
+                src={photo.src}
+                alt="Site progress"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold text-white/90 uppercase tracking-wider font-mono">{photo.date}</span>
+                    {photo.caption && <span className="text-[8px] text-white/70 truncate max-w-[100px]">{photo.caption}</span>}
+                  </div>
+                  {canUpload && (
+                    <button 
+                      onClick={() => handleDelete(photo.id)}
+                      className="p-1.5 bg-red-500/20 hover:bg-red-500 text-white rounded-lg transition-colors backdrop-blur-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {photos.length === 0 && !canUpload && [1, 2, 3, 4].map(i => (
+            <div key={i} className="aspect-square bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
+              <Camera className="w-6 h-6 text-slate-300" />
+              <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">No Photos</p>
+            </div>
+          ))}
         </div>
       )}
 
@@ -242,15 +252,13 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
                 </Button>
               </div>
 
-              <div className="mb-6 space-y-2">
-                <label className="text-sm font-bold text-slate-700">Project</label>
-                <select
+              <div className="mb-6">
+                <Select
+                  label="Project"
+                  options={filteredProjects.map(p => ({ value: p.id, label: p.name }))}
                   value={selectedProjectId}
-                  onChange={e => setSelectedProjectId(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                  onChange={setSelectedProjectId}
+                />
               </div>
 
               {!cameraActive ? (

@@ -9,6 +9,7 @@ import { TasksProvider } from "@/lib/tasks-store";
 import { OfficeTasksProvider } from "@/lib/office-tasks-store";
 import { SiteTasksProvider } from "@/lib/site-tasks-store";
 import { SiteUpdatesProvider } from "@/lib/site-updates-store";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
                   <SiteTasksProvider>
                 <SiteUpdatesProvider>
                   <ClientLayout>{children}</ClientLayout>
+                  <Toaster position="top-right" />
                 </SiteUpdatesProvider>
                   </SiteTasksProvider>
                 </OfficeTasksProvider>

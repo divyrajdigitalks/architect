@@ -31,24 +31,24 @@ export default function OfficeTeamPage() {
   const columns: Column<StaffMember>[] = [
     {
       header: "Member",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-sm font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
             {member.name.split(" ").map((n) => n[0]).join("")}
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-            <p className="text-[10px] font-normal text-slate-500 font-mono">{member.email}</p>
+            <p className="text-xs font-semibold text-slate-900">{member.name}</p>
+            <p className="text-[9px] font-normal text-slate-500 font-mono">{member.email}</p>
           </div>
         </div>
       ),
     },
     {
       header: "Role",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <Badge variant="outline" className="text-[10px] font-black uppercase bg-indigo-50 text-indigo-600 border-indigo-100">
+        <Badge variant="outline" className="text-[9px] font-bold uppercase bg-indigo-50 text-indigo-600 border-indigo-100 px-1.5 py-0">
           <Shield className="w-3 h-3 mr-1" />
           {member.role?.name || "—"}
         </Badge>
@@ -56,26 +56,26 @@ export default function OfficeTeamPage() {
     },
     {
       header: "Contact",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-slate-600">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1 text-slate-600">
             <Phone className="w-3 h-3 text-slate-400" />
-            <span className="text-xs font-mono">{member.phone || "—"}</span>
+            <span className="text-[10px] font-mono">{member.phone || "—"}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-500">
+          <div className="flex items-center gap-1 text-slate-500">
             <Mail className="w-3 h-3 text-slate-400" />
-            <span className="text-xs font-mono truncate max-w-[140px]">{member.email}</span>
+            <span className="text-[10px] font-mono truncate max-w-[120px]">{member.email}</span>
           </div>
         </div>
       ),
     },
     {
       header: "Experience",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
-        <div className="flex items-center gap-1.5">
-          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1">
+          <Briefcase className="w-3 h-3 text-slate-400" />
           <span className="text-xs font-semibold text-slate-700 font-mono">
             {member.experience != null ? `${member.experience} yrs` : "—"}
           </span>
@@ -84,11 +84,11 @@ export default function OfficeTeamPage() {
     },
     {
       header: "Status",
-      className: "py-4 px-6",
+      className: "py-3 px-4",
       render: (member) => (
         <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-          <span className="text-xs font-medium text-slate-600">{member.isActive ? "Active" : "Inactive"}</span>
+          <div className={`w-1 h-1 rounded-full ${member.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
+          <span className="text-[11px] font-medium text-slate-600">{member.isActive ? "Active" : "Inactive"}</span>
         </div>
       ),
     },
@@ -102,19 +102,19 @@ export default function OfficeTeamPage() {
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Office Team</h2>
-          <p className="text-sm font-medium text-slate-500 uppercase tracking-widest mt-1">
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Office Team</h2>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mt-0.5">
             Architects, designers &amp; office staff
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Input
             placeholder="Search office team..."
             icon={Search}
-            className="w-64"
+            className="w-56 h-9 text-xs"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -131,7 +131,7 @@ export default function OfficeTeamPage() {
           <p className="text-slate-300 text-xs">Add staff with &quot;Office&quot; team from Staff Management.</p>
         </div>
       ) : (
-        <Card className="overflow-hidden p-0 border-slate-200">
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
           <DataTable columns={columns} data={filteredMembers} />
         </Card>
       )}

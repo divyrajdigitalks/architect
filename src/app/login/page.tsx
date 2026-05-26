@@ -16,6 +16,7 @@ import {
 
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -24,7 +25,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [isGuest, setIsGuest] = useState(false);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Email → Role Mapping
   const roleCredentials: Record<string, string> = {
@@ -39,21 +41,49 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setErrors({});
+
+    const newErrors: Record<string, string> = {};
+
+    if (isGuest) {
+      if (!mobile.trim()) {
+        newErrors.mobile = "Mobile number is required";
+      } else if (mobile.length < 10) {
+        newErrors.mobile = "Please enter a valid 10-digit mobile number";
+      }
+    } else {
+      if (!email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+      
+      if (!password.trim()) {
+        newErrors.password = "Password is required";
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields correctly");
+      return;
+    }
+
+    setIsLoading(true);
+    const loginToast = toast.loading(isGuest ? "Accessing ArchiSite..." : "Signing you in...");
 
     try {
       if (isGuest) {
-        if (mobile.length < 10) {
-          setError("Please enter a valid mobile number.");
-          return;
-        }
         await login("", "", true, mobile);
-        return;
+      } else {
+        await login(email, password);
       }
-
-      await login(email, password);
+      toast.success("Welcome to ArchiSite!", { id: loginToast });
     } catch (err: any) {
-      setError(err.message || "Invalid email or password.");
+      console.error("Login error:", err);
+      toast.error(err.message || "Invalid credentials. Please try again.", { id: loginToast });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -172,10 +202,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
-                )}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-slate-700">Mobile Number</label>
                   <div className="relative">
@@ -184,21 +211,31 @@ export default function LoginPage() {
                       type="tel"
                       placeholder="+91 98765 43210"
                       value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                      onChange={(e) => {
+                        setMobile(e.target.value);
+                        if (errors.mobile) setErrors(prev => {
+                          const { mobile, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                      className={cn(
+                        "w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm font-mono focus:outline-none transition-all placeholder:text-slate-300",
+                        errors.mobile ? "border-red-500 focus:ring-2 focus:ring-red-500/10" : "border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                      )}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 pl-1">No account needed — just your number to continue</p>
+                  {errors.mobile && <p className="text-[10px] font-bold text-red-500 pl-1">{errors.mobile}</p>}
+                  {!errors.mobile && <p className="text-[11px] text-slate-400 pl-1">No account needed — just your number to continue</p>}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 group"
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 group"
                 >
                   <Eye className="w-4 h-4" />
-                  Explore ArchiSite
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  {isLoading ? "Accessing..." : "Explore ArchiSite"}
+                  {!isLoading && <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
                 </button>
               </form>
 
@@ -217,10 +254,7 @@ export default function LoginPage() {
                 <p className="text-sm text-slate-500">Sign in to your ArchiSite workspace</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <p className="text-red-500 text-xs font-medium text-center bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
-                )}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-slate-700">Work Email</label>
                   <div className="relative">
@@ -229,11 +263,20 @@ export default function LoginPage() {
                       type="email"
                       placeholder="name@company.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors(prev => {
+                          const { email, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                      className={cn(
+                        "w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm focus:outline-none transition-all placeholder:text-slate-300",
+                        errors.email ? "border-red-500 focus:ring-2 focus:ring-red-500/10" : "border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                      )}
                     />
                   </div>
+                  {errors.email && <p className="text-[10px] font-bold text-red-500 pl-1">{errors.email}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -246,19 +289,29 @@ export default function LoginPage() {
                       type="password"
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errors.password) setErrors(prev => {
+                          const { password, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                      className={cn(
+                        "w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm focus:outline-none transition-all placeholder:text-slate-300",
+                        errors.password ? "border-red-500 focus:ring-2 focus:ring-red-500/10" : "border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                      )}
                     />
                   </div>
+                  {errors.password && <p className="text-[10px] font-bold text-red-500 pl-1">{errors.password}</p>}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl transition-all group"
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all group"
                 >
-                  Sign In
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  {isLoading ? "Signing in..." : "Sign In"}
+                  {!isLoading && <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
                 </button>
               </form>
 
