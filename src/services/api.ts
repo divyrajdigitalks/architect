@@ -1,5 +1,4 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 async function getHeaders() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers: HeadersInit = {
@@ -21,12 +20,19 @@ export const api = {
     return handleResponse<T>(response);
   },
 
-  async post<T>(endpoint: string, body: any): Promise<T> {
-    const headers = await getHeaders();
+  async post<T>(endpoint: string, body: any, options: { headers?: any } = {}): Promise<T> {
+    const defaultHeaders = await getHeaders();
+    
+    // If body is FormData, don't set Content-Type header manually, let the browser do it with the boundary
+    const headers = { ...defaultHeaders, ...options.headers };
+    if (body instanceof FormData) {
+      delete headers["Content-Type"];
+    }
+
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     });
     return handleResponse<T>(response);
   },
@@ -46,6 +52,19 @@ export const api = {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "DELETE",
       headers,
+    });
+    return handleResponse<T>(response);
+  },
+
+  async upload<T>(endpoint: string, formData: FormData): Promise<T> {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const headers: HeadersInit = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    // No Content-Type — browser sets multipart/form-data with boundary automatically
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers,
+      body: formData,
     });
     return handleResponse<T>(response);
   },

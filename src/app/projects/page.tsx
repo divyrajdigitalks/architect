@@ -66,11 +66,26 @@ export default function ProjectsPage() {
   });
 
   const filteredProjects = projects.filter((p: any) => {
-    const match =
+    const searchQueryMatch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.client?.toLowerCase().includes(searchQuery.toLowerCase());
-    if (user?.role === "client") return match && p.id === user.projectId;
-    return match;
+    
+    // Role based filtering
+    if (user?.role === "director" || user?.role === "architect" || user?.role === "admin") {
+      return searchQueryMatch;
+    }
+
+    if (user?.role === "client") {
+      return searchQueryMatch && p.id === user.projectId;
+    }
+
+    // Designer or other staff - only show projects where they are assigned to at least one task
+    // or assigned as a designer/worker on the project itself
+    const isAssignedOnProject = 
+      p.designer?._id === user?.id || 
+      p.workers?.some((w: any) => (w._id || w) === user?.id);
+    
+    return searchQueryMatch && isAssignedOnProject;
   });
 
   const canAdd = user?.role === "architect" || user?.role === "director";

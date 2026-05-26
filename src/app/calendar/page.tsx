@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 
 import { useAuth } from "@/lib/auth-context";
+import { calendarEvents } from "@/lib/dummy-data";
 
 export default function CalendarPage() {
   const { user } = useAuth();

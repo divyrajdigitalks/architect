@@ -1,31 +1,35 @@
 "use client";
 
-import { projects } from "@/lib/dummy-data";
-import { Camera, Plus, MapPin, Upload, X, Image as ImageIcon, Video } from "lucide-react";
+import { Camera, Plus, Upload, X, Image as ImageIcon, Video, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/lib/auth-context";
+import { useProjects } from "@/lib/projects-store";
+import { sitePhotoService } from "@/services/sitePhoto.service";
 
 type Photo = {
   id: string;
   src: string;
-  project: string;
+  caption?: string;
   date: string;
-  type: "camera" | "gallery";
 };
 
-export default function SitePhotosPage() {
+export default function SitePhotosPage({ searchParams }: { searchParams: any }) {
+  const resolvedSearchParams = searchParams instanceof Promise ? use(searchParams) : searchParams;
+  const initialProjectId = resolvedSearchParams?.projectId;
+
   const { user } = useAuth();
+  const { projects, isHydrated: projectsHydrated } = useProjects();
+
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || "");
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [selectedProject, setSelectedProject] = useState(
-    user?.role === "client" ? (projects.find(p => p.id === user.projectId)?.name || projects[0].name) : projects[0].name
-  );
+  const [isLoading, setIsLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -37,20 +41,51 @@ export default function SitePhotosPage() {
     ? projects.filter(p => p.id === user.projectId)
     : projects;
 
-  const projectPhotos = photos.filter(p => p.project === selectedProject);
+  // Set default project
+  useEffect(() => {
+    if (projectsHydrated && projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(user?.role === "client" && user.projectId ? user.projectId : projects[0].id);
+    }
+  }, [projectsHydrated, projects, user, selectedProjectId]);
 
-  // Start live camera
+  // Fetch photos when project changes
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    setIsLoading(true);
+    sitePhotoService.getPhotosByProject(selectedProjectId)
+      .then((data: any) => {
+        const mapped = (data || []).map((p: any) => ({
+          id: p._id || p.id,
+          src: p.fileUrl,
+          caption: p.caption,
+          date: new Date(p.createdAt || p.date).toLocaleDateString(),
+        }));
+        setPhotos(mapped);
+      })
+      .catch(err => console.error("Failed to fetch photos", err))
+      .finally(() => setIsLoading(false));
+  }, [selectedProjectId]);
+
+  const refreshPhotos = async () => {
+    if (!selectedProjectId) return;
+    const data: any = await sitePhotoService.getPhotosByProject(selectedProjectId);
+    setPhotos((data || []).map((p: any) => ({
+      id: p._id || p.id,
+      src: p.fileUrl,
+      caption: p.caption,
+      date: new Date(p.createdAt || p.date).toLocaleDateString(),
+    })));
+  };
+
+  // Camera
   const startCamera = async () => {
     setCameraError("");
     setCameraActive(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err) {
+      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
+    } catch {
       setCameraError("Camera access denied. Please allow camera permission.");
       setCameraActive(false);
     }
@@ -69,43 +104,51 @@ export default function SitePhotosPage() {
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg");
-    setPreviewPhoto(dataUrl);
+    setPreviewPhoto(canvas.toDataURL("image/jpeg"));
   };
 
-  const saveCapture = () => {
+  const saveCapture = async () => {
     if (!previewPhoto) return;
-    const newPhoto: Photo = {
-      id: String(Date.now()),
-      src: previewPhoto,
-      project: selectedProject,
-      date: new Date().toLocaleDateString(),
-      type: "camera",
-    };
-    setPhotos(prev => [newPhoto, ...prev]);
-    stopCamera();
-    setShowUploadModal(false);
+    setIsUploading(true);
+    try {
+      const blob = await (await fetch(previewPhoto)).blob();
+      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
+      await sitePhotoService.uploadPhotos(selectedProjectId, [file]);
+      await refreshPhotos();
+      stopCamera();
+      setShowUploadModal(false);
+    } catch (err) {
+      console.error("Failed to upload captured photo:", err);
+      alert("Failed to upload photo.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  // Gallery upload
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const newPhoto: Photo = {
-          id: String(Date.now() + Math.random()),
-          src: ev.target?.result as string,
-          project: selectedProject,
-          date: new Date().toLocaleDateString(),
-          type: "gallery",
-        };
-        setPhotos(prev => [newPhoto, ...prev]);
-      };
-      reader.readAsDataURL(file);
-    });
-    setShowUploadModal(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!files.length) return;
+    setIsUploading(true);
+    try {
+      await sitePhotoService.uploadPhotos(selectedProjectId, files);
+      await refreshPhotos();
+      setShowUploadModal(false);
+    } catch (err) {
+      console.error("Failed to upload photos:", err);
+      alert("Failed to upload photos.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await sitePhotoService.deletePhoto(id);
+      setPhotos(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error("Failed to delete photo:", err);
+    }
   };
 
   return (
@@ -128,10 +171,10 @@ export default function SitePhotosPage() {
         {filteredProjects.map(p => (
           <button
             key={p.id}
-            onClick={() => setSelectedProject(p.name)}
+            onClick={() => setSelectedProjectId(p.id)}
             className={cn(
               "px-5 py-2.5 rounded-2xl text-sm font-bold border transition-all",
-              selectedProject === p.name
+              selectedProjectId === p.id
                 ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100"
                 : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
             )}
@@ -142,37 +185,50 @@ export default function SitePhotosPage() {
       </div>
 
       {/* Photos Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {projectPhotos.map(photo => (
-          <div key={photo.id} className="aspect-square rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-sm group relative">
-            <img src={photo.src} alt="Site photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-              <p className="text-white text-[10px] font-bold uppercase tracking-widest">{photo.date}</p>
-              <p className="text-white/70 text-[9px] font-bold uppercase">{photo.type === "camera" ? "📷 Live" : "🖼 Gallery"}</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {photos.map(photo => (
+            <div key={photo.id} className="aspect-square rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-sm group relative">
+              <img src={photo.src} alt="Site photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                <p className="text-white text-[10px] font-bold uppercase tracking-widest">{photo.date}</p>
+                {photo.caption && <p className="text-white/70 text-[9px]">{photo.caption}</p>}
+              </div>
+              {canUpload && (
+                <button
+                  onClick={() => handleDelete(photo.id)}
+                  className="absolute top-3 right-3 w-8 h-8 bg-red-500 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                >
+                  <Trash2 className="w-4 h-4 text-white" />
+                </button>
+              )}
             </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Empty placeholders */}
-        {projectPhotos.length === 0 && [1, 2, 3, 4].map(i => (
-          <div key={i} className="aspect-square bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
-            <Camera className="w-8 h-8 text-slate-300" />
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No Photos</p>
-          </div>
-        ))}
-
-        {canUpload && (
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="aspect-square bg-indigo-50 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-3 hover:bg-indigo-100 transition-all group"
-          >
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-indigo-600" />
+          {photos.length === 0 && [1, 2, 3, 4].map(i => (
+            <div key={i} className="aspect-square bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
+              <Camera className="w-8 h-8 text-slate-300" />
+              <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No Photos</p>
             </div>
-            <p className="text-xs font-black text-indigo-600 uppercase tracking-widest">Add Photo</p>
-          </button>
-        )}
-      </div>
+          ))}
+
+          {canUpload && (
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="aspect-square bg-indigo-50 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-3 hover:bg-indigo-100 transition-all group"
+            >
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <Plus className="w-6 h-6 text-indigo-600" />
+              </div>
+              <p className="text-xs font-black text-indigo-600 uppercase tracking-widest">Add Photo</p>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
@@ -186,24 +242,23 @@ export default function SitePhotosPage() {
                 </Button>
               </div>
 
-              {/* Project select */}
               <div className="mb-6 space-y-2">
                 <label className="text-sm font-bold text-slate-700">Project</label>
                 <select
-                  value={selectedProject}
-                  onChange={e => setSelectedProject(e.target.value)}
+                  value={selectedProjectId}
+                  onChange={e => setSelectedProjectId(e.target.value)}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {filteredProjects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                  {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
 
               {!cameraActive ? (
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Live Camera */}
                   <button
                     onClick={startCamera}
-                    className="flex flex-col items-center justify-center gap-4 p-8 bg-indigo-50 rounded-[2rem] border-2 border-indigo-100 hover:bg-indigo-100 hover:border-indigo-300 transition-all group"
+                    disabled={isUploading}
+                    className="flex flex-col items-center justify-center gap-4 p-8 bg-indigo-50 rounded-[2rem] border-2 border-indigo-100 hover:bg-indigo-100 hover:border-indigo-300 transition-all group disabled:opacity-50"
                   >
                     <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
                       <Video className="w-8 h-8 text-white" />
@@ -214,16 +269,16 @@ export default function SitePhotosPage() {
                     </div>
                   </button>
 
-                  {/* Gallery Upload */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center gap-4 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hover:bg-slate-100 hover:border-slate-300 transition-all group"
+                    disabled={isUploading}
+                    className="flex flex-col items-center justify-center gap-4 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hover:bg-slate-100 hover:border-slate-300 transition-all group disabled:opacity-50"
                   >
                     <div className="w-16 h-16 bg-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <ImageIcon className="w-8 h-8 text-white" />
+                      {isUploading ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <ImageIcon className="w-8 h-8 text-white" />}
                     </div>
                     <div className="text-center">
-                      <p className="font-black text-slate-900">Gallery</p>
+                      <p className="font-black text-slate-900">{isUploading ? "Uploading..." : "Gallery"}</p>
                       <p className="text-xs text-slate-500 mt-1">Choose from device</p>
                     </div>
                   </button>
@@ -231,15 +286,15 @@ export default function SitePhotosPage() {
               ) : (
                 <div className="space-y-4">
                   {cameraError ? (
-                    <div className="p-4 bg-red-50 rounded-2xl border border-red-200 text-red-600 text-sm font-medium text-center">
-                      {cameraError}
-                    </div>
+                    <div className="p-4 bg-red-50 rounded-2xl border border-red-200 text-red-600 text-sm font-medium text-center">{cameraError}</div>
                   ) : previewPhoto ? (
                     <div className="space-y-4">
                       <img src={previewPhoto} alt="Preview" className="w-full rounded-2xl border border-slate-200" />
                       <div className="flex gap-3">
                         <Button variant="outline" className="flex-1" onClick={() => setPreviewPhoto(null)}>Retake</Button>
-                        <Button className="flex-1" onClick={saveCapture}>Save Photo</Button>
+                        <Button className="flex-1" onClick={saveCapture} disabled={isUploading}>
+                          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Photo"}
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -248,8 +303,7 @@ export default function SitePhotosPage() {
                       <div className="flex gap-3">
                         <Button variant="outline" className="flex-1" onClick={stopCamera}>Cancel</Button>
                         <Button className="flex-1 gap-2" onClick={capturePhoto}>
-                          <Camera className="w-5 h-5" />
-                          Capture
+                          <Camera className="w-5 h-5" /> Capture
                         </Button>
                       </div>
                     </div>
@@ -261,15 +315,7 @@ export default function SitePhotosPage() {
         </div>
       )}
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleGalleryUpload}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} />
     </div>
   );
 }

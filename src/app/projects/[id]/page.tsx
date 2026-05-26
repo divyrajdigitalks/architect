@@ -22,10 +22,11 @@ import {
   ArrowUpRight,
   Plus,
   PenTool,
-  Hammer
+  Hammer,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, use, useEffect } from "react";
+import { useState, use, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
@@ -37,6 +38,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
 import { ExecutionModule } from "@/components/projects/ExecutionModule";
+import { sitePhotoService } from "@/services/sitePhoto.service";
 import {
   Table,
   TableBody,
@@ -61,9 +63,62 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const project = getProjectById(id);
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
   const [stages, setStages] = useState(project?.stages ?? []);
+  const [projectPhotos, setProjectPhotos] = useState<{ id: string; url: string; date: string }[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (project) setStages(project.stages);
   }, [project]);
+
+  useEffect(() => {
+    if (activeTab === "photos" && project) {
+      setPhotosLoading(true);
+      sitePhotoService.getPhotosByProject(project.id)
+        .then((data: any) => {
+          setProjectPhotos((data || []).map((p: any) => ({
+            id: p._id || p.id,
+            url: p.fileUrl,
+            date: new Date(p.createdAt || p.date).toLocaleDateString(),
+          })));
+        })
+        .catch(console.error)
+        .finally(() => setPhotosLoading(false));
+    }
+  }, [activeTab, project]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !project) return;
+    setIsUploading(true);
+    try {
+      await sitePhotoService.uploadPhotos(project.id, files);
+      const data: any = await sitePhotoService.getPhotosByProject(project.id);
+      setProjectPhotos((data || []).map((p: any) => ({
+        id: p._id || p.id,
+        url: p.fileUrl,
+        date: new Date(p.createdAt || p.date).toLocaleDateString(),
+      })));
+      setShowPhotoUpload(false);
+    } catch (err) {
+      console.error("Upload failed", err);
+      alert("Failed to upload photos.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    try {
+      await sitePhotoService.deletePhoto(photoId);
+      setProjectPhotos(prev => prev.filter(p => p.id !== photoId));
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
 
   if (!project) {
     return (
@@ -94,7 +149,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   );
 
   // Combine Office and Site tasks for the Tasks tab
-  // Also include projectSpecificTasks from the global tasks API
   const projectTasks = [
     ...projectOfficeTasks.map(t => ({
       id: t.id,
@@ -114,7 +168,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
       type: "Site" as const,
       deadline: t.endDate
     }))
-  ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i); // Remove duplicates
+  ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
   const projectUpdates = allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
   
   // Extract all unique assigned staff from office, site and global tasks
@@ -471,33 +526,53 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         {activeTab === "photos" && (
           <div className="space-y-6">
             <div className="flex justify-end">
-              <Link href="/site-photos">
-                <button className="px-6 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2">
-                  <Camera className="w-4 h-4" />
-                  Upload Photos
-                </button>
-              </Link>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" />
+                {isUploading ? "Uploading..." : "Upload Photos"}
+              </button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="aspect-square bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 group hover:border-indigo-300 hover:bg-indigo-50 transition-all cursor-pointer relative overflow-hidden">
-                  <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
-                  <Camera className="w-10 h-10 text-slate-300 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-500" />
-                  <div className="text-center">
-                    <p className="text-xs font-black text-slate-400 group-hover:text-indigo-600 uppercase tracking-widest">Site Photo #{i}</p>
-                    <p className="text-[9px] font-bold text-slate-300 group-hover:text-indigo-400 uppercase tracking-widest mt-1">Mar 12, 2024</p>
-                  </div>
+              {photosLoading ? (
+                <div className="col-span-4 flex items-center justify-center py-20">
+                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                 </div>
-              ))}
-              <Link href="/site-photos">
-                <button className="aspect-square w-full bg-indigo-50 rounded-[2.5rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-4 group hover:bg-indigo-100 transition-all">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Plus className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <p className="text-xs font-black text-indigo-600 uppercase tracking-widest">Upload Photos</p>
-                </button>
-              </Link>
+              ) : (
+                <>
+                  {projectPhotos.map((photo) => (
+                    <div key={photo.id} className="aspect-square bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 shadow-sm group hover:border-indigo-300 transition-all cursor-pointer relative overflow-hidden">
+                      <img src={photo.url} alt="Project photo" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <p className="text-white text-[10px] font-black uppercase tracking-widest">{photo.date}</p>
+                        <a href={photo.url} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-white text-indigo-600 rounded-full text-[9px] font-bold uppercase tracking-widest">View Full</a>
+                        <button onClick={() => handleDeletePhoto(photo.id)} className="px-4 py-1.5 bg-red-500 text-white rounded-full text-[9px] font-bold uppercase tracking-widest">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {projectPhotos.length === 0 && [1, 2, 3].map((i) => (
+                    <div key={i} className="aspect-square bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4">
+                      <Camera className="w-10 h-10 text-slate-200" />
+                      <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">No Photos</p>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square w-full bg-indigo-50 rounded-[2.5rem] border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-4 group hover:bg-indigo-100 transition-all"
+                  >
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <Plus className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <p className="text-xs font-black text-indigo-600 uppercase tracking-widest">Upload Photos</p>
+                  </button>
+                </>
+              )}
             </div>
+            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
           </div>
         )}
       </div>

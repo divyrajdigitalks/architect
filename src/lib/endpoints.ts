@@ -48,6 +48,10 @@ export interface EndPointApi {
   tasks: string;
   taskById: (id: string) => string;
   tasksByProject: (projectId: string) => string;
+
+  // Site Photos
+  sitePhotos: string;
+  sitePhotoById: (id: string) => string;
 }
 
 const endPointApi: EndPointApi = {
@@ -97,6 +101,10 @@ const endPointApi: EndPointApi = {
   tasks: "/tasks",
   taskById: (id: string) => `/tasks/${id}`,
   tasksByProject: (projectId: string) => `/tasks?project=${projectId}`,
+
+  // Site Photos
+  sitePhotos: "/site-photos",
+  sitePhotoById: (id: string) => `/site-photos/${id}`,
 };
 
 export default endPointApi;

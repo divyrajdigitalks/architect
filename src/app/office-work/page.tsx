@@ -14,16 +14,20 @@ import { useOfficeTasks, OfficeTaskCategory } from "@/lib/office-tasks-store";
 import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
 import { cn } from "@/lib/utils";
+import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
 
 export default function OfficeWorkPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
-  const { officeTasks, createOfficeTask } = useOfficeTasks();
+  const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
+  const isViewOnly = user?.role === "architect" || user?.role === "director";
+  const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus } = useOfficeTasks();
   const { projects } = useProjects();
   
   const [activeTab, setActiveTab] = useState<OfficeTaskCategory>("Civil");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [noteValues, setNoteValues] = useState<Record<string, string>>({});
   
   const [newTask, setNewTask] = useState({
     title: "",
@@ -65,7 +69,14 @@ export default function OfficeWorkPage() {
     setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
   };
 
-  const filteredTasks = officeTasks.filter(t => t.category === activeTab);
+  const filteredTasks = officeTasks.filter(t => {
+    const isCategory = t.category === activeTab;
+    if (!canCreate) {
+      const isAssigned = t.assignedTo?.some((s: any) => (s._id || s.id || s) === user?.id);
+      return isCategory && isAssigned;
+    }
+    return isCategory;
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -73,7 +84,7 @@ export default function OfficeWorkPage() {
         title="OFFICE WORK" 
         description="Manage designs, documentation, and office-side project coordination."
       >
-        {isAdmin && (
+        {isViewOnly ? null : canCreate && (
           <Button onClick={() => setIsModalOpen(true)} className="rounded-xl font-medium gap-2 bg-indigo-600 hover:bg-indigo-500">
             <Plus className="w-4 h-4" /> New Office Task
           </Button>
@@ -208,58 +219,140 @@ export default function OfficeWorkPage() {
                   </TableRow>
                 )}
                 {filteredTasks.map((task) => (
-                  <TableRow key={task.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <TableCell className="px-6 py-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-slate-900">{task.title}</p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={task.priority === "High" || task.priority === "Critical" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
-                            {task.priority || "Medium"}
-                          </Badge>
-                          <span className="text-[10px] text-slate-400 font-medium font-mono">ID: {task.id.slice(-6)}</span>
+                  <>
+                    <TableRow 
+                      key={task.id} 
+                      className={cn(
+                        "hover:bg-slate-50/50 transition-colors group cursor-pointer",
+                        expandedTaskId === task.id && "bg-slate-50"
+                      )}
+                      onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                    >
+                      <TableCell className="px-6 py-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-slate-900">{task.title}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={task.priority === "High" || task.priority === "Critical" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
+                              {task.priority || "Medium"}
+                            </Badge>
+                            <span className="text-[10px] text-slate-400 font-medium font-mono">ID: {task.id.slice(-6)}</span>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="space-y-2 max-w-[150px]">
-                        <div className="flex justify-between items-center text-[10px] font-bold">
-                          <span className={cn(
-                            "uppercase tracking-widest",
-                            task.status === "Completed" ? "text-green-600" :
-                            task.status === "In Progress" ? "text-blue-600" : "text-slate-500"
-                          )}>{task.status}</span>
-                          <span className="text-slate-500 font-mono">{task.progress}%</span>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <div className="space-y-2 max-w-[150px]">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className={cn(
+                              "uppercase tracking-widest",
+                              task.status === "Completed" ? "text-green-600" :
+                              task.status === "In Progress" ? "text-blue-600" : "text-slate-500"
+                            )}>{task.status}</span>
+                            <span className="text-slate-500 font-mono">{task.progress}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-indigo-600 transition-all duration-500" 
+                              style={{ width: `${task.progress}%` }} 
+                            />
+                          </div>
                         </div>
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-indigo-600 transition-all duration-500" 
-                            style={{ width: `${task.progress}%` }} 
-                          />
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <div className="flex -space-x-2">
+                          {task.assignedTo && task.assignedTo.length > 0 ? (
+                            task.assignedTo.map((user, i) => (
+                              <div key={i} className="w-12 h-12 rounded-xl bg-indigo-100 border-2 border-white flex items-center justify-center text-xs font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
+                                {(user.name || user)}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
+                          )}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex -space-x-2">
-                        {task.assignedTo && task.assignedTo.length > 0 ? (
-                          task.assignedTo.map((user, i) => (
-                            <div key={i} className="w-8 h-8 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-xs font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
-                              {(user.name || user)[0]}
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-right">
+                        <Button variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-indigo-600 text-white" : "text-slate-400")}>
+                          <ArrowRight className={cn("w-4 h-4 transition-transform", expandedTaskId === task.id && "rotate-90")} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {expandedTaskId === task.id && (
+                      <TableRow className="bg-slate-50/30 border-b border-slate-100">
+                        <TableCell colSpan={5} className="p-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-4">
+                              {!isViewOnly && (
+                                <>
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Update Task Status</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {["Pending", "In Progress", "Completed"].map((status) => (
+                                      <Button
+                                        key={status}
+                                        variant={task.status === status ? "default" : "outline"}
+                                        size="sm"
+                                        className="rounded-xl text-[10px] h-8"
+                                        onClick={() => updateOfficeTaskStatus(task.id, status as any)}
+                                      >
+                                        {status}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                              <div className="pt-2">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4>
+                                {isViewOnly ? (
+                                  <p className="text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-100 shadow-sm italic">
+                                    {task.notes || "No notes available for this task."}
+                                  </p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      className="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
+                                      rows={3}
+                                      placeholder="Add notes..."
+                                      value={noteValues[task.id] ?? (task.notes || "")}
+                                      onChange={(e) => setNoteValues(prev => ({ ...prev, [task.id]: e.target.value }))}
+                                    />
+                                    <Button
+                                      size="sm"
+                                      className="rounded-xl text-[10px] h-8 bg-indigo-600 hover:bg-indigo-500"
+                                      onClick={() => updateOfficeTask(task.id, { notes: noteValues[task.id] ?? task.notes })}
+                                    >
+                                      Save Notes
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          ))
-                        ) : (
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:bg-white group-hover:text-indigo-600 shadow-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Design Photos</h4>
+                              {isViewOnly ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {(task.images || []).length === 0 && <p className="text-xs text-slate-400 italic">No photos uploaded.</p>}
+                                  {(task.images || []).map((url, i) => (
+                                    <a key={i} href={url} target="_blank" rel="noreferrer" className="w-16 h-16 rounded-lg overflow-hidden border border-slate-200 block">
+                                      <img src={url} alt={`img-${i}`} className="w-full h-full object-cover" />
+                                    </a>
+                                  ))}
+                                </div>
+                              ) : (
+                                <TaskImageUpload
+                                  taskId={task.id}
+                                  type="Office"
+                                  existingImages={task.images}
+                                  onUploadComplete={() => console.log("Upload finished!")}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))}
               </TableBody>
             </Table>

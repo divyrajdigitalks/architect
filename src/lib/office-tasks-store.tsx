@@ -18,6 +18,7 @@ export type OfficeTask = {
   deadline?: string;
   priority?: string;
   notes?: string;
+  images?: string[];
   createdAt?: string;
 };
 
