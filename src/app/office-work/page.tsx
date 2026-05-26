@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -219,7 +219,7 @@ export default function OfficeWorkPage() {
                   </TableRow>
                 )}
                 {filteredTasks.map((task) => (
-                  <>
+                  <Fragment key={task.id}>
                     <TableRow 
                       key={task.id} 
                       className={cn(
@@ -352,7 +352,7 @@ export default function OfficeWorkPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>

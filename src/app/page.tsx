@@ -107,9 +107,9 @@ function ArchitectDashboard({ role = "architect" }: { role?: string }) {
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center text-[9px] font-medium text-primary-600 border border-primary-100">
-                        {task.officeTeam.split(' ').map(n => n[0]).join('')}
+                        {(task.officeTeam || "").split(' ').map((n: string) => n[0]).join('')}
                       </div>
-                      <span className="text-xs font-medium text-slate-600">{task.officeTeam}</span>
+                      <span className="text-xs font-medium text-slate-600">{task.officeTeam || "—"}</span>
                     </div>
                     <span className="text-[10px] font-medium text-slate-400 font-mono">{task.deadline}</span>
                   </div>
