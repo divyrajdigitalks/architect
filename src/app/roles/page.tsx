@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { roleService, Role } from "@/services/role.service";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 const MODULES = [
@@ -26,6 +27,8 @@ export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -108,12 +111,14 @@ export default function RolesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this role?")) return;
+  const handleDelete = async () => {
+    if (!roleToDelete) return;
     try {
-      await roleService.deleteRole(id);
+      await roleService.deleteRole(roleToDelete);
       toast.success("Role deleted successfully");
       fetchRoles();
+      setIsConfirmOpen(false);
+      setRoleToDelete(null);
     } catch (error) {
       console.error("Error deleting role:", error);
       toast.error(error instanceof Error ? error.message : "Failed to delete role");
@@ -156,7 +161,10 @@ export default function RolesPage() {
                 <button onClick={() => handleOpenModal(role)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => handleDelete(role._id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                <button onClick={() => {
+                  setRoleToDelete(role._id);
+                  setIsConfirmOpen(true);
+                }} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -165,11 +173,15 @@ export default function RolesPage() {
         ))}
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={editingRole ? "Edit Role" : "Create New Role"}
-      >
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Role"
+        message="Are you sure you want to delete this role? This might affect users assigned to this role."
+      />
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingRole ? "Edit Role" : "Create New Role"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-3">
             <div>

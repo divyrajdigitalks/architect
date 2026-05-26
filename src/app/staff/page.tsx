@@ -11,6 +11,7 @@ import Modal from "@/components/ui/Modal";
 import { staffService, StaffMember } from "@/services/staff.service";
 import { roleService, Role } from "@/services/role.service";
 import { Select } from "@/components/ui/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 export default function StaffPage() {
@@ -19,6 +20,8 @@ export default function StaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
@@ -120,12 +123,14 @@ export default function StaffPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) return;
+  const handleDelete = async () => {
+    if (!memberToDelete) return;
     try {
-      await staffService.deleteStaff(id);
+      await staffService.deleteStaff(memberToDelete);
       toast.success("Staff member deleted successfully");
       fetchData();
+      setIsConfirmOpen(false);
+      setMemberToDelete(null);
     } catch (error: any) {
       console.error("Error deleting staff:", error);
       toast.error(error.message || "Failed to delete staff member");
@@ -199,7 +204,10 @@ export default function StaffPage() {
           <button onClick={() => handleOpenModal(member)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all">
             <Edit2 className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => handleDelete(member._id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all">
+          <button onClick={() => {
+            setMemberToDelete(member._id);
+            setIsConfirmOpen(true);
+          }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -347,6 +355,14 @@ export default function StaffPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Staff Member"
+        message="Are you sure you want to delete this staff member? This will permanently remove their account and access."
+      />
     </div>
   );
 }

@@ -183,6 +183,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
           id: p._id,
           workerIds: p.workers?.map((w: any) => typeof w === 'string' ? w : w._id) || [],
           supervisorId: typeof p.supervisor === 'string' ? p.supervisor : p.supervisor?._id,
+          clientId: typeof p.client === 'string' ? p.client : p.client?._id,
           client: p.client?.name || p.client,
         }));
         setProjects(mappedProjects);

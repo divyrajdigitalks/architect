@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { CrudResource, saFetch } from "@/lib/superadmin-api";
 
@@ -48,6 +49,9 @@ export default function CrudResourcePage({ resource }: { resource: CrudResource 
   const [editId, setEditId] = useState<string | null>(null);
   const [editJson, setEditJson] = useState("{\n}\n");
 
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [rowToDelete, setRowToDelete] = useState<string | null>(null);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
@@ -64,6 +68,18 @@ export default function CrudResourcePage({ resource }: { resource: CrudResource 
       setError(e?.message ?? "Failed to load");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!rowToDelete) return;
+    try {
+      await saFetch(`${resource.basePath}/${rowToDelete}`, { method: "DELETE" });
+      await load();
+      setIsConfirmOpen(false);
+      setRowToDelete(null);
+    } catch (e: any) {
+      setError(e?.message ?? "Delete failed");
     }
   };
 
@@ -165,15 +181,9 @@ export default function CrudResourcePage({ resource }: { resource: CrudResource 
                             variant="danger"
                             size="sm"
                             className="gap-2"
-                            onClick={async () => {
-                              const ok = window.confirm(`Delete ${resource.label} ${extractId(row)}?`);
-                              if (!ok) return;
-                              try {
-                                await saFetch(`${resource.basePath}/${extractId(row)}`, { method: "DELETE" });
-                                await load();
-                              } catch (e: any) {
-                                setError(e?.message ?? "Delete failed");
-                              }
+                            onClick={() => {
+                              setRowToDelete(String(extractId(row)));
+                              setIsConfirmOpen(true);
                             }}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -196,6 +206,14 @@ export default function CrudResourcePage({ resource }: { resource: CrudResource 
           </table>
         </div>
       </Card>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${resource.label}`}
+        message={`Are you sure you want to delete this ${resource.label}? This action cannot be undone.`}
+      />
 
       <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title={`Create ${resource.label}`} className="max-w-3xl">
         <form

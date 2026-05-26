@@ -4,12 +4,13 @@ import { useState, useEffect, Fragment } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Hammer, Camera, ClipboardList, MapPin, CheckCircle2, Plus, Search, Filter, ArrowRight, HardHat } from "lucide-react";
+import { Hammer, Camera, ClipboardList, MapPin, CheckCircle2, Plus, Search, Filter, ArrowRight, HardHat, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 import { useAuth } from "@/lib/auth-context";
 import { useSiteTasks, SiteTaskCategory } from "@/lib/site-tasks-store";
@@ -23,11 +24,14 @@ export default function SiteWorkPage() {
   const { user } = useAuth();
   const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "site-engineer" || user?.role === "supervisor";
   const isViewOnly = user?.role === "architect" || user?.role === "director";
-  const { siteTasks, createSiteTask, updateSiteTask, updateSiteTaskStatus } = useSiteTasks();
+  const { siteTasks, createSiteTask, updateSiteTask, updateSiteTaskStatus, deleteSiteTask } = useSiteTasks();
   const { projects } = useProjects();
   
   const [activeTab, setActiveTab] = useState<SiteTaskCategory>("Civil");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<any>(null);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
@@ -78,23 +82,48 @@ export default function SiteWorkPage() {
     if (!selectedProject) return;
 
     try {
-      await createSiteTask({
-        title: newTask.title,
-        projectId: selectedProject.id,
-        project: selectedProject.name,
-        category: activeTab,
-        assignedTo: newTask.assignedTo,
-        status: newTask.status as any,
-        progress: 0,
-      });
+      if (editingTask) {
+        await updateSiteTask(editingTask.id, {
+          title: newTask.title,
+          projectId: selectedProject.id,
+          project: selectedProject.name,
+          assignedTo: newTask.assignedTo,
+          status: newTask.status as any,
+        });
+        toast.success("Site task updated successfully!");
+      } else {
+        await createSiteTask({
+          title: newTask.title,
+          projectId: selectedProject.id,
+          project: selectedProject.name,
+          category: activeTab,
+          assignedTo: newTask.assignedTo,
+          status: newTask.status as any,
+          progress: 0,
+        });
+        toast.success("Site task created successfully!");
+      }
 
-      toast.success("Site task created successfully!");
       setIsModalOpen(false);
+      setEditingTask(null);
       setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
       setErrors({});
     } catch (error) {
-      console.error("Error creating site task:", error);
-      toast.error("Failed to create task");
+      console.error("Error saving site task:", error);
+      toast.error(editingTask ? "Failed to update task" : "Failed to create task");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteSiteTask(taskToDelete);
+      toast.success("Task deleted successfully");
+      setIsConfirmOpen(false);
+      setTaskToDelete(null);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
     }
   };
 
@@ -116,11 +145,108 @@ export default function SiteWorkPage() {
         </div>
         
         { canCreate && (
-          <Button onClick={() => setIsModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-100 text-white">
+          <Button onClick={() => {
+            setEditingTask(null);
+            setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+            setIsModalOpen(true);
+          }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-100 text-white">
             <Plus className="w-4 h-4" /> New Log
           </Button>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Site Task"
+        message="Are you sure you want to delete this site task? This will remove all associated technical notes and photos."
+      />
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTask(null);
+          setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+          setErrors({});
+        }} 
+        title={editingTask ? "Edit Site Task" : `Create New ${activeTab} Site Task`}
+      >
+        <form onSubmit={handleAddLog} className="space-y-6">
+          <div className="space-y-2">
+            <Select
+              label="Project"
+              options={projects.map(p => ({ value: p.id, label: p.name }))}
+              value={newTask.project}
+              onChange={(val) => {
+                setNewTask({...newTask, project: val});
+                if (errors.project) setErrors(prev => {
+                  const { project, ...rest } = prev;
+                  return rest;
+                });
+              }}
+              placeholder="Select Project"
+              error={errors.project}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Current Task / Activity</label>
+            <Input 
+              placeholder="e.g., Foundation Casting" 
+              value={newTask.title}
+              onChange={(e) => {
+                setNewTask({...newTask, title: e.target.value});
+                if (errors.title) setErrors(prev => {
+                  const { title, ...rest } = prev;
+                  return rest;
+                });
+              }}
+              error={errors.title}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Select
+                label="Assign To (Supervisor)"
+                options={siteStaff.map(s => ({ 
+                  value: s._id, 
+                  label: s.name,
+                  description: s.role?.name || s.team 
+                }))}
+                value={newTask.assignedTo[0] || ""}
+                onChange={(val) => {
+                  setNewTask({...newTask, assignedTo: [val]});
+                  if (errors.assignedTo) setErrors(prev => {
+                    const { assignedTo, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+                placeholder="Select Staff"
+                error={errors.assignedTo}
+              />
+            </div>
+            <div className="space-y-2">
+              <Select
+                label="Status"
+                options={[
+                  { value: "On Track", label: "On Track" },
+                  { value: "Delayed", label: "Delayed" },
+                  { value: "Critical", label: "Critical" },
+                ]}
+                value={newTask.status}
+                onChange={(val) => setNewTask({...newTask, status: val})}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-medium">
+              {editingTask ? "Update Log" : "Save Log"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit shadow-sm">
         <button
@@ -238,9 +364,53 @@ export default function SiteWorkPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-blue-600 text-white" : "text-slate-400")}>
-                          <ArrowRight className={cn("w-4 h-4 transition-transform", expandedTaskId === task.id && "rotate-90")} />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {canCreate && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                  setNewTask({
+                                    title: task.title,
+                                    project: (task.projectId || (task.project as any)?.id || task.project as any)?._id || (task.project as any)?.id || task.project as string,
+                                    assignedTo: task.assignedTo?.map((s: any) => s._id || s.id || s) || [],
+                                    status: task.status || "On Track",
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTaskToDelete(task.id);
+                                  setIsConfirmOpen(true);
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-blue-600 text-white" : "text-slate-400")}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedTaskId(expandedTaskId === task.id ? null : task.id);
+                            }}
+                          >
+                            <ArrowRight className={cn("w-4 h-4 transition-transform", expandedTaskId === task.id && "rotate-90")} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     {expandedTaskId === task.id && (

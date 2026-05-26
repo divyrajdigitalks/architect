@@ -23,6 +23,7 @@ import Modal from "@/components/ui/Modal";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/role-context";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type SOPVideo = {
   id: string;
@@ -42,6 +43,8 @@ export default function WorkingSOPPage() {
   const { roles } = useRoles();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [videos, setVideos] = useState<SOPVideo[]>(INITIAL_VIDEOS);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [sopToDelete, setSopToDelete] = useState<string | null>(null);
   const [newVideo, setNewVideo] = useState({
     title: "",
     videoUrl: "",
@@ -78,6 +81,18 @@ export default function WorkingSOPPage() {
         ? prev.allowedRoles.filter(id => id !== roleId)
         : [...prev.allowedRoles, roleId]
     }));
+  };
+
+  const handleDelete = async () => {
+    if (!sopToDelete) return;
+    try {
+      // For local state management
+      setVideos(prev => prev.filter(v => v.id !== sopToDelete));
+      setIsConfirmOpen(false);
+      setSopToDelete(null);
+    } catch (error) {
+      console.error("Error deleting SOP:", error);
+    }
   };
 
   return (
@@ -162,7 +177,21 @@ export default function WorkingSOPPage() {
                       v.allowedRoles.includes(user?.role || "") && (
                         <div key={v.id} className="flex items-center justify-between group/video">
                           <span className="text-[10px] font-bold text-slate-600 group-hover/video:text-indigo-600 truncate mr-4">{v.title}</span>
-                          <PlayCircle className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-2">
+                            {isAdmin && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSopToDelete(v.id);
+                                  setIsConfirmOpen(true);
+                                }}
+                                className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                            <PlayCircle className="w-3.5 h-3.5" />
+                          </div>
                         </div>
                       )
                     ))}
@@ -257,6 +286,14 @@ export default function WorkingSOPPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete SOP Video"
+        message="Are you sure you want to delete this SOP video? This will remove access for all assigned roles."
+      />
     </div>
   );
 }

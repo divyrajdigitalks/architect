@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { sitePhotoService } from "@/services/sitePhoto.service";
 import { Select } from "@/components/ui/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 type Photo = {
@@ -32,6 +33,8 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
   const [cameraError, setCameraError] = useState("");
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -146,12 +149,14 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this photo?")) return;
+  const handleDelete = async () => {
+    if (!photoToDelete) return;
     try {
-      await sitePhotoService.deletePhoto(id);
+      await sitePhotoService.deletePhoto(photoToDelete);
       toast.success("Photo deleted");
-      setPhotos(prev => prev.filter(p => p.id !== id));
+      setPhotos(prev => prev.filter(p => p.id !== photoToDelete));
+      setIsConfirmOpen(false);
+      setPhotoToDelete(null);
     } catch (err) {
       console.error("Failed to delete photo:", err);
       toast.error("Failed to delete photo");
@@ -220,7 +225,10 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
                   </div>
                   {canUpload && (
                     <button 
-                      onClick={() => handleDelete(photo.id)}
+                      onClick={() => {
+                        setPhotoToDelete(photo.id);
+                        setIsConfirmOpen(true);
+                      }}
                       className="p-1.5 bg-red-500/20 hover:bg-red-500 text-white rounded-lg transition-colors backdrop-blur-sm"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -239,6 +247,14 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Photo"
+        message="Are you sure you want to delete this site photo? This action cannot be undone."
+      />
 
       {/* Upload Modal */}
       {showUploadModal && (

@@ -5,7 +5,7 @@ import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
 import { projectService } from "@/services/project.service";
 import {
-  MapPin, ChevronRight, Plus, Search, HardHat, CheckCircle2, UserCircle2,
+  MapPin, ChevronRight, Plus, Search, HardHat, CheckCircle2, UserCircle2, Edit2, Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import Modal from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 type Project = ReturnType<typeof useProjects>["projects"][0];
@@ -34,6 +35,9 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { projects, createProject, fetchProjects } = useProjects() as any;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -144,13 +148,66 @@ export default function ProjectsPage() {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (project) => (
-        <Link href={`/projects/${project.id}`}
-          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
-          View <ChevronRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center justify-end gap-2">
+          <Link href={`/projects/${project.id}`}
+            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+            title="View Details"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+          {canAdd && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingProject(project);
+                  setForm({
+                    name: project.name,
+                    clientId: project.clientId || "",
+                    location: project.location,
+                    startDate: project.startDate || "",
+                    expectedCompletion: project.expectedCompletion || "",
+                    budget: project.budget || "",
+                    designerId: project.designer?._id || project.designerId || "",
+                  });
+                  setIsAddModalOpen(true);
+                }}
+                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                title="Edit Project"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProjectToDelete(project.id);
+                  setIsConfirmOpen(true);
+                }}
+                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title="Delete Project"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
       ),
     },
   ];
+
+  const handleDelete = async () => {
+    if (!projectToDelete) return;
+    try {
+      await projectService.deleteProject(projectToDelete);
+      toast.success("Project deleted successfully");
+      if (fetchProjects) await fetchProjects();
+      setIsConfirmOpen(false);
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("Failed to delete project");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,25 +223,39 @@ export default function ProjectsPage() {
     }
 
     try {
-      await projectService.createProject({
-        name: form.name,
-        client: form.clientId,
-        location: form.location,
-        startDate: form.startDate,
-        expectedCompletion: form.expectedCompletion,
-        budget: form.budget,
-        designer: form.designerId,
-        stages: defaultStages,
-      });
+      if (editingProject) {
+        await projectService.updateProject(editingProject.id, {
+          name: form.name,
+          client: form.clientId,
+          location: form.location,
+          startDate: form.startDate,
+          expectedCompletion: form.expectedCompletion,
+          budget: form.budget,
+          designer: form.designerId,
+        });
+        toast.success("Project updated successfully!");
+      } else {
+        await projectService.createProject({
+          name: form.name,
+          client: form.clientId,
+          location: form.location,
+          startDate: form.startDate,
+          expectedCompletion: form.expectedCompletion,
+          budget: form.budget,
+          designer: form.designerId,
+          stages: defaultStages,
+        });
+        toast.success("Project created successfully!");
+      }
 
-      toast.success("Project created successfully!");
       if (fetchProjects) await fetchProjects();
       setForm(emptyForm);
+      setEditingProject(null);
       setErrors({});
       setIsAddModalOpen(false);
     } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Failed to create project");
+      console.error("Error saving project:", error);
+      toast.error(editingProject ? "Failed to update project" : "Failed to create project");
     }
   };
 
@@ -202,7 +273,11 @@ export default function ProjectsPage() {
           </div>
           
           {canAdd && (
-            <Button onClick={() => setIsAddModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+            <Button onClick={() => {
+              setEditingProject(null);
+              setForm(emptyForm);
+              setIsAddModalOpen(true);
+            }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
               <Plus className="w-4 h-4" /> New Project
             </Button>
           )}
@@ -232,8 +307,16 @@ export default function ProjectsPage() {
         </div>
       </div>
 
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This will permanently remove all associated data, tasks, and photos."
+      />
+
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}
-        title="Create New Project" className="max-w-2xl">
+        title={editingProject ? "Edit Project" : "Create New Project"} className="max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
 
           {/* Project Name & Client Selection - Side by Side */}
@@ -366,7 +449,7 @@ export default function ProjectsPage() {
               type="submit"
               disabled={!form.name.trim() || !form.clientId}
             >
-              Create Project
+              {editingProject ? "Update Project" : "Create Project"}
             </Button>
           </div>
         </form>

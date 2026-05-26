@@ -4,7 +4,7 @@ import { useState, useEffect, Fragment } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { PenTool, FileText, Clock, CheckCircle2, Plus, Search, Filter, ArrowRight } from "lucide-react";
+import { PenTool, FileText, Clock, CheckCircle2, Plus, Search, Filter, ArrowRight, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -16,17 +16,21 @@ import { staffService, StaffMember } from "@/services/staff.service";
 import { cn } from "@/lib/utils";
 import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
 import { Select } from "@/components/ui/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 export default function OfficeWorkPage() {
   const { user } = useAuth();
   const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
   const isViewOnly = user?.role === "architect" || user?.role === "director";
-  const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus } = useOfficeTasks();
+  const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask } = useOfficeTasks();
   const { projects } = useProjects();
   
   const [activeTab, setActiveTab] = useState<OfficeTaskCategory>("Civil");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<any>(null);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
@@ -70,24 +74,49 @@ export default function OfficeWorkPage() {
     if (!selectedProject) return;
 
     try {
-      await createOfficeTask({
-        title: newTask.title,
-        projectId: selectedProject.id,
-        project: selectedProject.name,
-        category: activeTab,
-        assignedTo: newTask.assignedTo,
-        priority: newTask.priority,
-        status: "Pending",
-        progress: 0,
-      });
+      if (editingTask) {
+        await updateOfficeTask(editingTask.id, {
+          title: newTask.title,
+          projectId: selectedProject.id,
+          project: selectedProject.name,
+          assignedTo: newTask.assignedTo,
+          priority: newTask.priority,
+        });
+        toast.success("Office task updated successfully!");
+      } else {
+        await createOfficeTask({
+          title: newTask.title,
+          projectId: selectedProject.id,
+          project: selectedProject.name,
+          category: activeTab,
+          assignedTo: newTask.assignedTo,
+          priority: newTask.priority,
+          status: "Pending",
+          progress: 0,
+        });
+        toast.success("Office task created successfully!");
+      }
       
-      toast.success("Office task created successfully!");
       setIsModalOpen(false);
+      setEditingTask(null);
       setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
       setErrors({});
     } catch (error) {
-      console.error("Error creating office task:", error);
-      toast.error("Failed to create task");
+      console.error("Error saving office task:", error);
+      toast.error(editingTask ? "Failed to update task" : "Failed to create task");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteOfficeTask(taskToDelete);
+      toast.success("Task deleted successfully");
+      setIsConfirmOpen(false);
+      setTaskToDelete(null);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
     }
   };
 
@@ -109,11 +138,117 @@ export default function OfficeWorkPage() {
         </div>
         
         {canCreate && (
-          <Button onClick={() => setIsModalOpen(true)} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+          <Button onClick={() => {
+            setEditingTask(null);
+            setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+            setIsModalOpen(true);
+          }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
             <Plus className="w-4 h-4" /> New Task
           </Button>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Office Task"
+        message="Are you sure you want to delete this office task? This will remove all associated design data and notes."
+      />
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTask(null);
+          setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+          setErrors({});
+        }} 
+        title={editingTask ? "Edit Office Task" : "Add New Office Task"}
+      >
+        <form onSubmit={handleAddTask} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Task Title</label>
+            <Input
+              placeholder="Enter task title..."
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              className={cn("rounded-xl", errors.title && "border-red-500")}
+            />
+            {errors.title && <p className="text-[10px] text-red-500 font-medium">{errors.title}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project</label>
+            <Select
+              value={newTask.project}
+              onChange={(value) => setNewTask({ ...newTask, project: value })}
+              options={projects.map(p => ({ label: p.name, value: p.id }))}
+              placeholder="Select project"
+              className={cn(errors.project && "border-red-500")}
+            />
+            {errors.project && <p className="text-[10px] text-red-500 font-medium">{errors.project}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assign To</label>
+            <div className="flex flex-wrap gap-2">
+              {officeStaff.map((staff) => (
+                <button
+                  key={staff._id || staff.id}
+                  type="button"
+                  onClick={() => {
+                    const id = staff._id || staff.id;
+                    setNewTask(prev => ({
+                      ...prev,
+                      assignedTo: prev.assignedTo.includes(id)
+                        ? prev.assignedTo.filter(a => a !== id)
+                        : [...prev.assignedTo, id]
+                    }))
+                  }}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-bold transition-all border",
+                    newTask.assignedTo.includes(staff._id || staff.id)
+                      ? "bg-indigo-600 border-indigo-600 text-white"
+                      : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
+                  )}
+                >
+                  {staff.name}
+                </button>
+              ))}
+            </div>
+            {errors.assignedTo && <p className="text-[10px] text-red-500 font-medium">{errors.assignedTo}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Priority</label>
+            <div className="flex gap-2">
+              {["Low", "Medium", "High", "Critical"].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setNewTask({ ...newTask, priority: p })}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all",
+                    newTask.priority === p
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                      : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" className="font-medium bg-indigo-600 hover:bg-indigo-500">
+              {editingTask ? "Update Task" : "Create Task"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit shadow-sm">
         <button
@@ -233,9 +368,53 @@ export default function OfficeWorkPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-indigo-600 text-white" : "text-slate-400")}>
-                          <ArrowRight className={cn("w-4 h-4 transition-transform", expandedTaskId === task.id && "rotate-90")} />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {canCreate && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                  setNewTask({
+                                    title: task.title,
+                                    project: (task.projectId || (task.project as any)?.id || task.project as any)?._id || (task.project as any)?.id || task.project as string,
+                                    assignedTo: task.assignedTo?.map((s: any) => s._id || s.id || s) || [],
+                                    priority: task.priority || "Medium",
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTaskToDelete(task.id);
+                                  setIsConfirmOpen(true);
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-indigo-600 text-white" : "text-slate-400")}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedTaskId(expandedTaskId === task.id ? null : task.id);
+                            }}
+                          >
+                            <ArrowRight className={cn("w-4 h-4 transition-transform", expandedTaskId === task.id && "rotate-90")} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     {expandedTaskId === task.id && (
