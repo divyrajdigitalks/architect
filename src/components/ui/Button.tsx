@@ -5,10 +5,11 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success" | "white";
   size?: "sm" | "md" | "lg" | "icon";
+  isLoading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", isLoading = false, children, ...props }, ref) => {
     const variants = {
       primary: "bg-primary-600 text-white shadow-sm hover:bg-primary-700 focus:ring-2 focus:ring-primary-500/20 border border-primary-700",
       secondary: "bg-slate-100 text-slate-900 border border-slate-200 hover:bg-slate-200 focus:ring-2 focus:ring-slate-500/10",
@@ -35,8 +36,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         ref={ref}
+        disabled={props.disabled || isLoading}
         {...props}
-      />
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            {children}
+          </div>
+        ) : children}
+      </button>
     );
   }
 );

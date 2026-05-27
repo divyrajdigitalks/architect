@@ -27,9 +27,9 @@ export type Project = {
   expectedCompletion: string;
   status: string;
   progress: number;
-  budget: string;
-  received: string;
-  pending: string;
+  budget: number | string;
+  received: number | string;
+  pending: number | string;
   supervisorId?: string;
   supervisor?: any;
   workerIds?: string[];
@@ -206,8 +206,17 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       const id = input.id ?? String(Date.now());
       const status = input.status ?? "Planned";
       const progress = input.progress ?? 0;
-      const received = input.received ?? "$0";
-      const pending = input.pending ?? input.budget ?? "$0";
+      
+      // Handle numeric conversion for budget/received/pending
+      const parseValue = (val: any) => {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') return Number(val.replace(/[^0-9.-]+/g, "")) || 0;
+        return 0;
+      };
+
+      const budget = parseValue(input.budget);
+      const received = parseValue(input.received);
+      const pending = parseValue(input.pending) || budget - received;
       const phase = input.phase ?? "Pre-Design";
 
       const created: Project = {
@@ -220,7 +229,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
         expectedCompletion: input.expectedCompletion,
         status,
         progress,
-        budget: input.budget,
+        budget,
         received,
         pending,
         supervisorId: input.supervisorId,
@@ -231,7 +240,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
         flow: input.flow ?? initializeFlow(),
       };
 
-      setProjects((prev) => [...prev, created]);
+      setProjects((prev) => [created, ...prev]);
       return created;
     };
 

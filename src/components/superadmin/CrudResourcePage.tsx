@@ -8,7 +8,20 @@ import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/utils";
-import { CrudResource, saFetch } from "@/lib/superadmin-api";
+
+export interface CrudResource {
+  label: string;
+  basePath: string;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
+}
+
+export const saFetch = async <T,>(path: string, options: RequestInit = {}): Promise<T> => {
+  const res = await fetch(`/api/superadmin${path}`, options);
+  if (!res.ok) throw new Error("API failed");
+  return res.json();
+};
 
 function extractId(row: any): string | null {
   return (

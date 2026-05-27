@@ -65,7 +65,7 @@ export default function AttendancePage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "architect" || user?.role === "director";
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 20)); // May 20, 2026 as in image
-  const [activeTab, setActiveTab] = useState<"office">("office");
+  const [activeTab, setActiveTab] = useState<"office" | "site">("office");
   const [staffList, setStaffList] = useState<StaffAttendance[]>(initialStaff);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMenuId, setShowMenuId] = useState<string | null>(null);

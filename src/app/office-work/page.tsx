@@ -195,10 +195,10 @@ export default function OfficeWorkPage() {
             <div className="flex flex-wrap gap-2">
               {officeStaff.map((staff) => (
                 <button
-                  key={staff._id || staff.id}
+                  key={staff._id}
                   type="button"
                   onClick={() => {
-                    const id = staff._id || staff.id;
+                    const id = staff._id;
                     setNewTask(prev => ({
                       ...prev,
                       assignedTo: prev.assignedTo.includes(id)
@@ -208,7 +208,7 @@ export default function OfficeWorkPage() {
                   }}
                   className={cn(
                     "px-3 py-1 rounded-full text-[10px] font-bold transition-all border",
-                    newTask.assignedTo.includes(staff._id || staff.id)
+                    newTask.assignedTo.includes(staff._id)
                       ? "bg-indigo-600 border-indigo-600 text-white"
                       : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
                   )}
@@ -429,7 +429,7 @@ export default function OfficeWorkPage() {
                                     {["Pending", "In Progress", "Completed"].map((status) => (
                                       <Button
                                         key={status}
-                                        variant={task.status === status ? "default" : "outline"}
+                                        variant={task.status === status ? "primary" : "outline"}
                                         size="sm"
                                         className="rounded-xl text-[10px] h-8"
                                         onClick={() => updateOfficeTaskStatus(task.id, status as any)}

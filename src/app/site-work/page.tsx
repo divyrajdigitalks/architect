@@ -425,7 +425,7 @@ export default function SiteWorkPage() {
                                     {["On Track", "In Progress", "Completed", "Critical", "Delayed"].map((status) => (
                                       <Button
                                         key={status}
-                                        variant={task.status === status ? "default" : "outline"}
+                                        variant={task.status === status ? "primary" : "outline"}
                                         size="sm"
                                         className="rounded-xl text-[10px] h-8"
                                         onClick={(e) => { e.stopPropagation(); updateSiteTaskStatus(task.id, status as any); }}

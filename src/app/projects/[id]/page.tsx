@@ -24,6 +24,7 @@ import {
   PenTool,
   Hammer,
   Trash2,
+    FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, use, useEffect, useRef } from "react";
@@ -33,7 +34,9 @@ import { useProjects } from "@/lib/projects-store";
 import { useOfficeTasks } from "@/lib/office-tasks-store";
 import { useSiteTasks } from "@/lib/site-tasks-store";
 import { useSiteUpdates } from "@/lib/site-updates-store";
+import { usePayments } from "@/lib/payments-store";
 import { useTasks } from "@/lib/tasks-store";
+import { staffService, StaffMember } from "@/services/staff.service";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { DesignModule } from "@/components/projects/DesignModule";
@@ -48,29 +51,99 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 
-type Tab = "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "payments" | "timeline";
+import { Select } from "@/components/ui/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import toast from "react-hot-toast";
+import Modal from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+
+type Tab = "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "finances" | "timeline";
 
 export default function ProjectDetailsPage({ params }: { params: any }) {
   const resolvedParams = params instanceof Promise ? use(params) : params;
   const id = resolvedParams?.id;
   const { user } = useAuth();
-  const { getProjectById, updateStageStatus } = useProjects();
-  const { officeTasks, updateOfficeTaskStatus } = useOfficeTasks();
-  const { siteTasks, updateSiteTaskStatus } = useSiteTasks();
+  const { getProjectById, updateStageStatus, updateProject } = useProjects();
+  const { officeTasks, updateOfficeTaskStatus, createOfficeTask } = useOfficeTasks();
+  const { siteTasks, updateSiteTaskStatus, createSiteTask } = useSiteTasks();
   const { getTasksByProjectId } = useTasks();
   const { updates: allSiteUpdates } = useSiteUpdates();
+  const { getPaymentsByProjectId, createPayment, deletePayment } = usePayments();
 
   const project = getProjectById(id);
+  const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "accountant";
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
   const [stages, setStages] = useState(project?.stages ?? []);
   const [projectPhotos, setProjectPhotos] = useState<{ id: string; url: string; date: string }[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<any>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+  const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [allStaff, setAllStaff] = useState<StaffMember[]>([]);
+  const [paymentForm, setPaymentForm] = useState({
+    milestone: "",
+    amount: "",
+    date: new Date().toISOString().split('T')[0],
+    status: "Pending" as any,
+    notes: ""
+  });
+  const [editForm, setEditForm] = useState({
+    name: project?.name || "",
+    location: project?.location || "",
+    startDate: project?.startDate || "",
+    expectedCompletion: project?.expectedCompletion || "",
+    budget: project?.budget || "",
+    status: project?.status || "Planned",
+    supervisorId: project?.supervisorId || "",
+    workerIds: project?.workerIds || [] as string[],
+  });
+  const [taskForm, setTaskForm] = useState({
+    title: "",
+    type: "Office" as "Office" | "Site",
+    category: "Civil" as "Civil" | "Interior",
+    assignedTo: [] as string[],
+    deadline: new Date().toISOString().split('T')[0],
+    notes: ""
+  });
+  const [teamForm, setTeamForm] = useState({
+    supervisorId: project?.supervisorId || "",
+    workerIds: project?.workerIds || [] as string[],
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (project) setStages(project.stages);
+    staffService.getAllStaff().then(setAllStaff).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (project) {
+      setStages(project.stages);
+      setEditForm({
+        name: project.name,
+        location: project.location,
+        startDate: project.startDate,
+        expectedCompletion: project.expectedCompletion,
+        budget: project.budget,
+        status: project.status,
+        supervisorId: project.supervisorId || "",
+        workerIds: project.workerIds || [],
+      });
+      setTeamForm({
+        supervisorId: project.supervisorId || "",
+        workerIds: project.workerIds || [],
+      });
+    }
   }, [project]);
 
   useEffect(() => {
@@ -131,6 +204,97 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
   const handleUpdateStageStatus = (stageName: string, newStatus: any) => {
     updateStageStatus(project.id, stageName, newStatus);
+  };
+
+  const handleEditProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingEdit(true);
+    try {
+      await updateProject(project.id, {
+        name: editForm.name,
+        location: editForm.location,
+        startDate: editForm.startDate,
+        expectedCompletion: editForm.expectedCompletion,
+        budget: editForm.budget,
+        status: editForm.status,
+        supervisor: editForm.supervisorId || null,
+        workers: editForm.workerIds,
+      });
+      toast.success("Project updated successfully");
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to update project");
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskForm.title) {
+      toast.error("Please provide a task title");
+      return;
+    }
+
+    setIsSubmittingTask(true);
+    try {
+      if (taskForm.type === "Office") {
+        await createOfficeTask({
+          title: taskForm.title,
+          projectId: project.id,
+          project: project.name,
+          category: taskForm.category as any,
+          assignedTo: taskForm.assignedTo,
+          status: "Pending",
+          progress: 0,
+          deadline: taskForm.deadline,
+          notes: taskForm.notes
+        });
+      } else {
+        await createSiteTask({
+          title: taskForm.title,
+          projectId: project.id,
+          project: project.name,
+          category: taskForm.category as any,
+          assignedTo: taskForm.assignedTo,
+          status: "Pending",
+          progress: 0,
+          endDate: taskForm.deadline,
+          notes: taskForm.notes
+        });
+      }
+      toast.success("Task created successfully");
+      setIsAddTaskModalOpen(false);
+      setTaskForm({
+        title: "",
+        type: "Office",
+        category: "Civil",
+        assignedTo: [],
+        deadline: new Date().toISOString().split('T')[0],
+        notes: ""
+      });
+    } catch (error) {
+      toast.error("Failed to create task");
+    } finally {
+      setIsSubmittingTask(false);
+    }
+  };
+
+  const handleUpdateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingTeam(true);
+    try {
+      await updateProject(project.id, {
+        supervisor: teamForm.supervisorId || null,
+        workers: teamForm.workerIds,
+      });
+      toast.success("Project team updated");
+      setIsManageTeamModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to update team");
+    } finally {
+      setIsSubmittingTeam(false);
+    }
   };
 
   const projectOfficeTasks = officeTasks.filter(t =>
@@ -204,7 +368,79 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
   const projectWorkers = Array.from(uniqueStaffMap.values());
 
-  const projectPayments: any[] = []; // Fetch from payment service if needed
+  const projectPayments = getPaymentsByProjectId(project.id);
+  const totalReceived = projectPayments.filter(p => p.status === "Paid").reduce((acc, p) => acc + p.amount, 0);
+  
+  // Parse budget as number
+  const budgetValue = typeof project.budget === 'number' ? project.budget : Number(String(project.budget).replace(/[^0-9.-]+/g, "")) || 0;
+  const totalPending = Math.max(0, budgetValue - totalReceived);
+  const utilization = budgetValue > 0 ? Math.min(100, Math.round((totalReceived / budgetValue) * 100)) : 0;
+
+  const handleAddPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentForm.milestone || !paymentForm.amount) {
+      toast.error("Please fill in required fields");
+      return;
+    }
+
+    setIsSubmittingPayment(true);
+    try {
+      if (editingPayment) {
+        const { updatePayment } = usePayments(); // Using from hook
+        await updatePayment(editingPayment.id, {
+          milestone: paymentForm.milestone,
+          amount: Number(paymentForm.amount),
+          date: paymentForm.date,
+          status: paymentForm.status,
+          notes: paymentForm.notes
+        });
+        toast.success("Payment updated");
+      } else {
+        await createPayment({
+          projectId: project.id,
+          project: project.id, // Send ObjectID string
+          clientId: project.clientId || "",
+          client: project.clientId || "", // Send ObjectID string
+          milestone: paymentForm.milestone,
+          amount: Number(paymentForm.amount),
+          date: paymentForm.date,
+          status: paymentForm.status,
+          notes: paymentForm.notes
+        });
+        toast.success("Payment recorded");
+      }
+      setIsPaymentModalOpen(false);
+      setEditingPayment(null);
+      setPaymentForm({
+        milestone: "",
+        amount: "",
+        date: new Date().toISOString().split('T')[0],
+        status: "Pending",
+        notes: ""
+      });
+    } catch (error) {
+      toast.error(editingPayment ? "Failed to update payment" : "Failed to record payment");
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
+  const { updatePayment } = usePayments();
+
+  const handleDeletePayment = async () => {
+    if (!paymentToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deletePayment(paymentToDelete);
+      toast.success("Payment record deleted");
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to delete payment");
+    } finally {
+      setIsDeleting(false);
+      setPaymentToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -236,9 +472,14 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-medium shadow-sm hover:bg-slate-50 transition-all active:scale-95">
-            Project Settings
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-medium shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            >
+              Project Settings
+            </button>
+          )}
           <Link href="/site-updates"><Button size="sm" className="gap-2 font-medium">
             <Plus className="w-4 h-4" />
             Daily Log
@@ -254,7 +495,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
           { id: "workers", label: "Team", icon: Users },
           { id: "updates", label: "Logs", icon: ClipboardList },
           { id: "photos", label: "Photos", icon: Camera },
-          { id: "payments", label: "Finances", icon: CreditCard },
+          { id: "finances", label: "Finances", icon: CreditCard },
           { id: "timeline", label: "Timeline", icon: History },
         ].map((tab) => (
           <button
@@ -291,9 +532,21 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         )}
 
         {activeTab === "tasks" && (
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  className="gap-2 text-[10px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500"
+                  onClick={() => setIsAddTaskModalOpen(true)}
+                >
+                  <Plus className="w-3.5 h-3.5" /> Create Task
+                </Button>
+              )}
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
                 <TableRow className="bg-slate-50/50">
                   <TableHead className="px-4 py-3">Task Details</TableHead>
                   <TableHead className="px-4 py-3">Assignee</TableHead>
@@ -348,15 +601,28 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
               </TableBody>
             </Table>
           </div>
+        </div>
         )}
 
         {activeTab === "workers" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {projectWorkers.map((worker) => (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  className="gap-2 text-[10px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500"
+                  onClick={() => setIsManageTeamModalOpen(true)}
+                >
+                  <Users className="w-3.5 h-3.5" /> Manage Team
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {projectWorkers.map((worker) => (
               <div key={worker.id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition-all duration-300 group">
                 <div className="flex justify-center">
                   <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center text-lg font-bold text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                    {worker.name?.split(' ').map(n => n[0]).join('') || "W"}
+                    {worker.name?.split(' ').map((n: string) => n[0]).join('') || "W"}
                   </div>
                 </div>
                 <div className="text-center space-y-0.5">
@@ -373,6 +639,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
               </div>
             ))}
           </div>
+        </div>
         )}
 
         {activeTab === "updates" && (
@@ -411,77 +678,484 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
           </div>
         )}
 
-        {activeTab === "payments" && (
+        {activeTab === "finances" && (
           <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Financial Overview</h3>
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  className="gap-2 text-[10px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                >
+                  <Plus className="w-3.5 h-3.5" /> Record Payment
+                </Button>
+              )}
+            </div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-1">
-                <div className="bg-green-50 p-2 rounded-md w-fit mb-1">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1 hover:shadow-md transition-shadow">
+                <div className="bg-green-50 p-2 rounded-lg w-fit mb-1 border border-green-100">
                   <DollarSign className="w-4 h-4 text-green-600" />
                 </div>
-                <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Received</p>
-                <p className="text-xl font-bold text-slate-900">{project.received}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Received</p>
+                <p className="text-xl font-bold text-slate-900 tracking-tight">${totalReceived.toLocaleString()}</p>
               </div>
-              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-1">
-                <div className="bg-orange-50 p-2 rounded-md w-fit mb-1">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1 hover:shadow-md transition-shadow">
+                <div className="bg-orange-50 p-2 rounded-lg w-fit mb-1 border border-orange-100">
                   <AlertCircle className="w-4 h-4 text-orange-600" />
                 </div>
-                <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Outstanding</p>
-                <p className="text-xl font-bold text-slate-900">{project.pending}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending Amount</p>
+                <p className="text-xl font-bold text-slate-900 tracking-tight">${totalPending.toLocaleString()}</p>
               </div>
-              <div className="bg-indigo-600 p-4 rounded-lg shadow-md flex items-center justify-between group cursor-pointer overflow-hidden relative">
+              <div className="bg-indigo-600 p-4 rounded-xl shadow-lg flex items-center justify-between group cursor-pointer overflow-hidden relative border border-indigo-500">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
                 <div className="relative z-10 space-y-0.5">
-                  <p className="text-indigo-100 text-[9px] font-semibold uppercase tracking-wider">Next Milestone</p>
-                  <p className="text-sm font-bold text-white tracking-tight">Structure Payment</p>
-                  <p className="text-indigo-200 text-[10px] font-medium">Due in 12 days</p>
+                  <p className="text-indigo-100 text-[9px] font-bold uppercase tracking-widest">Budget Utilization</p>
+                  <p className="text-sm font-bold text-white tracking-tight">${budgetValue.toLocaleString()}</p>
+                  <div className="w-24 h-1 bg-indigo-400 rounded-full mt-2 overflow-hidden">
+                    <div className="bg-white h-full" style={{ width: `${utilization}%` }} />
+                  </div>
                 </div>
-                <ArrowUpRight className="w-6 h-6 text-white relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                <ArrowUpRight className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
-                    <TableHead className="px-4 py-3">Milestone</TableHead>
-                    <TableHead className="px-4 py-3">Amount</TableHead>
-                    <TableHead className="px-4 py-3">Date</TableHead>
-                    <TableHead className="px-4 py-3">Status</TableHead>
-                    <TableHead className="px-4 py-3 text-right">Invoice</TableHead>
+                    <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Milestone</TableHead>
+                    <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Amount</TableHead>
+                    <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Date</TableHead>
+                    <TableHead className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Status</TableHead>
+                    <TableHead className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-slate-50">
                   {projectPayments.map((payment) => (
                     <TableRow key={payment.id} className="group hover:bg-slate-50/30 transition-all">
-                      <TableCell className="px-4 py-4">
-                        <p className="text-xs font-semibold text-slate-900">{payment.milestone}</p>
+                      <TableCell className="px-6 py-4">
+                        <p className="text-xs font-bold text-slate-900">{payment.milestone}</p>
+                        {payment.notes && <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1 italic">{payment.notes}</p>}
                       </TableCell>
-                      <TableCell className="px-4 py-4">
-                        <p className="text-xs font-bold text-slate-900">{payment.amount}</p>
+                      <TableCell className="px-6 py-4">
+                        <p className="text-xs font-bold text-slate-900">${payment.amount.toLocaleString()}</p>
                       </TableCell>
-                      <TableCell className="px-4 py-4">
-                        <span className="text-xs font-medium text-slate-500">{payment.date}</span>
+                      <TableCell className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">{payment.date}</span>
                       </TableCell>
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-6 py-4">
                         <span className={cn(
-                          "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border shadow-sm",
-                          payment.status === "Paid" ? "bg-white text-green-600 border-green-100" : "bg-white text-orange-600 border-orange-100"
+                          "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border",
+                          payment.status === "Paid" ? "bg-green-50 text-green-700 border-green-100" : 
+                          payment.status === "Pending" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                          "bg-red-50 text-red-700 border-red-100"
                         )}>
                           {payment.status}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-right">
-                        <button className="text-indigo-600 hover:text-indigo-800 font-bold text-[10px] uppercase tracking-wider">Download</button>
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {isAdmin && (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setEditingPayment(payment);
+                                  setPaymentForm({
+                                    milestone: payment.milestone,
+                                    amount: String(payment.amount),
+                                    date: payment.date,
+                                    status: payment.status,
+                                    notes: payment.notes || ""
+                                  });
+                                  setIsPaymentModalOpen(true);
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              >
+                                <PenTool className="w-3.5 h-3.5" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setPaymentToDelete(payment.id);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                          <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {projectPayments.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-12 text-slate-400 italic text-xs font-medium uppercase tracking-widest">No payment history available</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
           </div>
         )}
 
-        {activeTab === "timeline" && (
+        {/* Payment Modal */}
+        <Modal 
+          isOpen={isPaymentModalOpen} 
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setEditingPayment(null);
+          }}
+          title={editingPayment ? "Edit Payment Record" : "Add Payment Record"}
+        >
+          <form onSubmit={handleAddPayment} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Milestone Name</label>
+                <Input 
+                  placeholder="e.g., Slab Completion" 
+                  value={paymentForm.milestone}
+                  onChange={e => setPaymentForm({...paymentForm, milestone: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Amount ($)</label>
+                <Input 
+                  type="number" 
+                  placeholder="5000" 
+                  value={paymentForm.amount}
+                  onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Payment Date</label>
+                <Input 
+                  type="date" 
+                  value={paymentForm.date}
+                  onChange={e => setPaymentForm({...paymentForm, date: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                <select 
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  value={paymentForm.status}
+                  onChange={e => setPaymentForm({...paymentForm, status: e.target.value})}
+                >
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notes</label>
+              <textarea 
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all min-h-[80px]"
+                placeholder="Details about this transaction..."
+                value={paymentForm.notes}
+                onChange={e => setPaymentForm({...paymentForm, notes: e.target.value})}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+              <Button variant="ghost" type="button" onClick={() => {
+                setIsPaymentModalOpen(false);
+                setEditingPayment(null);
+              }}>Cancel</Button>
+              <Button type="submit" isLoading={isSubmittingPayment} className="bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+                {editingPayment ? "Update Payment" : "Record Payment"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDeletePayment}
+          isLoading={isDeleting}
+          title="Delete Payment Record"
+          message="Are you sure you want to delete this payment record? This action cannot be undone."
+        />
+
+        {/* Edit Project Modal */}
+        <Modal
+          isOpen={isEditModalOpen} 
+          onClose={() => setIsEditModalOpen(false)}
+          title="Edit Project Details"
+        >
+          <form onSubmit={handleEditProject} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Project Name</label>
+              <Input 
+                value={editForm.name}
+                onChange={e => setEditForm({...editForm, name: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
+              <Input 
+                value={editForm.location}
+                onChange={e => setEditForm({...editForm, location: e.target.value})}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
+                <Input 
+                  type="date" 
+                  value={editForm.startDate}
+                  onChange={e => setEditForm({...editForm, startDate: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Expected Completion</label>
+                <Input 
+                  type="date" 
+                  value={editForm.expectedCompletion}
+                  onChange={e => setEditForm({...editForm, expectedCompletion: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Budget ($)</label>
+                <Input 
+                  type="number" 
+                  value={editForm.budget}
+                  onChange={e => setEditForm({...editForm, budget: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                <select 
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  value={editForm.status}
+                  onChange={e => setEditForm({...editForm, status: e.target.value})}
+                >
+                  <option value="Planned">Planned</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Supervisor</label>
+              <select 
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={editForm.supervisorId}
+                onChange={e => setEditForm({...editForm, supervisorId: e.target.value})}
+              >
+                <option value="">Select Supervisor...</option>
+                {allStaff.filter(s => s.role?.name?.toLowerCase() === "supervisor" || s.role?.name?.toLowerCase() === "architect").map(s => (
+                  <option key={s._id} value={s._id}>{s.name} ({s.role?.name})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Team Workers</label>
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-slate-100 rounded-xl bg-slate-50/50">
+                {allStaff.filter(s => s.role?.name?.toLowerCase() === "worker" || s.role?.name?.toLowerCase() === "staff").map(s => (
+                  <label key={s._id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={editForm.workerIds.includes(s._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setEditForm({...editForm, workerIds: [...editForm.workerIds, s._id]});
+                        } else {
+                          setEditForm({...editForm, workerIds: editForm.workerIds.filter(id => id !== s._id)});
+                        }
+                      }}
+                    />
+                    <span className="text-xs font-medium text-slate-700">{s.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+              <Button variant="ghost" type="button" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+              <Button type="submit" isLoading={isSubmittingEdit} className="bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+                Update Project
+              </Button>
+            </div>
+          </form>
+         </Modal>
+
+         {/* Add Task Modal */}
+         <Modal 
+           isOpen={isAddTaskModalOpen} 
+           onClose={() => setIsAddTaskModalOpen(false)}
+           title="Create New Task"
+         >
+           <form onSubmit={handleAddTask} className="space-y-6">
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1.5">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Task Type</label>
+                 <select 
+                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                   value={taskForm.type}
+                   onChange={e => setTaskForm({...taskForm, type: e.target.value as any})}
+                 >
+                   <option value="Office">Office (Design)</option>
+                   <option value="Site">Site (Execution)</option>
+                 </select>
+               </div>
+               <div className="space-y-1.5">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Category</label>
+                 <select 
+                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                   value={taskForm.category}
+                   onChange={e => setTaskForm({...taskForm, category: e.target.value as any})}
+                 >
+                   <option value="Civil">Civil</option>
+                   <option value="Interior">Interior</option>
+                 </select>
+               </div>
+             </div>
+
+             <div className="space-y-1.5">
+               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Task Title</label>
+               <Input 
+                 placeholder="e.g., Layout Plan Finalization" 
+                 value={taskForm.title}
+                 onChange={e => setTaskForm({...taskForm, title: e.target.value})}
+                 required
+               />
+             </div>
+
+             <div className="space-y-1.5">
+               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assign To</label>
+               <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-slate-100 rounded-xl bg-slate-50/50">
+                 {allStaff.filter(s => s.role?.name?.toLowerCase() !== "client").map(s => (
+                   <label key={s._id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded transition-colors">
+                     <input 
+                       type="checkbox" 
+                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                       checked={taskForm.assignedTo.includes(s._id)}
+                       onChange={(e) => {
+                         if (e.target.checked) {
+                           setTaskForm({...taskForm, assignedTo: [...taskForm.assignedTo, s._id]});
+                         } else {
+                           setTaskForm({...taskForm, assignedTo: taskForm.assignedTo.filter(id => id !== s._id)});
+                         }
+                       }}
+                     />
+                     <span className="text-xs font-medium text-slate-700">{s.name}</span>
+                   </label>
+                 ))}
+               </div>
+             </div>
+
+             <div className="space-y-1.5">
+               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Deadline / End Date</label>
+               <Input 
+                 type="date" 
+                 value={taskForm.deadline}
+                 onChange={e => setTaskForm({...taskForm, deadline: e.target.value})}
+                 required
+               />
+             </div>
+
+             <div className="space-y-1.5">
+               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notes</label>
+               <textarea 
+                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all min-h-[80px]"
+                 placeholder="Describe the task..."
+                 value={taskForm.notes}
+                 onChange={e => setTaskForm({...taskForm, notes: e.target.value})}
+               />
+             </div>
+
+             <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+               <Button variant="ghost" type="button" onClick={() => setIsAddTaskModalOpen(false)}>Cancel</Button>
+               <Button type="submit" isLoading={isSubmittingTask} className="bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+                 Create Task
+               </Button>
+             </div>
+           </form>
+          </Modal>
+
+          {/* Manage Team Modal */}
+          <Modal 
+            isOpen={isManageTeamModalOpen} 
+            onClose={() => setIsManageTeamModalOpen(false)}
+            title="Manage Project Team"
+          >
+            <form onSubmit={handleUpdateTeam} className="space-y-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Project Supervisor</label>
+                <select 
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  value={teamForm.supervisorId}
+                  onChange={e => setTeamForm({...teamForm, supervisorId: e.target.value})}
+                >
+                  <option value="">Select Supervisor...</option>
+                  {allStaff.filter(s => s.role?.name?.toLowerCase() === "supervisor" || s.role?.name?.toLowerCase() === "architect").map(s => (
+                    <option key={s._id} value={s._id}>{s.name} ({s.role?.name})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Workers</label>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-slate-100 rounded-xl bg-slate-50/50">
+                  {allStaff.filter(s => s.role?.name?.toLowerCase() === "worker" || s.role?.name?.toLowerCase() === "staff").map(s => (
+                    <label key={s._id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={teamForm.workerIds.includes(s._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTeamForm({...teamForm, workerIds: [...teamForm.workerIds, s._id]});
+                          } else {
+                            setTeamForm({...teamForm, workerIds: teamForm.workerIds.filter(id => id !== s._id)});
+                          }
+                        }}
+                      />
+                      <span className="text-xs font-medium text-slate-700">{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+                <Button variant="ghost" type="button" onClick={() => setIsManageTeamModalOpen(false)}>Cancel</Button>
+                <Button type="submit" isLoading={isSubmittingTeam} className="bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
+                  Update Team
+                </Button>
+              </div>
+            </form>
+          </Modal>
+  
+           {activeTab === "timeline" && (
           <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm space-y-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-base font-bold text-slate-900 tracking-tight">Project Schedule</h3>
@@ -493,32 +1167,30 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
             <div className="space-y-8 relative pl-6">
               <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-100" />
-              {[
-                { date: "Jan 15, 2024", title: "Project Initiation & Design", status: "Completed" },
-                { date: "Feb 01, 2024", title: "Site Excavation", status: "Completed" },
-                { date: "Feb 20, 2024", title: "Foundation & Plinth", status: "Completed" },
-                { date: "Mar 10, 2024", title: "Structural Framing", status: "In Progress" },
-                { date: "Apr 05, 2024", title: "Plumbing & Electrical", status: "Planned" },
-              ].map((item, idx) => (
-                <div key={idx} className="relative flex gap-6 group">
-                  <div className={cn(
-                    "absolute -left-6 w-6 h-6 rounded-md border-2 border-white flex items-center justify-center z-10 transition-all duration-300 shadow-sm",
-                    item.status === "Completed" ? "bg-green-500" :
-                      item.status === "In Progress" ? "bg-indigo-600" : "bg-slate-200"
-                  )}>
-                    <div className="w-1.5 h-1.5 bg-white rounded-full" />
+              {project.stages && project.stages.length > 0 ? (
+                project.stages.map((stage, idx) => (
+                  <div key={idx} className="relative flex gap-6 group">
+                    <div className={cn(
+                      "absolute -left-6 w-6 h-6 rounded-md border-2 border-white flex items-center justify-center z-10 transition-all duration-300 shadow-sm",
+                      stage.status === "Completed" ? "bg-green-500" :
+                        stage.status === "In Progress" ? "bg-indigo-600" : "bg-slate-200"
+                    )}>
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Phase {idx + 1}</p>
+                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">{stage.name}</h4>
+                      <span className={cn(
+                        "text-[8px] font-bold uppercase tracking-wider",
+                        stage.status === "Completed" ? "text-green-600" :
+                          stage.status === "In Progress" ? "text-indigo-600" : "text-slate-400"
+                      )}>{stage.status}</span>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{item.date}</p>
-                    <h4 className="text-sm font-bold text-slate-900 tracking-tight">{item.title}</h4>
-                    <span className={cn(
-                      "text-[8px] font-bold uppercase tracking-wider",
-                      item.status === "Completed" ? "text-green-600" :
-                        item.status === "In Progress" ? "text-indigo-600" : "text-slate-400"
-                    )}>{item.status}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="py-10 text-center text-slate-400 italic text-xs">No stages defined for this project.</div>
+              )}
             </div>
           </div>
         )}

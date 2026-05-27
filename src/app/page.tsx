@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { useTasks } from "@/lib/tasks-store";
 import { useSiteUpdates } from "@/lib/site-updates-store";
+import { usePayments } from "@/lib/payments-store";
 import {
   Briefcase,
   Construction,
@@ -152,7 +153,10 @@ function ArchitectDashboard({ role = "architect" }: { role?: string }) {
 
 // --- Client Dashboard ---
 function ClientDashboard({ projectId }: { projectId?: string }) {
+  const { projects } = useProjects();
   const project = projects.find(p => p.id === projectId) || projects[0];
+
+  if (!project) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -234,6 +238,7 @@ function ClientDashboard({ projectId }: { projectId?: string }) {
 
 // --- Office Team Dashboard ---
 function OfficeTeamDashboard() {
+  const messages: { id: string; from: string; text: string; date: string; unread: boolean }[] = [];
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader
@@ -290,6 +295,7 @@ function OfficeTeamDashboard() {
 
 // --- Site Engineer Dashboard ---
 function SiteEngineerDashboard() {
+  const { updates: siteUpdates } = useSiteUpdates();
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader
@@ -312,14 +318,14 @@ function SiteEngineerDashboard() {
               <div key={update.id} className="p-4 border border-slate-200 rounded-xl hover:border-indigo-200 transition-all bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">{update.project}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">{update.timestamp}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">{update.date}</span>
                 </div>
                 <p className="text-sm font-medium text-slate-800 mb-3">{update.update}</p>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-slate-100 rounded flex items-center justify-center text-[10px] font-bold">
-                    {update.user[0]}
+                    {(update.addedBy || "S")[0]}
                   </div>
-                  <span className="text-xs text-slate-500 font-medium">Engineer: {update.user}</span>
+                  <span className="text-xs text-slate-500 font-medium">Engineer: {update.addedBy || "Site Team"}</span>
                 </div>
               </div>
             ))}
@@ -351,7 +357,12 @@ function SiteEngineerDashboard() {
 
 // --- Supervisor Dashboard ---
 function SupervisorDashboard({ projectId }: { projectId?: string }) {
+  const { projects } = useProjects();
+  const { tasks } = useTasks();
   const project = projects.find(p => p.id === projectId) || projects[0];
+
+  if (!project) return null;
+
   const siteTasks = tasks.filter(t => t.project === project.name).slice(0, 4);
 
   return (
@@ -447,7 +458,12 @@ function SupervisorDashboard({ projectId }: { projectId?: string }) {
 
 // --- Worker Dashboard ---
 function WorkerDashboard({ projectId }: { projectId?: string }) {
+  const { projects } = useProjects();
+  const { tasks } = useTasks();
   const project = projects.find(p => p.id === projectId) || projects[0];
+
+  if (!project) return null;
+
   const myTasks = tasks.filter(t => t.siteTeam === "John Doe");
 
   return (
@@ -524,9 +540,19 @@ function WorkerDashboard({ projectId }: { projectId?: string }) {
 
 // --- Accountant Dashboard ---
 function AccountantDashboard() {
-  const totalBudget = payments.reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
-  const paid = payments.filter(p => p.status === "Paid").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
-  const pending = payments.filter(p => p.status === "Pending").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[₹$,]/g, "")), 0);
+  const { payments } = usePayments();
+  const totalBudget = payments.reduce((sum, p) => {
+    const amount = typeof p.amount === 'number' ? p.amount : parseFloat(String(p.amount).replace(/[₹$,]/g, "")) || 0;
+    return sum + amount;
+  }, 0);
+  const paid = payments.filter(p => p.status === "Paid").reduce((sum, p) => {
+    const amount = typeof p.amount === 'number' ? p.amount : parseFloat(String(p.amount).replace(/[₹$,]/g, "")) || 0;
+    return sum + amount;
+  }, 0);
+  const pending = payments.filter(p => p.status === "Pending").reduce((sum, p) => {
+    const amount = typeof p.amount === 'number' ? p.amount : parseFloat(String(p.amount).replace(/[₹$,]/g, "")) || 0;
+    return sum + amount;
+  }, 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -579,7 +605,8 @@ function AccountantDashboard() {
   );
 }
 
-function DashboardStatusBadge({ status, className }: { status: string, className?: string }) {
+function DashboardStatusBadge({ status, className }: { status: string | undefined, className?: string }) {
+  const safeStatus = status || "Pending";
   const styles = {
     "Pending": "bg-slate-100 text-slate-600 border-slate-200",
     "In Progress": "bg-blue-50 text-blue-600 border-blue-100",
@@ -594,16 +621,16 @@ function DashboardStatusBadge({ status, className }: { status: string, className
     "Paid": CircleCheck
   };
 
-  const Icon = icons[status as keyof typeof icons] || CircleAlert;
+  const Icon = icons[safeStatus as keyof typeof icons] || CircleAlert;
 
   return (
     <span className={cn(
       "px-3 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5 border uppercase tracking-wider shadow-sm",
-      styles[status as keyof typeof styles],
+      styles[safeStatus as keyof typeof styles],
       className
     )}>
       <Icon className="w-3.5 h-3.5" />
-      {status}
+      {safeStatus}
     </span>
   );
 }

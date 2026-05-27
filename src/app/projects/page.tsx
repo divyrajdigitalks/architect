@@ -167,8 +167,8 @@ export default function ProjectsPage() {
                     location: project.location,
                     startDate: project.startDate || "",
                     expectedCompletion: project.expectedCompletion || "",
-                    budget: project.budget || "",
-                    designerId: project.designer?._id || project.designerId || "",
+                    budget: String(project.budget || ""),
+                    designerId: (project as any).designer?._id || (project as any).designerId || "",
                   });
                   setIsAddModalOpen(true);
                 }}
