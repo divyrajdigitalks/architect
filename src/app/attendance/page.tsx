@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Settings, Plus, Clock, Save } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Settings, Plus, Clock, Save, Trash2, FileText, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
 import { attendanceService } from "@/services/attendance.service";
-import { staffService } from "@/services/staff.service";
+import { StaffMember, staffService } from "@/services/staff.service";
 import { roleService, Role } from "@/services/role.service";
 import toast from "react-hot-toast";
 import {
@@ -77,6 +77,7 @@ export default function AttendancePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [staffList, setStaffList] = useState<StaffAttendance[]>([]);
   const [myAttendance, setMyAttendance] = useState<any[]>([]);
+  const [myStatus, setMyStatus] = useState<any>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,6 +114,10 @@ export default function AttendancePage() {
   const [otRate, setOtRate] = useState(0);
   const [otFixedAmount, setOtFixedAmount] = useState(0);
 
+  // Salary Slip State
+  const [isSalarySlipModalOpen, setIsSalarySlipModalOpen] = useState(false);
+  const [selectedStaffForSlip, setSelectedStaffForSlip] = useState<StaffAttendance | null>(null);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -136,16 +141,15 @@ export default function AttendancePage() {
 
         setStaffList(combined);
       } else {
-        // For Staff - show their own monthly history
+        if (!user?._id) return;
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
         const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
-        
-        const history = await attendanceService.getAllAttendance({ 
-          user: user?._id,
-          startDate: startOfMonth,
-          endDate: endOfMonth
-        });
-        setMyAttendance(history);
+        const [history, status] = await Promise.all([
+          attendanceService.getAllAttendance({ user: user._id, startDate: startOfMonth, endDate: endOfMonth }),
+          attendanceService.getMyStatus()
+        ]);
+        setMyAttendance(Array.isArray(history) ? history : []);
+        setMyStatus(status || null);
       }
     } catch (error) {
       toast.error("Failed to fetch data");
@@ -261,9 +265,11 @@ export default function AttendancePage() {
   const calculateBalance = (staff: StaffAttendance) => {
     let balance = 0;
     const dailyRate = staff.payoutType === "Daily" ? staff.salaryAmount : (staff.salaryAmount / (staff.config?.daysPerMonth || 26));
-    const hourlyRate = staff.payoutType === "Hourly" ? staff.salaryAmount : (dailyRate / (staff.config?.hoursPerDay || 8));
+    
+    // Last month due
+    balance += (staff.lastMonthDue || 0);
 
-    // For current day (demo logic - in real world you'd fetch monthly logs)
+    // Current attendance calculation
     if (staff.attendance) {
       if (staff.attendance.status === "Present") balance += dailyRate;
       else if (staff.attendance.status === "Half Day") balance += (dailyRate / 2);
@@ -274,6 +280,17 @@ export default function AttendancePage() {
     }
 
     return balance;
+  };
+
+  const handleClearDues = async (staffId: string) => {
+    if (!confirm("Are you sure you want to clear all dues for this staff member? This will set Last Month Due to 0.")) return;
+    try {
+      await staffService.updateStaff(staffId, { lastMonthDue: 0 });
+      toast.success("Dues cleared successfully");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to clear dues");
+    }
   };
 
   const filteredStaff = staffList.filter(s => 
@@ -293,6 +310,22 @@ export default function AttendancePage() {
     WO: staffList.filter(s => s.attendance?.status === "Weekly Off").length,
   };
 
+  const handleCheckIn = async () => {
+    try {
+      await attendanceService.checkIn();
+      toast.success("Checked in successfully");
+      fetchData();
+    } catch { toast.error("Failed to check in"); }
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      await attendanceService.checkOut();
+      toast.success("Checked out successfully");
+      fetchData();
+    } catch { toast.error("Failed to check out"); }
+  };
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-slate-50/50 pb-6">
@@ -307,20 +340,42 @@ export default function AttendancePage() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">View your monthly work history</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-              <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} 
-                className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition-all text-slate-600">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs font-bold text-slate-700 px-3 min-w-[140px] text-center">
-                {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
-              </span>
-              <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}
-                className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition-all text-slate-600">
-                <ChevronRight className="w-4 h-4" />
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+                  className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition-all text-slate-600">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-bold text-slate-700 px-3 min-w-[140px] text-center">
+                  {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+                </span>
+                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+                  className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition-all text-slate-600">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              {myStatus?.logs?.length > 0 && !myStatus.logs[myStatus.logs.length - 1]?.checkOut ? (
+                <Button size="sm" onClick={handleCheckOut} className="bg-rose-600 hover:bg-rose-700 text-white gap-2 h-9">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Check Out
+                </Button>
+              ) : (
+                <Button size="sm" onClick={handleCheckIn} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9">
+                  <Clock className="w-4 h-4" />
+                  Check In
+                </Button>
+              )}
             </div>
           </div>
+
+          {myStatus?.logs?.length > 0 && !myStatus.logs[myStatus.logs.length - 1]?.checkOut && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-3">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="text-xs font-bold text-emerald-700">
+                Currently checked in since {new Date(myStatus.logs[myStatus.logs.length - 1].checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
@@ -364,12 +419,15 @@ export default function AttendancePage() {
                     <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400 text-xs font-bold uppercase tracking-widest">No records found for this month</TableCell></TableRow>
                   ) : myAttendance.map((record) => (
                     <TableRow key={record._id}>
-                      <TableCell className="text-xs font-bold text-slate-900">{record.date}</TableCell>
+                      <TableCell className="text-xs font-bold text-slate-900">
+                        {new Date(record.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                      </TableCell>
                       <TableCell>
                         <Badge className={cn(
                           "text-[9px] font-black uppercase px-2 py-0.5",
                           record.status === "Present" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                           record.status === "Absent" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                          record.status === "Half Day" ? "bg-amber-50 text-amber-700 border-amber-100" :
                           "bg-slate-50 text-slate-700 border-slate-100"
                         )}>
                           {record.status}
@@ -377,15 +435,17 @@ export default function AttendancePage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
-                          {record.logs?.map((log: any, idx: number) => (
-                            <div key={idx} className="text-[10px] text-slate-500 font-medium">
-                              {new Date(log.checkIn).toLocaleTimeString()} - {log.checkOut ? new Date(log.checkOut).toLocaleTimeString() : "Ongoing"}
+                          {record.logs?.length > 0 ? record.logs.map((log: any, idx: number) => (
+                            <div key={idx} className="text-[10px] font-medium font-mono">
+                              <span className="text-emerald-600">{new Date(log.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              <span className="text-slate-400 mx-1">→</span>
+                              <span className="text-rose-500">{log.checkOut ? new Date(log.checkOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Ongoing"}</span>
                             </div>
-                          ))}
+                          )) : <span className="text-[10px] text-slate-400">—</span>}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs font-bold text-slate-900 font-mono">
-                        {Math.floor(record.totalMinutes / 60)}h {record.totalMinutes % 60}m
+                        {Math.floor((record.totalMinutes || 0) / 60)}h {(record.totalMinutes || 0) % 60}m
                       </TableCell>
                     </TableRow>
                   ))}
@@ -473,16 +533,17 @@ export default function AttendancePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">Staff Member</TableHead>
+                  <TableHead>Payout Type</TableHead>
                   <TableHead>Today's Status</TableHead>
                   <TableHead>Time Logged</TableHead>
                   <TableHead>Last Month Due</TableHead>
                   <TableHead>Balance</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10"><div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"/></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-10"><div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"/></TableCell></TableRow>
                 ) : filteredStaff.map((staff) => (
                   <TableRow key={staff._id} className="group hover:bg-slate-50/50">
                     <TableCell className="px-4 py-3">
@@ -495,6 +556,16 @@ export default function AttendancePage() {
                           <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-wider">{staff.role?.name || "Staff"}</span>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        "text-[9px] font-black uppercase px-2 py-0.5",
+                        staff.payoutType === "Monthly" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                        staff.payoutType === "Daily" ? "bg-amber-50 text-amber-700 border-amber-100" :
+                        "bg-emerald-50 text-emerald-700 border-emerald-100"
+                      )}>
+                        {staff.payoutType || "Monthly"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -530,7 +601,17 @@ export default function AttendancePage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs font-bold text-slate-900">₹{(staff.lastMonthDue || 0).toLocaleString()}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-slate-900">₹{(staff.lastMonthDue || 0).toLocaleString()}</span>
+                        {isAdmin && staff.lastMonthDue > 0 && (
+                          <button 
+                            onClick={() => handleClearDues(staff._id)}
+                            className="text-[8px] font-black text-rose-500 uppercase tracking-tighter hover:underline text-left"
+                          >
+                            Clear Dues
+                          </button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
@@ -544,8 +625,19 @@ export default function AttendancePage() {
                           <>
                             <button 
                               onClick={() => {
+                                setSelectedStaffForSlip(staff);
+                                setIsSalarySlipModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all"
+                              title="Salary Slip"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => {
                                 setSelectedStaffForOT(staff);
-                                setOtRate(staff.payoutType === "Hourly" ? staff.salaryAmount : (staff.salaryAmount / (26 * 8)));
+                                const dailyRate = staff.payoutType === "Daily" ? staff.salaryAmount : (staff.salaryAmount / (staff.config?.daysPerMonth || 26));
+                                setOtRate(staff.payoutType === "Hourly" ? staff.salaryAmount : (dailyRate / (staff.config?.hoursPerDay || 8)));
                                 setIsOvertimeModalOpen(true);
                               }}
                               className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all"
@@ -572,7 +664,7 @@ export default function AttendancePage() {
                   </TableRow>
                 ))}
                 {!isLoading && filteredStaff.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-400 text-xs font-bold uppercase tracking-widest">No office staff found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-20 text-slate-400 text-xs font-bold uppercase tracking-widest">No office staff found</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -808,6 +900,137 @@ export default function AttendancePage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Salary Slip Modal */}
+      <Modal
+        isOpen={isSalarySlipModalOpen}
+        onClose={() => setIsSalarySlipModalOpen(false)}
+        title="Staff Salary Slip"
+        className="max-w-2xl"
+      >
+        {selectedStaffForSlip && (
+          <div className="space-y-8 p-2">
+            {/* Slip Header */}
+            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tighter">ARCHISITE PRO</h2>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Architecture & Interior Design</p>
+              </div>
+              <div className="text-right space-y-1">
+                <Badge variant="outline" className="border-slate-900 text-slate-900 font-black px-4 py-1">SALARY SLIP</Badge>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">{formatDate(currentDate)}</p>
+              </div>
+            </div>
+
+            {/* Employee Details */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1">Employee Details</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Name</span>
+                    <span className="font-bold text-slate-900">{selectedStaffForSlip.name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Role</span>
+                    <span className="font-bold text-indigo-600">{selectedStaffForSlip.role?.name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Payout Type</span>
+                    <span className="font-bold text-slate-900">{selectedStaffForSlip.payoutType}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1">Attendance Summary</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Status</span>
+                    <span className="font-bold text-emerald-600">{selectedStaffForSlip.attendance?.status || "Absent"}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Work Hours</span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {selectedStaffForSlip.attendance?.totalMinutes ? `${Math.floor(selectedStaffForSlip.attendance.totalMinutes / 60)}h ${selectedStaffForSlip.attendance.totalMinutes % 60}m` : "0h"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Earnings Table */}
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Salary Calculation</h4>
+              <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-100/50">
+                      <TableHead className="text-[10px] font-black">Description</TableHead>
+                      <TableHead className="text-right text-[10px] font-black">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="text-sm font-medium">Last Month Outstanding Dues</TableCell>
+                      <TableCell className="text-right text-sm font-bold">₹{(selectedStaffForSlip.lastMonthDue || 0).toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="text-sm font-medium">
+                        Today's Earnings 
+                        <span className="text-[10px] text-slate-400 ml-2">({selectedStaffForSlip.attendance?.status || "N/A"})</span>
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-bold">
+                        ₹{(
+                          selectedStaffForSlip.attendance?.status === "Present" 
+                            ? (selectedStaffForSlip.payoutType === "Daily" ? selectedStaffForSlip.salaryAmount : (selectedStaffForSlip.salaryAmount / (selectedStaffForSlip.config?.daysPerMonth || 26)))
+                            : selectedStaffForSlip.attendance?.status === "Half Day"
+                              ? ((selectedStaffForSlip.payoutType === "Daily" ? selectedStaffForSlip.salaryAmount : (selectedStaffForSlip.salaryAmount / (selectedStaffForSlip.config?.daysPerMonth || 26))) / 2)
+                              : 0
+                        ).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                    {selectedStaffForSlip.attendance?.overtime?.amount && (
+                      <TableRow>
+                        <TableCell className="text-sm font-medium">
+                          Overtime 
+                          <span className="text-[10px] text-emerald-500 ml-2">
+                            ({selectedStaffForSlip.attendance.overtime.type === 'hourly' ? `${selectedStaffForSlip.attendance.overtime.hours.toFixed(1)} hrs` : 'Fixed'})
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-bold text-emerald-600">+ ₹{selectedStaffForSlip.attendance.overtime.amount.toLocaleString()}</TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow className="bg-indigo-50/50">
+                      <TableCell className="text-sm font-black text-indigo-600">Total Balance Payable</TableCell>
+                      <TableCell className="text-right text-base font-black text-indigo-600">₹{calculateBalance(selectedStaffForSlip).toLocaleString()}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-between items-end pt-12">
+              <div className="space-y-4">
+                <div className="w-32 h-px bg-slate-300" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Employee Signature</p>
+              </div>
+              <div className="text-right space-y-4">
+                <div className="w-32 h-px bg-slate-300 ml-auto" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Authorized Signatory</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t no-print">
+              <Button variant="outline" onClick={() => setIsSalarySlipModalOpen(false)}>Close</Button>
+              <Button onClick={() => window.print()} className="gap-2">
+                <FileText className="w-4 h-4" />
+                Print Slip
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
