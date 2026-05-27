@@ -41,6 +41,13 @@ type AttendanceLog = {
   duration: number;
 };
 
+type OvertimeData = {
+  type: "hourly" | "fixed";
+  hours: number;
+  rate: number;
+  amount: number;
+};
+
 type StaffAttendance = {
   _id: string;
   name: string;
@@ -50,17 +57,19 @@ type StaffAttendance = {
   team: "Office" | "Site";
   payoutType: SalaryPayoutType;
   salaryAmount: number;
+  lastMonthDue: number;
   config: {
     hoursPerDay: number;
     daysPerMonth: number;
   };
   attendance?: {
-    _id?: string;
-    status: AttendanceStatus;
-    totalMinutes: number;
-    logs: AttendanceLog[];
+      _id?: string;
+      status: AttendanceStatus;
+      totalMinutes: number;
+      logs: AttendanceLog[];
+      overtime?: OvertimeData;
+    };
   };
-};
 
 export default function AttendancePage() {
   const { user } = useAuth();
@@ -94,6 +103,15 @@ export default function AttendancePage() {
   });
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  // Overtime State
+  const [isOvertimeModalOpen, setIsOvertimeModalOpen] = useState(false);
+  const [selectedStaffForOT, setSelectedStaffForOT] = useState<StaffAttendance | null>(null);
+  const [otType, setOtType] = useState<"hourly" | "fixed">("hourly");
+  const [otHours, setOtHours] = useState(0);
+  const [otMins, setOtMins] = useState(0);
+  const [otRate, setOtRate] = useState(0);
+  const [otFixedAmount, setOtFixedAmount] = useState(0);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -211,6 +229,51 @@ export default function AttendancePage() {
     } catch (error) {
       toast.error("Failed to add staff");
     }
+  };
+
+  const handleSaveOvertime = async () => {
+    if (!selectedStaffForOT) return;
+    try {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const amount = otType === "hourly" ? (otHours + otMins / 60) * otRate : otFixedAmount;
+      
+      const payload = {
+        user: selectedStaffForOT._id,
+        date: dateStr,
+        overtime: {
+          type: otType,
+          hours: otType === "hourly" ? (otHours + otMins / 60) : 0,
+          rate: otType === "hourly" ? otRate : 0,
+          amount: amount
+        },
+        status: selectedStaffForOT.attendance?.status || "Present"
+      };
+
+      await attendanceService.updateAttendance(selectedStaffForOT.attendance?._id || "new", payload);
+      toast.success("Overtime saved");
+      setIsOvertimeModalOpen(false);
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to save overtime");
+    }
+  };
+
+  const calculateBalance = (staff: StaffAttendance) => {
+    let balance = 0;
+    const dailyRate = staff.payoutType === "Daily" ? staff.salaryAmount : (staff.salaryAmount / (staff.config?.daysPerMonth || 26));
+    const hourlyRate = staff.payoutType === "Hourly" ? staff.salaryAmount : (dailyRate / (staff.config?.hoursPerDay || 8));
+
+    // For current day (demo logic - in real world you'd fetch monthly logs)
+    if (staff.attendance) {
+      if (staff.attendance.status === "Present") balance += dailyRate;
+      else if (staff.attendance.status === "Half Day") balance += (dailyRate / 2);
+      
+      if (staff.attendance.overtime?.amount) {
+        balance += staff.attendance.overtime.amount;
+      }
+    }
+
+    return balance;
   };
 
   const filteredStaff = staffList.filter(s => 
@@ -410,9 +473,10 @@ export default function AttendancePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">Staff Member</TableHead>
-                  <TableHead>Payout Info</TableHead>
                   <TableHead>Today's Status</TableHead>
                   <TableHead>Time Logged</TableHead>
+                  <TableHead>Last Month Due</TableHead>
+                  <TableHead>Balance</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -430,12 +494,6 @@ export default function AttendancePage() {
                           <span className="text-xs font-bold text-slate-900">{staff.name}</span>
                           <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-wider">{staff.role?.name || "Staff"}</span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{staff.payoutType}</span>
-                        <span className="text-xs font-bold text-slate-900">₹{staff.salaryAmount}/{staff.payoutType === "Hourly" ? "hr" : "mo"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -471,21 +529,45 @@ export default function AttendancePage() {
                         </span>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-bold text-slate-900">₹{(staff.lastMonthDue || 0).toLocaleString()}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-indigo-600">₹{calculateBalance(staff).toLocaleString()}</span>
+                        {calculateBalance(staff) > 0 && <span className="text-emerald-500 text-[10px]">↑</span>}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
-                      {isAdmin && (
-                        <button 
-                          onClick={() => {
-                            setSelectedStaffForEdit(staff);
-                            setManualHours(staff.attendance?.totalMinutes ? Number((staff.attendance.totalMinutes / 60).toFixed(1)) : (staff.config?.hoursPerDay || 8));
-                            setManualStatus(staff.attendance?.status || "Present");
-                            setIsEditTimeModalOpen(true);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
-                          title="Manual Update"
-                        >
-                          <Settings className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        {isAdmin && (
+                          <>
+                            <button 
+                              onClick={() => {
+                                setSelectedStaffForOT(staff);
+                                setOtRate(staff.payoutType === "Hourly" ? staff.salaryAmount : (staff.salaryAmount / (26 * 8)));
+                                setIsOvertimeModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all"
+                              title="Add Overtime"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setSelectedStaffForEdit(staff);
+                                setManualHours(staff.attendance?.totalMinutes ? Number((staff.attendance.totalMinutes / 60).toFixed(1)) : (staff.config?.hoursPerDay || 8));
+                                setManualStatus(staff.attendance?.status || "Present");
+                                setIsEditTimeModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                              title="Manual Update"
+                            >
+                              <Settings className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -591,6 +673,82 @@ export default function AttendancePage() {
               setIsSettingsModalOpen(false);
             }}>
               Save Settings
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Overtime Modal */}
+      <Modal
+        isOpen={isOvertimeModalOpen}
+        onClose={() => setIsOvertimeModalOpen(false)}
+        title="Add Overtime"
+        className="max-w-md"
+      >
+        <div className="space-y-6">
+          <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xs font-bold text-emerald-600 border border-emerald-200">
+                {selectedStaffForOT?.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">{selectedStaffForOT?.name}</p>
+                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{formatDate(currentDate)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Overtime Type</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="otType" checked={otType === "hourly"} onChange={() => setOtType("hourly")} />
+                  <span className="text-xs font-medium text-slate-700">Hourly Rate</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="otType" checked={otType === "fixed"} onChange={() => setOtType("fixed")} />
+                  <span className="text-xs font-medium text-slate-700">Fixed Amount</span>
+                </label>
+              </div>
+            </div>
+
+            {otType === "hourly" ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Duration (HH:MM)</label>
+                  <div className="flex items-center gap-2">
+                    <Input type="number" placeholder="Hrs" value={otHours} onChange={(e) => setOtHours(Number(e.target.value))} />
+                    <span className="text-xs font-bold">:</span>
+                    <Input type="number" placeholder="Min" value={otMins} onChange={(e) => setOtMins(Number(e.target.value))} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Rate (₹/hr)</label>
+                  <Input type="number" value={otRate} onChange={(e) => setOtRate(Number(e.target.value))} />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">Total Fixed Amount (₹)</label>
+                <Input type="number" placeholder="Enter Amount" value={otFixedAmount} onChange={(e) => setOtFixedAmount(Number(e.target.value))} />
+              </div>
+            )}
+
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-slate-500 uppercase">Total OT Amount</span>
+                <span className="text-lg font-black text-indigo-600">
+                  ₹{otType === "hourly" ? ((otHours + otMins / 60) * otRate).toLocaleString() : otFixedAmount.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsOvertimeModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveOvertime} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              Save Overtime
             </Button>
           </div>
         </div>
