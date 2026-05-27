@@ -2,10 +2,13 @@
 
 import { Bell, Search, UserCircle, Settings, Menu, X, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
+import { LogIn, LogOut, Timer, Pause, Play } from "lucide-react";
+import { attendanceService } from "@/services/attendance.service";
+import toast from "react-hot-toast";
 
 const getPageTitle = (pathname: string) => {
   if (pathname === "/") return "Dashboard Overview";
@@ -29,6 +32,66 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Time Tracker State
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [timerInterval, setTimerInterval] = useState<any>(null);
+
+  useEffect(() => {
+    if (user && user.team === "Office" && user.trackAttendance) {
+      attendanceService.getMyStatus().then((res: any) => {
+        if (res && res.logs && res.logs.length > 0) {
+          const lastLog = res.logs[res.logs.length - 1];
+          if (!lastLog.checkOut) {
+            setIsClockedIn(true);
+            const startTime = new Date(lastLog.checkIn).getTime();
+            const now = new Date().getTime();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            setTimer(elapsed);
+            
+            const interval = setInterval(() => {
+              setTimer(prev => prev + 1);
+            }, 1000);
+            setTimerInterval(interval);
+          }
+        }
+      }).catch(console.error);
+    }
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [user]);
+
+  const formatTimer = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleClockToggle = async () => {
+    try {
+      if (!isClockedIn) {
+        await attendanceService.checkIn();
+        setIsClockedIn(true);
+        setTimer(0);
+        const interval = setInterval(() => {
+          setTimer(prev => prev + 1);
+        }, 1000);
+        setTimerInterval(interval);
+        toast.success("Clocked In Successfully");
+      } else {
+        await attendanceService.checkOut();
+        setIsClockedIn(false);
+        if (timerInterval) clearInterval(timerInterval);
+        setTimerInterval(null);
+        toast.success(`Clocked Out. Total time: ${formatTimer(timer)}`);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Operation failed");
+    }
+  };
 
   if (pathname === "/login") return null;
 
@@ -82,6 +145,34 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
           </div>
 
           <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+            {/* Time Tracker for Office Staff */}
+            {user?.team === "Office" && user?.trackAttendance && (
+              <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full shadow-inner mr-2 transition-all duration-500">
+                <div className="flex flex-col items-end">
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Shift Duration</span>
+                  <span className={cn(
+                    "text-xs font-mono font-bold leading-none",
+                    isClockedIn ? "text-indigo-600 animate-pulse" : "text-slate-400"
+                  )}>
+                    {formatTimer(timer)}
+                  </span>
+                </div>
+                <div className="w-px h-6 bg-slate-200 mx-1" />
+                <button
+                  onClick={handleClockToggle}
+                  className={cn(
+                    "p-1.5 rounded-full transition-all active:scale-95 shadow-sm",
+                    isClockedIn 
+                      ? "bg-rose-500 text-white hover:bg-rose-600" 
+                      : "bg-indigo-600 text-white hover:bg-indigo-700"
+                  )}
+                  title={isClockedIn ? "Clock Out" : "Clock In"}
+                >
+                  {isClockedIn ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                </button>
+              </div>
+            )}
+
             {/* Notifications */}
             <div className="relative">
               <Button 

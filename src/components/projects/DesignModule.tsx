@@ -46,7 +46,7 @@ export function DesignModule({ tasks, projectId, updateTaskStatus }: DesignModul
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {(activeSubTab === "civil" ? civilTasks : interiorTasks).map((task) => (
           <DesignTaskCard key={task.id} task={task} onStatusChange={(status) => updateTaskStatus?.(task.id, status)} />
         ))}
@@ -67,32 +67,32 @@ function DesignTaskCard({ task, onStatusChange }: { task: OfficeTask, onStatusCh
 
   return (
     <>
-      <Card className="p-4 space-y-3 hover:shadow-md transition-all group border-slate-200">
+      <Card className="p-2.5 space-y-2.5 hover:shadow-md transition-all group border-slate-200">
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
-            <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.title}</h4>
+            <h4 className="text-[10px] font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">{task.title}</h4>
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(e.target.value as OfficeTaskStatus)}
               className={cn(
-                "text-[8px] px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
+                "text-[7px] px-1 py-0.5 rounded-md border font-black uppercase tracking-tighter focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
                 statusColors[task.status]
               )}
             >
               {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           </div>
-          <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-            <FileText className="w-3.5 h-3.5 text-slate-400" />
+          <div className="bg-slate-50 p-1 rounded-lg border border-slate-100 shrink-0">
+            <FileText className="w-3 h-3 text-slate-400" />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[7px] font-bold text-slate-400 uppercase tracking-tighter font-mono">
             <span>Progress</span>
             <span>{task.progress}%</span>
           </div>
-          <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-0.5 w-full bg-slate-100 rounded-full overflow-hidden">
             <div 
               className="h-full bg-indigo-600 transition-all duration-500" 
               style={{ width: `${task.progress}%` }} 
@@ -101,39 +101,39 @@ function DesignTaskCard({ task, onStatusChange }: { task: OfficeTask, onStatusCh
         </div>
 
         {task.images && task.images.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-hide">
-            {task.images.slice(0, 3).map((img, i) => (
-              <div key={i} className="w-8 h-8 rounded-md overflow-hidden border border-slate-100 flex-shrink-0">
+          <div className="flex items-center gap-1 overflow-x-auto py-0.5 scrollbar-hide">
+            {task.images.slice(0, 2).map((img, i) => (
+              <div key={i} className="w-6 h-6 rounded-md overflow-hidden border border-slate-100 flex-shrink-0">
                 <img src={img} alt="Design" className="w-full h-full object-cover" />
               </div>
             ))}
-            {task.images.length > 3 && (
-              <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400">
-                +{task.images.length - 3}
+            {task.images.length > 2 && (
+              <div className="w-6 h-6 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-[7px] font-bold text-slate-400">
+                +{task.images.length - 2}
               </div>
             )}
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-          <div className="flex -space-x-1.5">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+          <div className="flex -space-x-1">
             {task.assignedTo && task.assignedTo.length > 0 ? (
               task.assignedTo.map((user, i) => (
-                <div key={i} className="w-5 h-5 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
+                <div key={i} className="w-4 h-4 rounded-full bg-indigo-100 border border-white flex items-center justify-center text-[7px] font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
                   {(user.name || user)[0]}
                 </div>
               ))
             ) : (
-              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">No Staff</span>
+              <span className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">None</span>
             )}
           </div>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 text-[8px] font-bold uppercase tracking-widest gap-1 hover:text-indigo-600 p-0"
+            className="h-5 text-[7px] font-bold uppercase tracking-widest gap-0.5 hover:text-indigo-600 p-0"
             onClick={() => setIsPreviewOpen(true)}
           >
-            Details <ChevronRight className="w-2.5 h-2.5" />
+            Info <ChevronRight className="w-2 h-2" />
           </Button>
         </div>
       </Card>

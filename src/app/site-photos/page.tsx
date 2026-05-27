@@ -16,6 +16,7 @@ type Photo = {
   src: string;
   caption?: string;
   date: string;
+  uploadedBy?: string;
 };
 
 export default function SitePhotosPage({ searchParams }: { searchParams: any }) {
@@ -64,6 +65,7 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
           src: p.fileUrl,
           caption: p.caption,
           date: new Date(p.createdAt || p.date).toLocaleDateString(),
+          uploadedBy: p.uploadedBy?.name || "System",
         }));
         setPhotos(mapped);
       })
@@ -79,6 +81,7 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
       src: p.fileUrl,
       caption: p.caption,
       date: new Date(p.createdAt || p.date).toLocaleDateString(),
+      uploadedBy: p.uploadedBy?.name || "System",
     })));
   };
 
@@ -211,29 +214,32 @@ export default function SitePhotosPage({ searchParams }: { searchParams: any }) 
           )}
 
           {photos.map(photo => (
-            <div key={photo.id} className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+            <div key={photo.id} className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm max-w-[180px]">
               <img
                 src={photo.src}
                 alt="Site progress"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-white/90 uppercase tracking-wider font-mono">{photo.date}</span>
-                    {photo.caption && <span className="text-[8px] text-white/70 truncate max-w-[100px]">{photo.caption}</span>}
+                <div className="absolute bottom-2 left-2 right-2 flex flex-col gap-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider font-mono">{photo.date}</span>
+                    {canUpload && (
+                      <button 
+                        onClick={() => {
+                          setPhotoToDelete(photo.id);
+                          setIsConfirmOpen(true);
+                        }}
+                        className="p-1 bg-red-500/20 hover:bg-red-500 text-white rounded transition-colors backdrop-blur-sm"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
-                  {canUpload && (
-                    <button 
-                      onClick={() => {
-                        setPhotoToDelete(photo.id);
-                        setIsConfirmOpen(true);
-                      }}
-                      className="p-1.5 bg-red-500/20 hover:bg-red-500 text-white rounded-lg transition-colors backdrop-blur-sm"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <div className="flex flex-col">
+                    <span className="text-[7px] font-black text-indigo-300 uppercase tracking-widest">{photo.uploadedBy}</span>
+                    {photo.caption && <span className="text-[8px] text-white/70 truncate">{photo.caption}</span>}
+                  </div>
                 </div>
               </div>
             </div>

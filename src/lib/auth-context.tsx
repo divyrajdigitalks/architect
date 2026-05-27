@@ -12,7 +12,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string | any; // role can be ID or populated object
+  role: string | any;
+  team?: "Office" | "Site";
+  trackAttendance?: boolean;
+  config?: {
+    hoursPerDay: number;
+    daysPerMonth: number;
+  };
   projectId?: string;
   mobile?: string;
 }
@@ -72,7 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: data._id,
         name: data.name,
         email: data.email,
-        role: data.role?.name || data.role, // Handle both ID and object
+        role: data.role?.name || data.role,
+        team: data.team,
+        trackAttendance: data.trackAttendance,
+        config: data.config,
       };
 
       setUser(finalUser);

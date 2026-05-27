@@ -1207,39 +1207,44 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                 {isUploading ? "Uploading..." : "Upload Photos"}
               </button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
               {photosLoading ? (
-                <div className="col-span-4 flex items-center justify-center py-10">
+                <div className="col-span-full flex items-center justify-center py-10">
                   <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
                 <>
-                  {projectPhotos.map((photo) => (
-                    <div key={photo.id} className="aspect-square bg-slate-50 rounded-lg border border-slate-100 shadow-sm group hover:border-indigo-300 transition-all cursor-pointer relative overflow-hidden">
+                  {projectPhotos.map((photo: any) => (
+                    <div key={photo.id} className="aspect-square bg-slate-50 rounded-lg border border-slate-100 shadow-sm group hover:border-indigo-300 transition-all cursor-pointer relative overflow-hidden max-w-[120px]">
                       <img src={photo.url} alt="Project photo" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
-                        <p className="text-white text-[8px] font-bold uppercase tracking-wider">{photo.date}</p>
-                        <a href={photo.url} target="_blank" rel="noreferrer" className="px-3 py-1 bg-white text-indigo-600 rounded-md text-[8px] font-bold uppercase tracking-wider">View</a>
-                        <button onClick={() => handleDeletePhoto(photo.id)} className="px-3 py-1 bg-red-500 text-white rounded-md text-[8px] font-bold uppercase tracking-wider">Delete</button>
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                        <p className="text-white text-[7px] font-bold uppercase tracking-wider">{photo.date}</p>
+                        <p className="text-indigo-300 text-[6px] font-black uppercase tracking-tighter text-center line-clamp-1">{photo.uploadedBy || "Staff"}</p>
+                        <div className="flex gap-1 mt-1">
+                          <a href={photo.url} target="_blank" rel="noreferrer" className="p-1 bg-white/20 hover:bg-white/40 text-white rounded transition-colors">
+                            <ArrowUpRight className="w-2.5 h-2.5" />
+                          </a>
+                          <button onClick={() => handleDeletePhoto(photo.id)} className="p-1 bg-red-500/20 hover:bg-red-500 text-white rounded transition-colors">
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
 
                   {projectPhotos.length === 0 && [1, 2, 3].map((i) => (
-                    <div key={i} className="aspect-square bg-slate-50 rounded-lg border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
-                      <Camera className="w-6 h-6 text-slate-200" />
-                      <p className="text-[8px] font-bold text-slate-300 uppercase tracking-wider">No Photos</p>
+                    <div key={i} className="aspect-square bg-slate-50 rounded-lg border border-dashed border-slate-200 flex flex-col items-center justify-center gap-1 max-w-[120px]">
+                      <Camera className="w-4 h-4 text-slate-200" />
+                      <p className="text-[7px] font-bold text-slate-300 uppercase tracking-wider">Empty</p>
                     </div>
                   ))}
 
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square w-full bg-indigo-50 rounded-lg border border-dashed border-indigo-200 flex flex-col items-center justify-center gap-2 group hover:bg-indigo-100 transition-all"
+                    className="aspect-square w-full max-w-[120px] bg-indigo-50 rounded-lg border border-dashed border-indigo-200 flex flex-col items-center justify-center gap-1 group hover:bg-indigo-100 transition-all"
                   >
-                    <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                      <Plus className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Upload</p>
+                    <Plus className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+                    <p className="text-[8px] font-bold text-indigo-600 uppercase tracking-wider">Add</p>
                   </button>
                 </>
               )}

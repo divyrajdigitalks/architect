@@ -14,8 +14,9 @@ export interface StaffMember {
 }
 
 export const staffService = {
-  async getAllStaff(): Promise<StaffMember[]> {
-    return api.get(endPointApi.users);
+  async getAllStaff(params?: any): Promise<StaffMember[]> {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return api.get(`${endPointApi.users}${query}`);
   },
 
   async getStaffById(id: string): Promise<StaffMember> {
