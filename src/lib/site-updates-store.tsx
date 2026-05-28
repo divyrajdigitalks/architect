@@ -26,8 +26,9 @@ type SiteUpdatesContextType = {
   updates: SiteUpdate[];
   isHydrated: boolean;
   getUpdatesByProjectId: (projectId: string) => SiteUpdate[];
-  createUpdate: (input: CreateUpdateInput) => SiteUpdate;
-  deleteUpdate: (id: string) => void;
+  createUpdate: (input: CreateUpdateInput) => Promise<SiteUpdate>;
+  deleteUpdate: (id: string) => Promise<void>;
+  fetchUpdates: () => Promise<void>;
 };
 
 const SiteUpdatesContext = createContext<SiteUpdatesContextType | undefined>(undefined);
@@ -36,50 +37,58 @@ export function SiteUpdatesProvider({ children }: { children: React.ReactNode })
   const [updates, setUpdates] = useState<SiteUpdate[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    const fetchUpdates = async () => {
-      try {
-        const data = (await siteUpdateService.getAllUpdates()) as any;
-        if (data && data.length > 0) {
-          const mappedUpdates = data.map((u: any) => ({
-            ...u,
-            id: u._id,
-          }));
-          setUpdates(mappedUpdates);
-        }
-      } catch (error) {
-        console.error("Failed to fetch site updates from backend", error);
-      } finally {
-        setIsHydrated(true);
+  const fetchUpdates = async () => {
+    try {
+      const data = (await siteUpdateService.getAllUpdates()) as any;
+      if (data && data.length >= 0) {
+        const mappedUpdates = data.map((u: any) => ({
+          ...u,
+          id: u._id,
+        }));
+        setUpdates(mappedUpdates);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch site updates from backend", error);
+    } finally {
+      setIsHydrated(true);
+    }
+  };
 
+  useEffect(() => {
     fetchUpdates();
   }, []);
 
   const api = useMemo<SiteUpdatesContextType>(() => {
-    const getUpdatesByProjectId = (projectId: string) => updates.filter((u) => u.projectId === projectId);
+    const getUpdatesByProjectId = (projectId: string) => updates.filter((u) => u.projectId === projectId || (u.project as any)?._id === projectId);
 
-    const createUpdate = (input: CreateUpdateInput): SiteUpdate => {
-      const created: SiteUpdate = {
-        id: input.id ?? String(Date.now()),
-        projectId: input.projectId,
-        project: input.project,
-        update: input.update,
-        date: input.date ?? new Date().toISOString().split("T")[0],
-        progress: input.progress ?? 0,
-        photos: input.photos ?? 0,
-        stage: input.stage,
-        addedBy: input.addedBy,
-        createdAt: new Date().toISOString(),
-      };
-      setUpdates((prev) => [created, ...prev]);
-      return created;
+    const createUpdate = async (input: CreateUpdateInput): Promise<SiteUpdate> => {
+      try {
+        const payload = {
+          project: input.projectId || input.project,
+          update: input.update,
+          progress: input.progress,
+          stage: input.stage,
+        };
+        const data = await siteUpdateService.createUpdate(payload) as any;
+        await fetchUpdates();
+        return { ...data, id: data._id } as SiteUpdate;
+      } catch (error) {
+        console.error("Failed to create update on backend", error);
+        throw error;
+      }
     };
 
-    const deleteUpdate = (id: string) => setUpdates((prev) => prev.filter((u) => u.id !== id));
+    const deleteUpdate = async (id: string) => {
+      try {
+        await siteUpdateService.deleteUpdate(id);
+        await fetchUpdates();
+      } catch (error) {
+        console.error("Failed to delete update on backend", error);
+        setUpdates((prev) => prev.filter((u) => u.id !== id));
+      }
+    };
 
-    return { updates, isHydrated, getUpdatesByProjectId, createUpdate, deleteUpdate };
+    return { updates, isHydrated, getUpdatesByProjectId, createUpdate, deleteUpdate, fetchUpdates };
   }, [updates, isHydrated]);
 
   return <SiteUpdatesContext.Provider value={api}>{children}</SiteUpdatesContext.Provider>;

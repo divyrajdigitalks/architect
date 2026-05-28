@@ -56,11 +56,11 @@ type ProjectsContextType = {
   projects: Project[];
   isHydrated: boolean;
   getProjectById: (id: string) => Project | undefined;
-  createProject: (input: CreateProjectInput) => Project;
-  updateProject: (id: string, patch: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
+  createProject: (input: CreateProjectInput) => Promise<Project>;
+  updateProject: (id: string, patch: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   fetchProjects: () => Promise<void>;
-  updateStageStatus: (projectId: string, stageName: string, status: StageStatus) => void;
+  updateStageStatus: (projectId: string, stageName: string, status: StageStatus) => Promise<void>;
   updateLifecycleStatus: (projectId: string, phaseName: string, status: LifecycleStatus) => void;
 };
 
@@ -202,66 +202,71 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
   const api = useMemo<ProjectsContextType>(() => {
     const getProjectById = (id: string) => projects.find((p) => p.id === id);
 
-    const createProject = (input: CreateProjectInput): Project => {
-      const id = input.id ?? String(Date.now());
-      const status = input.status ?? "Planned";
-      const progress = input.progress ?? 0;
-      
-      // Handle numeric conversion for budget/received/pending
-      const parseValue = (val: any) => {
-        if (typeof val === 'number') return val;
-        if (typeof val === 'string') return Number(val.replace(/[^0-9.-]+/g, "")) || 0;
-        return 0;
-      };
-
-      const budget = parseValue(input.budget);
-      const received = parseValue(input.received);
-      const pending = parseValue(input.pending) || budget - received;
-      const phase = input.phase ?? "Pre-Design";
-
-      const created: Project = {
-        id,
-        name: input.name,
-        client: input.client,
-        clientId: input.clientId,
-        location: input.location,
-        startDate: input.startDate,
-        expectedCompletion: input.expectedCompletion,
-        status,
-        progress,
-        budget,
-        received,
-        pending,
-        supervisorId: input.supervisorId,
-        workerIds: input.workerIds ?? [],
-        phase,
-        lifecycle: input.lifecycle ?? [],
-        stages: input.stages ?? [],
-        flow: input.flow ?? initializeFlow(),
-      };
-
-      setProjects((prev) => [created, ...prev]);
-      return created;
+    const createProject = async (input: CreateProjectInput): Promise<Project> => {
+      try {
+        const payload = {
+          name: input.name,
+          client: input.clientId || input.client,
+          location: input.location,
+          startDate: input.startDate,
+          expectedCompletion: input.expectedCompletion,
+          budget: input.budget,
+          designer: (input as any).designerId,
+          stages: input.stages,
+        };
+        const data = await projectService.createProject(payload);
+        await fetchProjects();
+        return { ...data, id: data._id } as any;
+      } catch (error) {
+        console.error("Failed to create project on backend", error);
+        throw error;
+      }
     };
 
-    const updateProject = (id: string, patch: Partial<Project>) => {
-      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    const updateProject = async (id: string, patch: Partial<Project>) => {
+      try {
+        const payload = {
+          ...patch,
+          client: patch.clientId || patch.client,
+          designer: (patch as any).designerId || (patch as any).designer?._id,
+          supervisor: patch.supervisorId || patch.supervisor?._id,
+          workers: patch.workerIds || patch.workers,
+        };
+        await projectService.updateProject(id, payload);
+        await fetchProjects();
+      } catch (error) {
+        console.error("Failed to update project on backend", error);
+        // Fallback to local update if API fails (optional, but good for UX)
+        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+      }
     };
 
-    const deleteProject = (id: string) => {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+    const deleteProject = async (id: string) => {
+      try {
+        await projectService.deleteProject(id);
+        await fetchProjects();
+      } catch (error) {
+        console.error("Failed to delete project on backend", error);
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+      }
     };
 
-    const updateStageStatus = (projectId: string, stageName: string, status: StageStatus) => {
-      setProjects((prev) =>
-        prev.map((p) => {
-          if (p.id !== projectId) return p;
-          const stages = (p.stages ?? []).map((s) => (s.name === stageName ? { ...s, status } : s));
-          const progress = computeProgressFromStages(stages);
-          const statusText = computeStatusFromProgress(progress);
-          return { ...p, stages, progress, status: statusText };
-        })
-      );
+    const updateStageStatus = async (projectId: string, stageName: string, status: StageStatus) => {
+      try {
+        await projectService.updateStage(projectId, { stageName, status });
+        await fetchProjects();
+      } catch (error) {
+        console.error("Failed to update stage status on backend", error);
+        setProjects((prev) =>
+          prev.map((p) => {
+            if (p.id !== projectId) return p;
+            const stages = (p.stages ?? []).map((s) => (s.name === stageName ? { ...s, status } : s));
+            const progress = computeProgressFromStages(stages);
+            const statusText = computeStatusFromProgress(progress);
+            return { ...p, stages, progress, status: statusText };
+          })
+        );
+      }
     };
 
     const updateLifecycleStatus = (projectId: string, phaseName: string, status: LifecycleStatus) => {
@@ -284,8 +289,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       deleteProject,
       updateStageStatus,
       updateLifecycleStatus,
-    fetchProjects,
-  };
+      fetchProjects,
+    };
   }, [projects, isHydrated]);
 
   return <ProjectsContext.Provider value={api}>{children}</ProjectsContext.Provider>;

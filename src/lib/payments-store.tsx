@@ -69,30 +69,37 @@ export function PaymentsProvider({ children }: { children: React.ReactNode }) {
       payments.filter((p) => p.projectId === projectId);
 
     const createPayment = async (input: CreatePaymentInput): Promise<Payment> => {
-      const data = await paymentService.createPayment(input) as any;
-      const newPayment = {
-        ...data,
-        id: data._id,
-        projectId: data.project?._id || data.project,
-        project: data.project?.name || data.project,
-        clientId: data.client?._id || data.client,
-        client: data.client?.name || data.client,
-      };
-      setPayments((prev) => [newPayment, ...prev]);
-      await fetchProjects();
-      return newPayment;
+      try {
+        const data = await paymentService.createPayment(input) as any;
+        await fetchPayments();
+        await fetchProjects();
+        return { ...data, id: data._id } as Payment;
+      } catch (error) {
+        console.error("Failed to create payment on backend", error);
+        throw error;
+      }
     };
 
     const updatePayment = async (id: string, patch: Partial<Payment>) => {
-      await paymentService.updatePayment(id, patch);
-      setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-      await fetchProjects();
+      try {
+        await paymentService.updatePayment(id, patch);
+        await fetchPayments();
+        await fetchProjects();
+      } catch (error) {
+        console.error("Failed to update payment on backend", error);
+        setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+      }
     };
 
     const deletePayment = async (id: string) => {
-      await paymentService.deletePayment(id);
-      setPayments((prev) => prev.filter((p) => p.id !== id));
-      await fetchProjects();
+      try {
+        await paymentService.deletePayment(id);
+        await fetchPayments();
+        await fetchProjects();
+      } catch (error) {
+        console.error("Failed to delete payment on backend", error);
+        setPayments((prev) => prev.filter((p) => p.id !== id));
+      }
     };
 
     return {

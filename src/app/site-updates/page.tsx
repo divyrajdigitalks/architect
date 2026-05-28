@@ -1,55 +1,65 @@
 "use client";
 
-import { useState } from "react";
-import { projects, siteUpdates as initialUpdates } from "@/lib/dummy-data";
+import { useState, useEffect } from "react";
 import { ClipboardList, Calendar, Plus, Construction, TrendingUp, Camera, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/lib/auth-context";
-
-type Update = {
-  id: string;
-  project: string;
-  update: string;
-  date: string;
-  progress: number;
-  photos: number;
-  stage?: string;
-  addedBy?: string;
-};
+import { useSiteUpdates } from "@/lib/site-updates-store";
+import { useProjects } from "@/lib/projects-store";
+import toast from "react-hot-toast";
 
 const stageOptions = ["Layout", "Excavation", "Foundation", "Structure", "Brick Work", "Plumbing", "Electrical", "Plaster", "Flooring", "Painting", "Interior", "Final Handover"];
 
 export default function SiteUpdatesPage() {
   const { user } = useAuth();
-  const [updates, setUpdates] = useState<Update[]>(initialUpdates.map(u => ({ ...u, id: String(u.id) })));
+  const { updates, createUpdate, isHydrated } = useSiteUpdates();
+  const { projects } = useProjects();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ project: projects[0].name, update: "", stage: stageOptions[0], progress: "" });
+  const [form, setForm] = useState({ project: "", update: "", stage: stageOptions[0], progress: "" });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const canAdd = user?.role === "supervisor" || user?.role === "architect" || user?.role === "director";
+  useEffect(() => {
+    if (projects.length > 0 && !form.project) {
+      setForm(f => ({ ...f, project: projects[0].id }));
+    }
+  }, [projects]);
+
+  const canAdd = user?.role === "supervisor" || user?.role === "architect" || user?.role === "director" || user?.role === "site-engineer";
 
   const visibleUpdates = user?.role === "client"
-    ? updates.filter(u => u.project === projects.find(p => p.id === user.projectId)?.name)
+    ? updates.filter(u => u.projectId === user.projectId || (u.project as any)?._id === user.projectId)
     : updates;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.update.trim()) return;
-    const newUpdate: Update = {
-      id: String(Date.now()),
-      project: form.project,
-      update: form.update,
-      date: new Date().toISOString().split("T")[0],
-      progress: Number(form.progress) || 0,
-      photos: 0,
-      stage: form.stage,
-      addedBy: user?.name,
-    };
-    setUpdates(prev => [newUpdate, ...prev]);
-    setForm({ project: projects[0].name, update: "", stage: stageOptions[0], progress: "" });
-    setShowForm(false);
+    if (!form.project) {
+      toast.error("Please select a project");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await createUpdate({
+        projectId: form.project,
+        project: projects.find(p => p.id === form.project)?.name || form.project,
+        update: form.update,
+        progress: Number(form.progress) || 0,
+        stage: form.stage,
+        addedBy: user?.name,
+      });
+      toast.success("Site update posted successfully!");
+      setForm(f => ({ ...f, update: "", progress: "" }));
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error posting site update:", error);
+      toast.error("Failed to post site update");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,7 +94,7 @@ export default function SiteUpdatesPage() {
                   onChange={e => setForm(f => ({ ...f, project: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5">
@@ -123,7 +133,9 @@ export default function SiteUpdatesPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button variant="secondary" size="sm" type="button" onClick={() => setShowForm(false)} className="text-xs">Cancel</Button>
-              <Button size="sm" type="submit" className="text-xs">Post Update</Button>
+              <Button size="sm" type="submit" disabled={isLoading} className="text-xs">
+                {isLoading ? "Posting..." : "Post Update"}
+              </Button>
             </div>
           </form>
         </Card>
@@ -148,7 +160,7 @@ export default function SiteUpdatesPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900 tracking-tight">{update.project}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 tracking-tight">{(update.project as any)?.name || update.project}</h3>
                       {update.stage && (
                         <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
                           {update.stage}
@@ -164,7 +176,7 @@ export default function SiteUpdatesPage() {
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                         <Camera className="w-3.5 h-3.5" />
-                        {update.photos} Photos
+                        {update.photos || 0} Photos
                       </div>
                       {update.addedBy && (
                         <div className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">
@@ -177,7 +189,7 @@ export default function SiteUpdatesPage() {
                 
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono bg-slate-50 px-2 py-1 rounded-md border border-slate-100 self-start sm:self-center">
                   <Calendar className="w-3.5 h-3.5" />
-                  {update.date}
+                  {new Date(update.date || (update as any).createdAt).toLocaleDateString()}
                 </div>
               </div>
             </Card>

@@ -33,7 +33,7 @@ const emptyForm = {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const { projects, createProject, fetchProjects } = useProjects() as any;
+  const { projects, createProject, updateProject, deleteProject, fetchProjects } = useProjects() as any;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
@@ -198,9 +198,8 @@ export default function ProjectsPage() {
   const handleDelete = async () => {
     if (!projectToDelete) return;
     try {
-      await projectService.deleteProject(projectToDelete);
+      await deleteProject(projectToDelete);
       toast.success("Project deleted successfully");
-      if (fetchProjects) await fetchProjects();
       setIsConfirmOpen(false);
       setProjectToDelete(null);
     } catch (error) {
@@ -224,27 +223,27 @@ export default function ProjectsPage() {
 
     try {
       if (editingProject) {
-        await projectService.updateProject(editingProject.id, {
+        await updateProject(editingProject.id, {
           name: form.name,
-          client: form.clientId,
+          clientId: form.clientId,
           location: form.location,
           startDate: form.startDate,
           expectedCompletion: form.expectedCompletion,
           budget: form.budget,
-          designer: form.designerId,
-        });
+          designerId: form.designerId,
+        } as any);
         toast.success("Project updated successfully!");
       } else {
-        await projectService.createProject({
+        await createProject({
           name: form.name,
-          client: form.clientId,
+          clientId: form.clientId,
           location: form.location,
           startDate: form.startDate,
           expectedCompletion: form.expectedCompletion,
           budget: form.budget,
-          designer: form.designerId,
+          designerId: form.designerId,
           stages: defaultStages,
-        });
+        } as any);
         toast.success("Project created successfully!");
       }
 

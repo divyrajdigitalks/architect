@@ -202,8 +202,9 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     );
   }
 
-  const handleUpdateStageStatus = (stageName: string, newStatus: any) => {
-    updateStageStatus(project.id, stageName, newStatus);
+  const handleUpdateStageStatus = async (stageName: string, newStatus: any) => {
+    await updateStageStatus(project.id, stageName, newStatus);
+    toast.success(`Stage ${stageName} updated to ${newStatus}`);
   };
 
   const handleEditProject = async (e: React.FormEvent) => {
@@ -408,7 +409,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     setIsSubmittingPayment(true);
     try {
       if (editingPayment) {
-        const { updatePayment } = usePayments(); // Using from hook
         await updatePayment(editingPayment.id, {
           milestone: paymentForm.milestone,
           amount: Number(paymentForm.amount),
