@@ -22,7 +22,9 @@ import toast from "react-hot-toast";
 export default function OfficeWorkPage() {
   const { user } = useAuth();
   const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
-  const isViewOnly = user?.role === "architect" || user?.role === "director";
+  const isViewOnly = false;
+  const isAdminRole = user?.role === "architect" || user?.role === "director";
+  const canDeleteImages = (task: any) => isAdminRole || task.assignedTo?.some((s: any) => (s._id || s.id || s) === user?.id);
   const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask, refreshTasks } = useOfficeTasks();
   const { projects } = useProjects();
   
@@ -442,7 +444,7 @@ export default function OfficeWorkPage() {
                               )}
                               <div className="pt-2">
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4>
-                                {isViewOnly ? (
+                                {false ? (
                                   <p className="text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-100 shadow-sm italic">
                                     {task.notes || "No notes available for this task."}
                                   </p>
@@ -476,26 +478,16 @@ export default function OfficeWorkPage() {
                             </div>
                             <div className="space-y-4">
                               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Design Photos</h4>
-                              {isViewOnly ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {(task.images || []).length === 0 && <p className="text-xs text-slate-400 italic">No photos uploaded.</p>}
-                                  {(task.images || []).map((url, i) => (
-                                    <a key={i} href={url} target="_blank" rel="noreferrer" className="w-16 h-16 rounded-lg overflow-hidden border border-slate-200 block">
-                                      <img src={url} alt={`img-${i}`} className="w-full h-full object-cover" />
-                                    </a>
-                                  ))}
-                                </div>
-                              ) : (
-                                <TaskImageUpload
+                              <TaskImageUpload
                                   taskId={task.id}
                                   type="Office"
                                   existingImages={task.images}
+                                  canDelete={canDeleteImages(task)}
                                   onUploadComplete={() => {
                                     refreshTasks();
-                                    toast.success("Photos uploaded successfully");
+                                    toast.success("Photos updated successfully");
                                   }}
                                 />
-                              )}
                             </div>
                           </div>
                         </TableCell>

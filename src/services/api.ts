@@ -47,11 +47,12 @@ export const api = {
     return handleResponse<T>(response);
   },
 
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string, body?: any): Promise<T> {
     const headers = await getHeaders();
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "DELETE",
       headers,
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
     return handleResponse<T>(response);
   },

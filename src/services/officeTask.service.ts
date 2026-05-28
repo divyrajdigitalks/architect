@@ -19,9 +19,10 @@ export const officeTaskService = {
   },
   async uploadImages(id: string, files: File[]) {
     const formData = new FormData();
-    files.forEach(file => {
-      formData.append("images", file);
-    });
+    files.forEach(file => formData.append("images", file));
     return api.post(`${endPointApi.officeTaskById(id)}/upload`, formData);
+  },
+  async deleteImage(id: string, imageUrl: string) {
+    return api.delete(`${endPointApi.officeTaskById(id)}/image`, { imageUrl });
   },
 };
