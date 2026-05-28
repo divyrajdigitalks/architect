@@ -89,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(finalUser);
       localStorage.setItem("auth_user", JSON.stringify(finalUser));
       localStorage.setItem("token", data.token);
+      // Dispatch storage event so stores re-fetch with the new token
+      window.dispatchEvent(new Event("storage"));
       
       // Refresh roles to ensure correct permissions are loaded for the sidebar
       await refreshRoles();

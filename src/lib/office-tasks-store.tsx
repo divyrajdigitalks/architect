@@ -61,7 +61,18 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
   };
 
   useEffect(() => {
-    fetchTasks();
+    const token = localStorage.getItem("token");
+    if (token) fetchTasks();
+    else setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const token = localStorage.getItem("token");
+      if (token) fetchTasks();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const api = useMemo<OfficeTasksContextType>(() => {
@@ -85,8 +96,6 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
           ...data,
           id: data._id,
         };
-        
-        // Fetch fresh populated tasks from backend
         await fetchTasks();
         return created;
       } catch (error) {

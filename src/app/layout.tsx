@@ -48,12 +48,12 @@ export default function RootLayout({
               <TasksProvider>
                 <OfficeTasksProvider>
                   <SiteTasksProvider>
-                <SiteUpdatesProvider>
-                  <PaymentsProvider>
-                    <ClientLayout>{children}</ClientLayout>
-                    <Toaster position="top-right" />
-                  </PaymentsProvider>
-                </SiteUpdatesProvider>
+                    <SiteUpdatesProvider>
+                      <PaymentsProvider>
+                        <ClientLayout>{children}</ClientLayout>
+                        <Toaster position="top-right" />
+                      </PaymentsProvider>
+                    </SiteUpdatesProvider>
                   </SiteTasksProvider>
                 </OfficeTasksProvider>
               </TasksProvider>

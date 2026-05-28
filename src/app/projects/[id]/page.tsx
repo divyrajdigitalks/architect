@@ -390,13 +390,13 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     return getPaymentsByProjectId(project.id);
   }, [getPaymentsByProjectId, project]);
 
-  const { totalReceived, totalPending, utilization } = useMemo(() => {
+  const { totalReceived, totalPending, utilization, budgetValue } = useMemo(() => {
     if (!project) return { totalReceived: 0, totalPending: 0, utilization: 0 };
     const received = projectPayments.filter(p => p.status === "Paid").reduce((acc, p) => acc + p.amount, 0);
     const budgetValue = typeof project.budget === 'number' ? project.budget : Number(String(project.budget).replace(/[^0-9.-]+/g, "")) || 0;
     const pending = Math.max(0, budgetValue - received);
     const util = budgetValue > 0 ? Math.min(100, Math.round((received / budgetValue) * 100)) : 0;
-    return { totalReceived: received, totalPending: pending, utilization: util };
+    return { totalReceived: received, totalPending: pending, utilization: util, budgetValue };
   }, [project, projectPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {

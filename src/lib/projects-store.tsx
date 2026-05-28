@@ -196,7 +196,18 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchProjects();
+    const token = localStorage.getItem("token");
+    if (token) fetchProjects();
+    else setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const token = localStorage.getItem("token");
+      if (token) fetchProjects();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const api = useMemo<ProjectsContextType>(() => {

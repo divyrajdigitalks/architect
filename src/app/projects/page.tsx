@@ -8,6 +8,7 @@ import {
   MapPin, ChevronRight, Plus, Search, HardHat, CheckCircle2, UserCircle2, Edit2, Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +34,7 @@ const emptyForm = {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { projects, createProject, updateProject, deleteProject, fetchProjects } = useProjects() as any;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -301,7 +303,7 @@ export default function ProjectsPage() {
           <DataTable 
             columns={columns} 
             data={filteredProjects} 
-            onRowClick={(p) => window.location.href = `/projects/${p.id}`}
+            onRowClick={(p) => router.push(`/projects/${p.id}`)}
           />
         </div>
       </div>
