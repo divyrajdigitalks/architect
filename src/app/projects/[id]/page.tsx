@@ -193,15 +193,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     }
   };
 
-  if (!project) {
-    return (
-      <div className="p-10 text-center">
-        <h2 className="text-2xl font-bold">Project not found</h2>
-        <Link href="/projects" className="text-indigo-600 hover:underline mt-4 inline-block">Back to Projects</Link>
-      </div>
-    );
-  }
-
   const handleUpdateStageStatus = async (stageName: string, newStatus: any) => {
     await updateStageStatus(project.id, stageName, newStatus);
     toast.success(`Stage ${stageName} updated to ${newStatus}`);
@@ -398,6 +389,15 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     const util = budgetValue > 0 ? Math.min(100, Math.round((received / budgetValue) * 100)) : 0;
     return { totalReceived: received, totalPending: pending, utilization: util, budgetValue };
   }, [project, projectPayments]);
+
+  if (!project) {
+    return (
+      <div className="p-10 text-center">
+        <h2 className="text-2xl font-bold">Project not found</h2>
+        <Link href="/projects" className="text-indigo-600 hover:underline mt-4 inline-block">Back to Projects</Link>
+      </div>
+    );
+  }
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
