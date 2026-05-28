@@ -77,6 +77,8 @@ export const DEFAULT_ROLES: RoleConfig[] = [
 
 interface RoleContextType {
   roles: RoleConfig[];
+  isInitialized: boolean;
+  refreshRoles: () => Promise<void>;
   addRole: (name: string, color: string) => RoleConfig;
   deleteRole: (id: string) => void;
   updateRolePages: (id: string, pages: string[]) => void;
@@ -90,42 +92,42 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load from Backend
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const backendRoles = await roleService.getAllRoles();
-        if (backendRoles && Array.isArray(backendRoles)) {
-          // Map backend roles to RoleConfig
-          const mappedRoles: RoleConfig[] = backendRoles.map((r: any) => {
-            const hasAll = r.permissions.includes("all");
-            
-            // Derive pages from permissions
-            const derivedPages = hasAll 
-              ? ALL_PAGES.map(p => p.key) 
-              : ALL_PAGES.filter(p => {
-                  if (p.key === "dashboard") return true; // Everyone sees dashboard
-                  return r.permissions.includes(`${p.key}.view`) || r.permissions.includes("all");
-                }).map(p => p.key);
+  const fetchRoles = async () => {
+    try {
+      const backendRoles = await roleService.getAllRoles();
+      if (backendRoles && Array.isArray(backendRoles)) {
+        // Map backend roles to RoleConfig
+        const mappedRoles: RoleConfig[] = backendRoles.map((r: any) => {
+          const hasAll = r.permissions.includes("all");
+          
+          // Derive pages from permissions
+          const derivedPages = hasAll 
+            ? ALL_PAGES.map(p => p.key) 
+            : ALL_PAGES.filter(p => {
+                if (p.key === "dashboard") return true; // Everyone sees dashboard
+                return r.permissions.includes(`${p.key}.view`) || r.permissions.includes("all");
+              }).map(p => p.key);
 
-            return {
-              id: r.name.toLowerCase().replace(/\s+/g, '-'),
-              backendId: r._id,
-              name: r.name.toUpperCase(),
-              color: r.name.toLowerCase() === "director" ? "slate" : "indigo",
-              pages: derivedPages,
-              canDelete: !["admin", "director", "architect"].includes(r.name.toLowerCase())
-            };
-          });
-          setRoles(mappedRoles);
-          setIsInitialized(true);
-          return;
-        }
-      } catch (error) {
-        console.error("Failed to fetch roles from backend", error);
+          return {
+            id: r.name.toLowerCase().replace(/\s+/g, '-'),
+            backendId: r._id,
+            name: r.name.toUpperCase(),
+            color: r.name.toLowerCase() === "director" ? "slate" : "indigo",
+            pages: derivedPages,
+            canDelete: !["admin", "director", "architect"].includes(r.name.toLowerCase())
+          };
+        });
+        setRoles(mappedRoles);
+        setIsInitialized(true);
+        return;
       }
-      setIsInitialized(true);
-    };
+    } catch (error) {
+      console.error("Failed to fetch roles from backend", error);
+    }
+    setIsInitialized(true);
+  };
 
+  useEffect(() => {
     fetchRoles();
   }, []);
 
@@ -154,7 +156,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const getRoleById = (id: string) => roles.find(r => r.id === id);
 
   return (
-    <RoleContext.Provider value={{ roles, addRole, deleteRole, updateRolePages, getRoleById }}>
+    <RoleContext.Provider value={{ roles, isInitialized, refreshRoles: fetchRoles, addRole, deleteRole, updateRolePages, getRoleById }}>
       {children}
     </RoleContext.Provider>
   );

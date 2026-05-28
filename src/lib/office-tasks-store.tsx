@@ -29,6 +29,7 @@ type CreateOfficeTaskInput = Omit<OfficeTask, "id" | "createdAt"> & {
 type OfficeTasksContextType = {
   officeTasks: OfficeTask[];
   isHydrated: boolean;
+  refreshTasks: () => Promise<void>;
   getOfficeTasksByProjectId: (projectId: string) => OfficeTask[];
   createOfficeTask: (input: CreateOfficeTaskInput) => OfficeTask | Promise<OfficeTask>;
   updateOfficeTask: (id: string, patch: Partial<OfficeTask>) => void;
@@ -42,24 +43,24 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
   const [officeTasks, setOfficeTasks] = useState<OfficeTask[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = (await officeTaskService.getAllTasks()) as any;
-        if (data && data.length > 0) {
-          const mappedTasks = data.map((t: any) => ({
-            ...t,
-            id: t._id,
-          }));
-          setOfficeTasks(mappedTasks);
-        }
-      } catch (error) {
-        console.error("Failed to fetch office tasks from backend", error);
-      } finally {
-        setIsHydrated(true);
+  const fetchTasks = async () => {
+    try {
+      const data = (await officeTaskService.getAllTasks()) as any;
+      if (data && data.length >= 0) {
+        const mappedTasks = data.map((t: any) => ({
+          ...t,
+          id: t._id,
+        }));
+        setOfficeTasks(mappedTasks);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch office tasks from backend", error);
+    } finally {
+      setIsHydrated(true);
+    }
+  };
 
+  useEffect(() => {
     fetchTasks();
   }, []);
 
@@ -86,10 +87,7 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
         };
         
         // Fetch fresh populated tasks from backend
-        const fresh = (await officeTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setOfficeTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
         return created;
       } catch (error) {
         console.error("Failed to create office task on backend", error);
@@ -119,10 +117,7 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
           payload.project = patch.projectId;
         }
         await officeTaskService.updateTask(id, payload);
-        const fresh = (await officeTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setOfficeTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
       } catch (error) {
         console.error("Failed to update office task on backend", error);
         setOfficeTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -134,17 +129,14 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
     const deleteOfficeTask = async (id: string) => {
       try {
         await officeTaskService.deleteTask(id);
-        const fresh = (await officeTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setOfficeTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
       } catch (error) {
         console.error("Failed to delete office task on backend", error);
         setOfficeTasks((prev) => prev.filter((t) => t.id !== id));
       }
     };
 
-    return { officeTasks, isHydrated, getOfficeTasksByProjectId, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask };
+    return { officeTasks, isHydrated, refreshTasks: fetchTasks, getOfficeTasksByProjectId, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask };
   }, [officeTasks, isHydrated]);
 
   return <OfficeTasksContext.Provider value={api}>{children}</OfficeTasksContext.Provider>;

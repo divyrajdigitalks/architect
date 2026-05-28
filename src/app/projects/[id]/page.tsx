@@ -27,7 +27,7 @@ import {
     FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, use, useEffect, useRef } from "react";
+import { useState, use, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
@@ -68,7 +68,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const { siteTasks, updateSiteTaskStatus, createSiteTask } = useSiteTasks();
   const { getTasksByProjectId } = useTasks();
   const { updates: allSiteUpdates } = useSiteUpdates();
-  const { getPaymentsByProjectId, createPayment, deletePayment } = usePayments();
+  const { getPaymentsByProjectId, createPayment, deletePayment, updatePayment } = usePayments();
 
   const project = getProjectById(id);
   const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "accountant";
@@ -297,84 +297,106 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     }
   };
 
-  const projectOfficeTasks = officeTasks.filter(t =>
-    t.projectId === project.id ||
-    t.project === project.id ||
-    (t.project as any)?._id === project.id ||
-    (t.project as any)?.name === project.name ||
-    t.project === project.name
-  );
-  const projectSiteTasks = siteTasks.filter(t =>
-    t.projectId === project.id ||
-    t.project === project.id ||
-    (t.project as any)?._id === project.id ||
-    (t.project as any)?.name === project.name ||
-    t.project === project.name
-  );
+  const projectOfficeTasks = useMemo(() => {
+    if (!project) return [];
+    return officeTasks.filter(t =>
+      t.projectId === project.id ||
+      t.project === project.id ||
+      (t.project as any)?._id === project.id ||
+      (t.project as any)?.name === project.name ||
+      t.project === project.name
+    );
+  }, [officeTasks, project]);
+
+  const projectSiteTasks = useMemo(() => {
+    if (!project) return [];
+    return siteTasks.filter(t =>
+      t.projectId === project.id ||
+      t.project === project.id ||
+      (t.project as any)?._id === project.id ||
+      (t.project as any)?.name === project.name ||
+      t.project === project.name
+    );
+  }, [siteTasks, project]);
 
   // Combine Office and Site tasks for the Tasks tab
-  const projectTasks = [
-    ...projectOfficeTasks.map(t => ({
-      id: t.id,
-      name: t.title,
-      stage: t.category,
-      assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
-      status: t.status,
-      type: "Office" as const,
-      deadline: t.deadline
-    })),
-    ...projectSiteTasks.map(t => ({
-      id: t.id,
-      name: t.title,
-      stage: t.category,
-      assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
-      status: t.status,
-      type: "Site" as const,
-      deadline: t.endDate
-    }))
-  ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+  const projectTasks = useMemo(() => {
+    const combined = [
+      ...projectOfficeTasks.map(t => ({
+        id: t.id,
+        name: t.title,
+        stage: t.category,
+        assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
+        status: t.status,
+        type: "Office" as const,
+        deadline: t.deadline
+      })),
+      ...projectSiteTasks.map(t => ({
+        id: t.id,
+        name: t.title,
+        stage: t.category,
+        assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
+        status: t.status,
+        type: "Site" as const,
+        deadline: t.endDate
+      }))
+    ];
+    return combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+  }, [projectOfficeTasks, projectSiteTasks]);
 
-  const projectUpdates = allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
+  const projectUpdates = useMemo(() => {
+    if (!project) return [];
+    return allSiteUpdates.filter(u => u.projectId === project.id || u.project === project.name);
+  }, [allSiteUpdates, project]);
   
   // Extract all unique assigned staff from office, site and global tasks
-  const staffFromOffice = projectOfficeTasks.flatMap(t => t.assignedTo || []);
-  const staffFromSite = projectSiteTasks.flatMap(t => t.assignedTo || []);
-  const allAssignedStaff = [...staffFromOffice, ...staffFromSite];
-  
-  // Use a Map to keep unique staff by ID
-  const uniqueStaffMap = new Map();
-  
-  // Also include supervisor and project workers as a fallback/additional list if needed,
-  // but prioritize staff assigned to tasks.
-  if (project.supervisor) {
-    const s = project.supervisor;
-    uniqueStaffMap.set(s._id || s.id, { ...s, type: "Supervisor" });
-  }
-  
-  allAssignedStaff.forEach((s: any) => {
-    if (!s) return;
-    const id = s._id || s.id || (typeof s === 'string' ? s : null);
-    if (!id) return;
+  const projectWorkers = useMemo(() => {
+    if (!project) return [];
+    const staffFromOffice = projectOfficeTasks.flatMap(t => t.assignedTo || []);
+    const staffFromSite = projectSiteTasks.flatMap(t => t.assignedTo || []);
+    const allAssignedStaff = [...staffFromOffice, ...staffFromSite];
     
-    if (!uniqueStaffMap.has(id)) {
-      uniqueStaffMap.set(id, {
-        id,
-        name: s.name || (typeof s === 'string' ? s : "Unknown"),
-        type: s.role?.name || s.role || "Staff",
-        rate: s.rate || "N/A"
-      });
+    // Use a Map to keep unique staff by ID
+    const uniqueStaffMap = new Map();
+    
+    // Also include supervisor and project workers as a fallback/additional list if needed,
+    // but prioritize staff assigned to tasks.
+    if (project.supervisor) {
+      const s = project.supervisor;
+      uniqueStaffMap.set(s._id || s.id, { ...s, type: "Supervisor" });
     }
-  });
+    
+    allAssignedStaff.forEach((s: any) => {
+      if (!s) return;
+      const id = s._id || s.id || (typeof s === 'string' ? s : null);
+      if (!id) return;
+      
+      if (!uniqueStaffMap.has(id)) {
+        uniqueStaffMap.set(id, {
+          id,
+          name: s.name || (typeof s === 'string' ? s : "Unknown"),
+          type: s.role?.name || s.role || "Staff",
+          rate: s.rate || "N/A"
+        });
+      }
+    });
 
-  const projectWorkers = Array.from(uniqueStaffMap.values());
+    return Array.from(uniqueStaffMap.values());
+  }, [project, projectOfficeTasks, projectSiteTasks]);
 
-  const projectPayments = getPaymentsByProjectId(project.id);
-  const totalReceived = projectPayments.filter(p => p.status === "Paid").reduce((acc, p) => acc + p.amount, 0);
-  
-  // Parse budget as number
-  const budgetValue = typeof project.budget === 'number' ? project.budget : Number(String(project.budget).replace(/[^0-9.-]+/g, "")) || 0;
-  const totalPending = Math.max(0, budgetValue - totalReceived);
-  const utilization = budgetValue > 0 ? Math.min(100, Math.round((totalReceived / budgetValue) * 100)) : 0;
+  const projectPayments = useMemo(() => {
+    if (!project) return [];
+    return getPaymentsByProjectId(project.id);
+  }, [getPaymentsByProjectId, project]);
+
+  const { totalReceived, totalPending, utilization } = useMemo(() => {
+    if (!project) return { totalReceived: 0, totalPending: 0, utilization: 0 };
+    const received = projectPayments.filter(p => p.status === "Paid").reduce((acc, p) => acc + p.amount, 0);
+    const budgetValue = typeof project.budget === 'number' ? project.budget : Number(String(project.budget).replace(/[^0-9.-]+/g, "")) || 0;
+    const pending = Math.max(0, budgetValue - received);
+    const util = budgetValue > 0 ? Math.min(100, Math.round((received / budgetValue) * 100)) : 0;
+    return { totalReceived: received, totalPending: pending, utilization: util };
+  }, [project, projectPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -424,8 +446,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
       setIsSubmittingPayment(false);
     }
   };
-
-  const { updatePayment } = usePayments();
 
   const handleDeletePayment = async () => {
     if (!paymentToDelete) return;

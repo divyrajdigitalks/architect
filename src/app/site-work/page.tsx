@@ -24,7 +24,7 @@ export default function SiteWorkPage() {
   const { user } = useAuth();
   const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "site-engineer" || user?.role === "supervisor";
   const isViewOnly = user?.role === "architect" || user?.role === "director";
-  const { siteTasks, createSiteTask, updateSiteTask, updateSiteTaskStatus, deleteSiteTask } = useSiteTasks();
+  const { siteTasks, createSiteTask, updateSiteTask, updateSiteTaskStatus, deleteSiteTask, refreshTasks } = useSiteTasks();
   const { projects } = useProjects();
   
   const [activeTab, setActiveTab] = useState<SiteTaskCategory>("Civil");
@@ -454,7 +454,15 @@ export default function SiteWorkPage() {
                                     <Button
                                       size="sm"
                                       className="rounded-xl text-[10px] h-8 bg-blue-600 hover:bg-blue-500"
-                                      onClick={() => updateSiteTask(task.id, { notes: noteValues[task.id] ?? task.notes })}
+                                      onClick={async () => {
+                                        await updateSiteTask(task.id, { notes: noteValues[task.id] ?? task.notes });
+                                        setNoteValues(prev => {
+                                          const next = { ...prev };
+                                          delete next[task.id];
+                                          return next;
+                                        });
+                                        toast.success("Technical notes saved successfully");
+                                      }}
                                     >
                                       Save Notes
                                     </Button>
@@ -478,7 +486,10 @@ export default function SiteWorkPage() {
                                   taskId={task.id}
                                   type="Site"
                                   existingImages={task.images}
-                                  onUploadComplete={() => console.log("Site photos uploaded!")}
+                                  onUploadComplete={() => {
+                                    refreshTasks();
+                                    toast.success("Site photos uploaded successfully");
+                                  }}
                                 />
                               )}
                             </div>

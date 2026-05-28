@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 import { authService } from "@/services/auth.service";
+import { useRoles } from "./role-context";
 
 // Role is now a string to support dynamic custom roles
 export type Role = string;
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { refreshRoles } = useRoles();
 
   useEffect(() => {
     try {
@@ -87,6 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(finalUser);
       localStorage.setItem("auth_user", JSON.stringify(finalUser));
       localStorage.setItem("token", data.token);
+      
+      // Refresh roles to ensure correct permissions are loaded for the sidebar
+      await refreshRoles();
+      
       router.push("/");
     } catch (error: any) {
       throw error;

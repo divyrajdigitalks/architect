@@ -29,6 +29,7 @@ type CreateSiteTaskInput = Omit<SiteTask, "id" | "createdAt"> & {
 type SiteTasksContextType = {
   siteTasks: SiteTask[];
   isHydrated: boolean;
+  refreshTasks: () => Promise<void>;
   getSiteTasksByProjectId: (projectId: string) => SiteTask[];
   createSiteTask: (input: CreateSiteTaskInput) => SiteTask | Promise<SiteTask>;
   updateSiteTask: (id: string, patch: Partial<SiteTask>) => void;
@@ -42,24 +43,24 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
   const [siteTasks, setSiteTasks] = useState<SiteTask[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = (await siteTaskService.getAllTasks()) as any;
-        if (data && data.length > 0) {
-          const mappedTasks = data.map((t: any) => ({
-            ...t,
-            id: t._id,
-          }));
-          setSiteTasks(mappedTasks);
-        }
-      } catch (error) {
-        console.error("Failed to fetch site tasks from backend", error);
-      } finally {
-        setIsHydrated(true);
+  const fetchTasks = async () => {
+    try {
+      const data = (await siteTaskService.getAllTasks()) as any;
+      if (data && data.length >= 0) {
+        const mappedTasks = data.map((t: any) => ({
+          ...t,
+          id: t._id,
+        }));
+        setSiteTasks(mappedTasks);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch site tasks from backend", error);
+    } finally {
+      setIsHydrated(true);
+    }
+  };
 
+  useEffect(() => {
     fetchTasks();
   }, []);
 
@@ -84,10 +85,7 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
           ...data,
           id: data._id,
         };
-        const fresh = (await siteTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setSiteTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
         return created;
       } catch (error) {
         console.error("Failed to create site task on backend", error);
@@ -117,10 +115,7 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
           payload.project = patch.projectId;
         }
         await siteTaskService.updateTask(id, payload);
-        const fresh = (await siteTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setSiteTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
       } catch (error) {
         console.error("Failed to update site task on backend", error);
         setSiteTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -132,17 +127,14 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
     const deleteSiteTask = async (id: string) => {
       try {
         await siteTaskService.deleteTask(id);
-        const fresh = (await siteTaskService.getAllTasks()) as any;
-        if (fresh) {
-          setSiteTasks(fresh.map((t: any) => ({ ...t, id: t._id })));
-        }
+        await fetchTasks();
       } catch (error) {
         console.error("Failed to delete site task on backend", error);
         setSiteTasks((prev) => prev.filter((t) => t.id !== id));
       }
     };
 
-    return { siteTasks, isHydrated, getSiteTasksByProjectId, createSiteTask, updateSiteTask, updateSiteTaskStatus, deleteSiteTask };
+    return { siteTasks, isHydrated, refreshTasks: fetchTasks, getSiteTasksByProjectId, createSiteTask, updateSiteTask, updateSiteTaskStatus, deleteSiteTask };
   }, [siteTasks, isHydrated]);
 
   return <SiteTasksContext.Provider value={api}>{children}</SiteTasksContext.Provider>;

@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Phone,
   Eye,
+  EyeOff,
   Briefcase,
   Users,
   Camera,
@@ -38,6 +39,8 @@ export default function LoginPage() {
     "accountant@gmail.com": "accountant",
     "client@gmail.com": "client",
   };
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,7 +289,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => {
@@ -297,10 +300,21 @@ export default function LoginPage() {
                         });
                       }}
                       className={cn(
-                        "w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm focus:outline-none transition-all placeholder:text-slate-300",
+                        "w-full pl-10 pr-12 py-3 bg-white border rounded-xl text-sm focus:outline-none transition-all placeholder:text-slate-300",
                         errors.password ? "border-red-500 focus:ring-2 focus:ring-red-500/10" : "border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                       )}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                   {errors.password && <p className="text-[10px] font-bold text-red-500 pl-1">{errors.password}</p>}
                 </div>

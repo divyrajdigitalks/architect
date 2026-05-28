@@ -23,7 +23,7 @@ export default function OfficeWorkPage() {
   const { user } = useAuth();
   const canCreate = user?.role === "architect" || user?.role === "director" || user?.role === "office-team";
   const isViewOnly = user?.role === "architect" || user?.role === "director";
-  const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask } = useOfficeTasks();
+  const { officeTasks, createOfficeTask, updateOfficeTask, updateOfficeTaskStatus, deleteOfficeTask, refreshTasks } = useOfficeTasks();
   const { projects } = useProjects();
   
   const [activeTab, setActiveTab] = useState<OfficeTaskCategory>("Civil");
@@ -458,7 +458,15 @@ export default function OfficeWorkPage() {
                                     <Button
                                       size="sm"
                                       className="rounded-xl text-[10px] h-8 bg-indigo-600 hover:bg-indigo-500"
-                                      onClick={() => updateOfficeTask(task.id, { notes: noteValues[task.id] ?? task.notes })}
+                                      onClick={async () => {
+                                        await updateOfficeTask(task.id, { notes: noteValues[task.id] ?? task.notes });
+                                        setNoteValues(prev => {
+                                          const next = { ...prev };
+                                          delete next[task.id];
+                                          return next;
+                                        });
+                                        toast.success("Notes saved successfully");
+                                      }}
                                     >
                                       Save Notes
                                     </Button>
@@ -482,7 +490,10 @@ export default function OfficeWorkPage() {
                                   taskId={task.id}
                                   type="Office"
                                   existingImages={task.images}
-                                  onUploadComplete={() => console.log("Upload finished!")}
+                                  onUploadComplete={() => {
+                                    refreshTasks();
+                                    toast.success("Photos uploaded successfully");
+                                  }}
                                 />
                               )}
                             </div>

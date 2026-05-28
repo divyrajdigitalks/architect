@@ -84,9 +84,17 @@ const ROLE_PAGE_LABELS: Record<string, Record<string, string>> = {
 export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { getRoleById } = useRoles();
+  const { getRoleById, isInitialized } = useRoles();
 
   if (pathname === "/login") return null;
+
+  if (!isInitialized && user) {
+    return (
+      <div className="w-60 h-screen bg-slate-900 text-slate-300 flex flex-col items-center justify-center border-r border-slate-800">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   const roleName = typeof user?.role === 'string' ? user.role : "";
   const roleId = roleName.toLowerCase().replace(/\s+/g, '-');
