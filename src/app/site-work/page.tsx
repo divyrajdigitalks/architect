@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Hammer, Camera, ClipboardList, MapPin, CheckCircle2, Plus, Search, Filter, ArrowRight, HardHat, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn, formatDateForDisplay } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
@@ -44,6 +44,8 @@ export default function SiteWorkPage() {
     project: "",
     assignedTo: [] as string[],
     status: "On Track",
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -60,9 +62,9 @@ export default function SiteWorkPage() {
   });
 
   const siteStats = [
-    { title: "Active Sites", count: projects.filter(p => p.status === "In Progress" || p.status === "Active").length, icon: MapPin, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Active Sites", count: projects.filter(p => p.status === "In Progress" || p.status === "Active").length, icon: MapPin, color: "text-indigo-600", bg: "bg-indigo-50" },
     { title: "On-site Team", count: siteStaff.length, icon: HardHat, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { title: "Site Logs", count: siteTasks.length, icon: ClipboardList, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Site Logs", count: siteTasks.length, icon: ClipboardList, color: "text-indigo-600", bg: "bg-indigo-50" },
     { title: "Inspections", count: siteTasks.filter(t => t.status === "Critical" || t.status === "Delayed").length, icon: CheckCircle2, color: "text-indigo-600", bg: "bg-indigo-50" },
   ];
 
@@ -91,6 +93,8 @@ export default function SiteWorkPage() {
           project: selectedProject.name,
           assignedTo: newTask.assignedTo,
           status: newTask.status as any,
+          startDate: newTask.startDate,
+          endDate: newTask.endDate,
         });
         toast.success("Site task updated successfully!");
       } else {
@@ -102,13 +106,15 @@ export default function SiteWorkPage() {
           assignedTo: newTask.assignedTo,
           status: newTask.status as any,
           progress: 0,
+          startDate: newTask.startDate,
+          endDate: newTask.endDate,
         });
         toast.success("Site task created successfully!");
       }
 
       setIsModalOpen(false);
       setEditingTask(null);
-      setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+      setNewTask({ title: "", project: "", assignedTo: [], status: "On Track", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
       setErrors({});
     } catch (error) {
       console.error("Error saving site task:", error);
@@ -149,9 +155,9 @@ export default function SiteWorkPage() {
         { canCreate && (
           <Button onClick={() => {
             setEditingTask(null);
-            setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+            setNewTask({ title: "", project: "", assignedTo: [], status: "On Track", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
             setIsModalOpen(true);
-          }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-100 text-white">
+          }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100 text-white">
             <Plus className="w-4 h-4" /> New Log
           </Button>
         )}
@@ -170,7 +176,7 @@ export default function SiteWorkPage() {
         onClose={() => {
           setIsModalOpen(false);
           setEditingTask(null);
-          setNewTask({ title: "", project: "", assignedTo: [], status: "On Track" });
+          setNewTask({ title: "", project: "", assignedTo: [], status: "On Track", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
           setErrors({});
         }} 
         title={editingTask ? "Edit Site Task" : `Create New ${activeTab} Site Task`}
@@ -210,7 +216,7 @@ export default function SiteWorkPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Select
-                label="Assign To (Supervisor)"
+                label="Assign To"
                 options={siteStaff.map(s => ({ 
                   value: s._id, 
                   label: s.name,
@@ -241,9 +247,29 @@ export default function SiteWorkPage() {
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start Date</label>
+              <Input
+                type="date"
+                value={newTask.startDate}
+                onChange={(e) => setNewTask({ ...newTask, startDate: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End Date</label>
+              <Input
+                type="date"
+                value={newTask.endDate}
+                onChange={(e) => setNewTask({ ...newTask, endDate: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+          </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-medium">
+            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium">
               {editingTask ? "Update Log" : "Save Log"}
             </Button>
           </div>
@@ -253,13 +279,13 @@ export default function SiteWorkPage() {
       <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit shadow-sm">
         <button
           onClick={() => setActiveTab("Civil")}
-          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Civil" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Civil" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Civil Work
         </button>
         <button
           onClick={() => setActiveTab("Interior")}
-          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Interior" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
+          className={cn("px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300", activeTab === "Interior" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")}
         >
           Interior Work
         </button>
@@ -301,7 +327,7 @@ export default function SiteWorkPage() {
                 <TableRow>
                   <TableHead className="px-6 py-4">Site Task</TableHead>
                   <TableHead className="px-6 py-4">Project</TableHead>
-                  <TableHead className="px-6 py-4">Status</TableHead>
+                  <TableHead className="px-6 py-4">Status & Progress</TableHead>
                   <TableHead className="px-6 py-4">Staff</TableHead>
                   <TableHead className="px-6 py-4 text-right">Action</TableHead>
                 </TableRow>
@@ -333,7 +359,11 @@ export default function SiteWorkPage() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-slate-900">{task.title}</p>
-                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Added on {new Date(task.createdAt || Date.now()).toLocaleDateString()}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] text-slate-400 font-medium font-mono">Added: {formatDateForDisplay(task.createdAt)}</span>
+                              {task.startDate && <span className="text-[10px] text-slate-400 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
+                              {task.endDate && <span className="text-[10px] text-slate-400 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
@@ -341,27 +371,40 @@ export default function SiteWorkPage() {
                         <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <Badge 
-                          variant={
-                            task.status === "Completed" ? "success" : 
-                            task.status === "Critical" ? "destructive" : 
-                            task.status === "Delayed" ? "warning" : "secondary"
-                          }
-                          className="text-[10px] px-2 py-0.5 font-black uppercase tracking-widest shadow-sm"
-                        >
-                          {task.status}
-                        </Badge>
+                        <div className="space-y-2 max-w-[150px]">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className={cn(
+                              "uppercase tracking-widest",
+                              task.status === "Completed" ? "text-green-600" :
+                              task.status === "Critical" ? "text-red-600" : 
+                              task.status === "Delayed" ? "text-orange-600" : "text-blue-600"
+                            )}>{task.status}</span>
+                            <span className="text-slate-500 font-mono">{task.progress}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-indigo-600 transition-all duration-500" 
+                              style={{ width: `${task.progress}%` }} 
+                            />
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <div className="flex -space-x-2">
+                        <div className="flex flex-wrap gap-2">
                           {task.assignedTo && task.assignedTo.length > 0 ? (
                             task.assignedTo.map((user: any, i: number) => (
-                              <div key={i} className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-xs font-bold text-blue-600 font-mono shadow-sm" title={user.name || user}>
-                                {(user.name || user)[0]}
+                              <div
+                                key={i}
+                                className="px-3 py-1 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-xs font-semibold text-indigo-600 shadow-sm"
+                                title={user.name || user}
+                              >
+                                {user.name || user}
                               </div>
                             ))
                           ) : (
-                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-widest">
+                              Unassigned
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -381,6 +424,8 @@ export default function SiteWorkPage() {
                                     project: (task.projectId || (task.project as any)?.id || task.project as any)?._id || (task.project as any)?.id || task.project as string,
                                     assignedTo: task.assignedTo?.map((s: any) => s._id || s.id || s) || [],
                                     status: task.status || "On Track",
+                                    startDate: task.startDate || new Date().toISOString().split('T')[0],
+                                    endDate: task.endDate || new Date().toISOString().split('T')[0],
                                   });
                                   setIsModalOpen(true);
                                 }}
@@ -404,7 +449,7 @@ export default function SiteWorkPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-blue-600 text-white" : "text-slate-400")}
+                            className={cn("h-8 w-8 rounded-lg transition-all", expandedTaskId === task.id ? "bg-indigo-600 text-white" : "text-slate-400")}
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedTaskId(expandedTaskId === task.id ? null : task.id);
@@ -447,7 +492,7 @@ export default function SiteWorkPage() {
                                 ) : (
                                   <div className="space-y-2">
                                     <textarea
-                                      className="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                                      className="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
                                       rows={3}
                                       placeholder="Add technical notes..."
                                       value={noteValues[task.id] ?? (task.notes || "")}
@@ -455,7 +500,7 @@ export default function SiteWorkPage() {
                                     />
                                     <Button
                                       size="sm"
-                                      className="rounded-xl text-[10px] h-8 bg-blue-600 hover:bg-blue-500"
+                                      className="rounded-xl text-[10px] h-8 bg-indigo-600 hover:bg-indigo-500"
                                       onClick={async () => {
                                         await updateSiteTask(task.id, { notes: noteValues[task.id] ?? task.notes });
                                         setNoteValues(prev => {

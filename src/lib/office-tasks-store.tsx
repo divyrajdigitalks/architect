@@ -15,7 +15,8 @@ export type OfficeTask = {
   assignedTo: any[];
   status: OfficeTaskStatus;
   progress: number;
-  deadline?: string;
+  startDate?: string;
+  endDate?: string;
   priority?: string;
   notes?: string;
   images?: string[];
@@ -88,7 +89,8 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
           priority: input.priority || "Medium",
           status: input.status || "Pending",
           progress: input.progress || 0,
-          deadline: input.deadline,
+          startDate: input.startDate,
+          endDate: input.endDate,
           notes: input.notes,
         };
         const data = (await officeTaskService.createTask(payload)) as any;
@@ -97,6 +99,7 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
           id: data._id,
         };
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
         return created;
       } catch (error) {
         console.error("Failed to create office task on backend", error);
@@ -109,7 +112,8 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
           assignedTo: input.assignedTo ?? [],
           status: input.status ?? "Pending",
           progress: input.progress ?? 0,
-          deadline: input.deadline,
+          startDate: input.startDate,
+          endDate: input.endDate,
           priority: input.priority,
           notes: input.notes,
           createdAt: new Date().toISOString(),
@@ -127,18 +131,25 @@ export function OfficeTasksProvider({ children }: { children: React.ReactNode })
         }
         await officeTaskService.updateTask(id, payload);
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
       } catch (error) {
         console.error("Failed to update office task on backend", error);
         setOfficeTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
       }
     };
 
-    const updateOfficeTaskStatus = (id: string, status: OfficeTaskStatus) => updateOfficeTask(id, { status });
+    const updateOfficeTaskStatus = (id: string, status: OfficeTaskStatus) => {
+      let progress = 0;
+      if (status === "Completed") progress = 100;
+      else if (status === "In Progress") progress = 50;
+      updateOfficeTask(id, { status, progress });
+    };
 
     const deleteOfficeTask = async (id: string) => {
       try {
         await officeTaskService.deleteTask(id);
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
       } catch (error) {
         console.error("Failed to delete office task on backend", error);
         setOfficeTasks((prev) => prev.filter((t) => t.id !== id));

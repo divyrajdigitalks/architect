@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOfficeTasks, OfficeTaskCategory } from "@/lib/office-tasks-store";
 import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
-import { cn } from "@/lib/utils";
+import { cn, formatDateForDisplay } from "@/lib/utils";
 import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
 import { Select } from "@/components/ui/Select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -43,6 +43,8 @@ export default function OfficeWorkPage() {
     project: "",
     assignedTo: [] as string[],
     priority: "Medium",
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function OfficeWorkPage() {
     { title: "Design Phase", count: officeTasks.filter(t => t.status === "In Progress").length, icon: PenTool, color: "text-indigo-600", bg: "bg-indigo-50" },
     { title: "Documentation", count: officeTasks.filter(t => t.status === "Pending").length, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
     { title: "Approvals", count: officeTasks.filter(t => t.status === "Completed").length, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-    { title: "Revisions", count: officeTasks.filter(t => t.priority === "High" || t.priority === "Critical").length, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
+    // { title: "Revisions", count: officeTasks.filter(t => t.priority === "High" || t.priority === "Critical").length, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
   ];
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -83,6 +85,8 @@ export default function OfficeWorkPage() {
           project: selectedProject.name,
           assignedTo: newTask.assignedTo,
           priority: newTask.priority,
+          startDate: newTask.startDate,
+          endDate: newTask.endDate,
         });
         toast.success("Office task updated successfully!");
       } else {
@@ -95,13 +99,15 @@ export default function OfficeWorkPage() {
           priority: newTask.priority,
           status: "Pending",
           progress: 0,
+          startDate: newTask.startDate,
+          endDate: newTask.endDate,
         });
         toast.success("Office task created successfully!");
       }
       
       setIsModalOpen(false);
       setEditingTask(null);
-      setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+      setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
       setErrors({});
     } catch (error) {
       console.error("Error saving office task:", error);
@@ -142,7 +148,7 @@ export default function OfficeWorkPage() {
         {canCreate && (
           <Button onClick={() => {
             setEditingTask(null);
-            setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+            setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
             setIsModalOpen(true);
           }} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
             <Plus className="w-4 h-4" /> New Task
@@ -163,7 +169,7 @@ export default function OfficeWorkPage() {
         onClose={() => {
           setIsModalOpen(false);
           setEditingTask(null);
-          setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium" });
+          setNewTask({ title: "", project: "", assignedTo: [], priority: "Medium", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] });
           setErrors({});
         }} 
         title={editingTask ? "Edit Office Task" : "Add New Office Task"}
@@ -242,6 +248,28 @@ export default function OfficeWorkPage() {
               ))}
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start Date</label>
+              <Input
+                type="date"
+                value={newTask.startDate}
+                onChange={(e) => setNewTask({ ...newTask, startDate: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End Date</label>
+              <Input
+                type="date"
+                value={newTask.endDate}
+                onChange={(e) => setNewTask({ ...newTask, endDate: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+          </div>
+
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
@@ -327,11 +355,13 @@ export default function OfficeWorkPage() {
                       <TableCell className="px-6 py-4">
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-slate-900">{task.title}</p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge variant={task.priority === "High" || task.priority === "Critical" ? "destructive" : "warning"} className="text-[9px] px-1.5 py-0">
                               {task.priority || "Medium"}
                             </Badge>
                             <span className="text-[10px] text-slate-400 font-medium font-mono">ID: {task.id.slice(-6)}</span>
+                            {task.startDate && <span className="text-[10px] text-slate-400 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
+                            {task.endDate && <span className="text-[10px] text-slate-400 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
                           </div>
                         </div>
                       </TableCell>
@@ -385,6 +415,8 @@ export default function OfficeWorkPage() {
                                     project: (task.projectId || (task.project as any)?.id || task.project as any)?._id || (task.project as any)?.id || task.project as string,
                                     assignedTo: task.assignedTo?.map((s: any) => s._id || s.id || s) || [],
                                     priority: task.priority || "Medium",
+                                    startDate: task.startDate || new Date().toISOString().split('T')[0],
+                                    endDate: task.endDate || new Date().toISOString().split('T')[0],
                                   });
                                   setIsModalOpen(true);
                                 }}

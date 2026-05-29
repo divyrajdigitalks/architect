@@ -17,7 +17,7 @@ const getPageTitle = (pathname: string) => {
   if (pathname === "/workers") return "Agency Directory";
   if (pathname === "/supervisors") return "Client Directory";
   if (pathname === "/clients") return "Office Team Directory";
-  if (pathname === "/site-updates") return "Recent Site Updates";
+  // if (pathname === "/site-updates") return "Recent Site Updates";
   if (pathname === "/payments") return "Financial Overview";
   if (pathname === "/calendar") return "Project Schedule";
   if (pathname === "/reports") return "Analytics & Reports";
@@ -49,7 +49,7 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
             const now = new Date().getTime();
             const elapsed = Math.floor((now - startTime) / 1000);
             setTimer(elapsed);
-            
+
             const interval = setInterval(() => {
               setTimer(prev => prev + 1);
             }, 1000);
@@ -105,20 +105,20 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     <>
       {/* Overlay for closing dropdowns when clicking outside */}
       {(showNotifications || showSettings) && (
-        <div 
-          className="fixed inset-0 z-40 bg-transparent" 
+        <div
+          className="fixed inset-0 z-40 bg-transparent"
           onClick={() => {
             setShowNotifications(false);
             setShowSettings(false);
-          }} 
+          }}
         />
       )}
-      
+
       <header className="h-14 bg-white border-b border-slate-200 fixed top-0 right-0 left-0 lg:left-60 z-40 flex items-center justify-between px-4 lg:px-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="lg:hidden h-8 w-8"
             onClick={onMenuToggle}
           >
@@ -137,9 +137,9 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         <div className="flex items-center gap-4">
           <div className="hidden md:flex relative group">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-primary-600 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Quick search..." 
+            <input
+              type="text"
+              placeholder="Quick search..."
               className="bg-slate-50 border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 w-64 transition-all"
             />
           </div>
@@ -162,8 +162,8 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                   onClick={handleClockToggle}
                   className={cn(
                     "p-1.5 rounded-full transition-all active:scale-95 shadow-sm",
-                    isClockedIn 
-                      ? "bg-rose-500 text-white hover:bg-rose-600" 
+                    isClockedIn
+                      ? "bg-rose-500 text-white hover:bg-rose-600"
                       : "bg-indigo-600 text-white hover:bg-indigo-700"
                   )}
                   title={isClockedIn ? "Clock Out" : "Clock In"}
@@ -175,9 +175,9 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
             {/* Notifications */}
             <div className="relative">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className={cn("h-8 w-8 relative", showNotifications && "bg-slate-100 text-primary-600")}
                 onClick={() => {
                   setShowNotifications(!showNotifications);
@@ -216,9 +216,9 @@ export default function Navbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
             {/* Settings */}
             <div className="relative">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className={cn("h-8 w-8", showSettings && "bg-slate-100 text-primary-600")}
                 onClick={() => {
                   setShowSettings(!showSettings);

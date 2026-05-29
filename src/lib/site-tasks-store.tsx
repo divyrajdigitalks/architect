@@ -97,6 +97,7 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
           id: data._id,
         };
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
         return created;
       } catch (error) {
         console.error("Failed to create site task on backend", error);
@@ -127,18 +128,26 @@ export function SiteTasksProvider({ children }: { children: React.ReactNode }) {
         }
         await siteTaskService.updateTask(id, payload);
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
       } catch (error) {
         console.error("Failed to update site task on backend", error);
         setSiteTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
       }
     };
 
-    const updateSiteTaskStatus = (id: string, status: SiteTaskStatus) => updateSiteTask(id, { status });
+    const updateSiteTaskStatus = (id: string, status: SiteTaskStatus) => {
+      let progress = 0;
+      if (status === "Completed") progress = 100;
+      else if (status === "In Progress" || status === "On Track") progress = 50;
+      else if (status === "Critical" || status === "Delayed") progress = 25; // Or 0, but let's give a bit of progress if it's already started. Actually let's do 25.
+      updateSiteTask(id, { status, progress });
+    };
 
     const deleteSiteTask = async (id: string) => {
       try {
         await siteTaskService.deleteTask(id);
         await fetchTasks();
+        window.dispatchEvent(new Event("refreshProjects"));
       } catch (error) {
         console.error("Failed to delete site task on backend", error);
         setSiteTasks((prev) => prev.filter((t) => t.id !== id));

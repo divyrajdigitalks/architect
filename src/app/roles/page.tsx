@@ -12,9 +12,9 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
 
 const MODULES = [
-  "projects", "tasks", "office-work", "site-work", "office-team", "site-team", 
-  "clients", "site-updates", "site-photos", "attendance", "payments", 
-  "reports", "messages", "staff", "roles", "settings", "working-sop", "calendar"
+  "projects", "tasks", "office-work", "site-work", "office-team", "site-team",
+  "clients", "site-photos", "attendance", "payments", "reports", "messages",
+  "staff", "roles", "settings", "working-sop", "calendar"
 ];
 
 const ALL_AVAILABLE_PERMISSIONS = [
@@ -30,8 +30,8 @@ export default function RolesPage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -132,7 +132,7 @@ export default function RolesPage() {
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">ROLES & PERMISSIONS</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Access Control Management</p>
         </div>
-        
+
         <Button onClick={() => handleOpenModal()} size="sm" className="rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-100">
           <Plus className="w-4 h-4" /> New Role
         </Button>
@@ -156,7 +156,7 @@ export default function RolesPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex gap-1">
                 <button onClick={() => handleOpenModal(role)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
                   <Edit2 className="w-3.5 h-3.5" />
@@ -186,9 +186,9 @@ export default function RolesPage() {
           <div className="space-y-3">
             <div>
               <label className="text-xs font-bold text-slate-700 mb-1 block">Role Name</label>
-              <Input 
-                placeholder="e.g., Project Manager" 
-                value={formData.name} 
+              <Input
+                placeholder="e.g., Project Manager"
+                value={formData.name}
                 onChange={e => {
                   setFormData(f => ({ ...f, name: e.target.value }));
                   if (errors.name) setErrors(prev => {
@@ -202,16 +202,16 @@ export default function RolesPage() {
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 mb-1 block">Description</label>
-              <Input 
-                placeholder="What does this role do?" 
-                value={formData.description} 
+              <Input
+                placeholder="What does this role do?"
+                value={formData.description}
                 onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
                 className="h-9 text-xs"
               />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 mb-2 block">Permissions</label>
-              
+
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                 {/* Special Permissions */}
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
@@ -222,11 +222,10 @@ export default function RolesPage() {
                         key={perm}
                         type="button"
                         onClick={() => handleTogglePermission(perm)}
-                        className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${
-                          formData.permissions.includes(perm)
+                        className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${formData.permissions.includes(perm)
                             ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
                             : "bg-white border-slate-200 text-slate-600 hover:border-indigo-100"
-                        }`}
+                          }`}
                       >
                         {formData.permissions.includes(perm) ? (
                           <ShieldCheck className="w-3.5 h-3.5 text-white" />
@@ -253,11 +252,10 @@ export default function RolesPage() {
                             type="button"
                             onClick={() => handleTogglePermission(perm)}
                             disabled={formData.permissions.includes("all")}
-                            className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${
-                              isSelected
+                            className={`flex items-center gap-2 p-2 rounded-md border text-left transition-all ${isSelected
                                 ? "bg-indigo-50 border-indigo-200 text-indigo-700"
                                 : "bg-white border-slate-100 text-slate-500 hover:border-indigo-100"
-                            } ${formData.permissions.includes("all") ? "opacity-50 cursor-not-allowed" : ""}`}
+                              } ${formData.permissions.includes("all") ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {isSelected ? (
                               <Check className="w-3 h-3 text-indigo-600" />

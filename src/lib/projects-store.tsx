@@ -207,7 +207,11 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       if (token) fetchProjects();
     };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("refreshProjects", fetchProjects);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("refreshProjects", fetchProjects);
+    };
   }, []);
 
   const api = useMemo<ProjectsContextType>(() => {

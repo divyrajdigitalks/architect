@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, use, useEffect, useRef, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatDateForDisplay } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-store";
 import { useOfficeTasks } from "@/lib/office-tasks-store";
@@ -57,7 +57,7 @@ import toast from "react-hot-toast";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 
-type Tab = "office-work" | "site-work" | "tasks" | "workers" | "updates" | "photos" | "finances" | "timeline";
+type Tab = "office-work" | "site-work" | "tasks" | "workers" | "photos" | "finances" | "timeline";
 
 export default function ProjectDetailsPage({ params }: { params: any }) {
   const resolvedParams = params instanceof Promise ? use(params) : params;
@@ -73,7 +73,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   const project = getProjectById(id);
   const isAdmin = user?.role === "architect" || user?.role === "director" || user?.role === "accountant";
   const [activeTab, setActiveTab] = useState<Tab>("office-work");
-  const [stages, setStages] = useState(project?.stages ?? []);
   const [projectPhotos, setProjectPhotos] = useState<{ id: string; url: string; date: string }[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
@@ -113,7 +112,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
     type: "Office" as "Office" | "Site",
     category: "Civil" as "Civil" | "Interior",
     assignedTo: [] as string[],
-    deadline: new Date().toISOString().split('T')[0],
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
     notes: ""
   });
   const [teamForm, setTeamForm] = useState({
@@ -128,7 +128,6 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
   useEffect(() => {
     if (project) {
-      setStages(project.stages);
       setEditForm({
         name: project.name,
         location: project.location,
@@ -194,12 +193,14 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   };
 
   const handleUpdateStageStatus = async (stageName: string, newStatus: any) => {
+    if (!project) return;
     await updateStageStatus(project.id, stageName, newStatus);
     toast.success(`Stage ${stageName} updated to ${newStatus}`);
   };
 
   const handleEditProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!project) return;
     setIsSubmittingEdit(true);
     try {
       await updateProject(project.id, {
@@ -227,6 +228,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
       toast.error("Please provide a task title");
       return;
     }
+    if (!project) return;
 
     setIsSubmittingTask(true);
     try {
@@ -239,7 +241,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
           assignedTo: taskForm.assignedTo,
           status: "Pending",
           progress: 0,
-          deadline: taskForm.deadline,
+          startDate: taskForm.startDate,
+          endDate: taskForm.endDate,
           notes: taskForm.notes
         });
       } else {
@@ -251,7 +254,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
           assignedTo: taskForm.assignedTo,
           status: "Pending",
           progress: 0,
-          endDate: taskForm.deadline,
+          startDate: taskForm.startDate,
+          endDate: taskForm.endDate,
           notes: taskForm.notes
         });
       }
@@ -262,7 +266,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         type: "Office",
         category: "Civil",
         assignedTo: [],
-        deadline: new Date().toISOString().split('T')[0],
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
         notes: ""
       });
     } catch (error) {
@@ -274,6 +279,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
 
   const handleUpdateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!project) return;
     setIsSubmittingTeam(true);
     try {
       await updateProject(project.id, {
@@ -312,6 +318,8 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   }, [siteTasks, project]);
 
   // Combine Office and Site tasks for the Tasks tab
+  const [timelineFilter, setTimelineFilter] = useState<"all" | "office" | "site">("all");
+
   const projectTasks = useMemo(() => {
     const combined = [
       ...projectOfficeTasks.map(t => ({
@@ -320,8 +328,10 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         stage: t.category,
         assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
         status: t.status,
+        progress: t.progress,
         type: "Office" as const,
-        deadline: t.deadline
+        startDate: t.startDate,
+        deadline: t.endDate
       })),
       ...projectSiteTasks.map(t => ({
         id: t.id,
@@ -329,12 +339,43 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         stage: t.category,
         assignee: t.assignedTo?.map((a: any) => a.name).join(", ") || "Unassigned",
         status: t.status,
+        progress: t.progress,
         type: "Site" as const,
+        startDate: t.startDate,
         deadline: t.endDate
       }))
     ];
     return combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
   }, [projectOfficeTasks, projectSiteTasks]);
+
+  const timelineEvents = useMemo(() => {
+    return projectTasks.map((task, idx) => ({
+      id: task.id,
+      title: task.name,
+      subtitle: `${task.type} work · ${task.stage}`,
+      status: task.status,
+      assignee: task.assignee,
+      startDate: task.startDate,
+      deadline: task.deadline,
+      kind: "task" as const,
+      category: task.type.toLowerCase() as "office" | "site",
+      color: task.type === "Office" ? "indigo" : "amber",
+      order: idx,
+    })).sort((a, b) => {
+      const aDeadline = a.deadline ? new Date(a.deadline).getTime() : undefined;
+      const bDeadline = b.deadline ? new Date(b.deadline).getTime() : undefined;
+
+      if (aDeadline !== undefined && bDeadline !== undefined) {
+        return aDeadline - bDeadline;
+      }
+      return a.order - b.order;
+    });
+  }, [projectTasks]);
+
+  const visibleTimelineEvents = useMemo(() => {
+    if (timelineFilter === "all") return timelineEvents;
+    return timelineEvents.filter((event) => event.kind === "task" && event.category === timelineFilter);
+  }, [timelineEvents, timelineFilter]);
 
   const projectUpdates = useMemo(() => {
     if (!project) return [];
@@ -382,7 +423,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   }, [getPaymentsByProjectId, project]);
 
   const { totalReceived, totalPending, utilization, budgetValue } = useMemo(() => {
-    if (!project) return { totalReceived: 0, totalPending: 0, utilization: 0 };
+    if (!project) return { totalReceived: 0, totalPending: 0, utilization: 0, budgetValue: 0 };
     const received = projectPayments.filter(p => p.status === "Paid").reduce((acc, p) => acc + p.amount, 0);
     const budgetValue = typeof project.budget === 'number' ? project.budget : Number(String(project.budget).replace(/[^0-9.-]+/g, "")) || 0;
     const pending = Math.max(0, budgetValue - received);
@@ -482,10 +523,13 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
               </span>
               <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="font-mono">{project.startDate}</span>
+                <span className="font-mono">{formatDateForDisplay(project.startDate)}</span>
               </span>
               <span className="flex items-center gap-2 px-3 py-1 bg-indigo-600 text-white rounded-md text-[9px] font-semibold uppercase tracking-wider shadow-sm">
                 {project.status}
+              </span>
+              <span className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-md text-[9px] font-semibold uppercase tracking-wider shadow-sm">
+                {project.progress || 0}% PROGRESS
               </span>
             </div>
           </div>
@@ -500,10 +544,10 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
               Project Settings
             </button>
           )}
-          <Link href="/site-updates"><Button size="sm" className="gap-2 font-medium">
+          {/* <Link href="/site-updates"><Button size="sm" className="gap-2 font-medium">
             <Plus className="w-4 h-4" />
             Daily Log
-          </Button></Link>
+          </Button></Link> */}
         </div>
       </div>
 
@@ -513,7 +557,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
           { id: "site-work", label: "Site", icon: Hammer },
           { id: "tasks", label: "Tasks", icon: CheckCircle2 },
           { id: "workers", label: "Team", icon: Users },
-          { id: "updates", label: "Logs", icon: ClipboardList },
+          // { id: "updates", label: "Logs", icon: ClipboardList },
           { id: "photos", label: "Photos", icon: Camera },
           { id: "finances", label: "Finances", icon: CreditCard },
           { id: "timeline", label: "Timeline", icon: History },
@@ -571,7 +615,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                   <TableHead className="px-4 py-3">Task Details</TableHead>
                   <TableHead className="px-4 py-3">Assignee</TableHead>
                   <TableHead className="px-4 py-3">Deadline</TableHead>
-                  <TableHead className="px-4 py-3">Status</TableHead>
+                  <TableHead className="px-4 py-3">Status & Progress</TableHead>
                   <TableHead className="px-4 py-3 text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -602,14 +646,27 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                       <span className="text-xs font-medium text-slate-500">{task.deadline || "N/A"}</span>
                     </TableCell>
                     <TableCell className="px-4 py-4">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border shadow-sm",
-                        task.status === "In Progress" || task.status === "On Track" ? "bg-white text-blue-600 border-blue-100" :
-                          task.status === "Completed" ? "bg-white text-green-600 border-green-100" :
-                            "bg-white text-slate-400 border-slate-100"
-                      )}>
-                        {task.status}
-                      </span>
+                      <div className="space-y-2 max-w-[120px]">
+                        <div className="flex justify-between items-center text-[9px] font-bold">
+                          <span className={cn(
+                            "uppercase tracking-widest",
+                            task.status === "In Progress" || task.status === "On Track" ? "text-blue-600" :
+                            task.status === "Completed" ? "text-green-600" :
+                            task.status === "Critical" ? "text-red-600" :
+                            task.status === "Delayed" ? "text-orange-600" :
+                            "text-slate-500"
+                          )}>
+                            {task.status}
+                          </span>
+                          <span className="text-slate-500 font-mono">{task.progress}%</span>
+                        </div>
+                        <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-indigo-600 transition-all duration-500" 
+                            style={{ width: `${task.progress}%` }} 
+                          />
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right">
                       <button className="text-slate-300 hover:text-indigo-600 p-1 hover:bg-white hover:shadow-sm rounded-md transition-all">
@@ -662,7 +719,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
         </div>
         )}
 
-        {activeTab === "updates" && (
+        {/* {activeTab === "updates" && (
           <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm space-y-8">
             {projectUpdates.map((update, idx) => (
               <div key={update.id} className="flex gap-4 group">
@@ -696,7 +753,7 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
               </div>
             ))}
           </div>
-        )}
+        )} */}
 
         {activeTab === "finances" && (
           <div className="space-y-6">
@@ -1093,14 +1150,25 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
                </div>
              </div>
 
-             <div className="space-y-1.5">
-               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Deadline / End Date</label>
-               <Input 
-                 type="date" 
-                 value={taskForm.deadline}
-                 onChange={e => setTaskForm({...taskForm, deadline: e.target.value})}
-                 required
-               />
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1.5">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
+                 <Input
+                   type="date"
+                   value={taskForm.startDate}
+                   onChange={e => setTaskForm({...taskForm, startDate: e.target.value})}
+                   required
+                 />
+               </div>
+               <div className="space-y-1.5">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">End Date</label>
+                 <Input
+                   type="date"
+                   value={taskForm.endDate}
+                   onChange={e => setTaskForm({...taskForm, endDate: e.target.value})}
+                   required
+                 />
+               </div>
              </div>
 
              <div className="space-y-1.5">
@@ -1177,39 +1245,87 @@ export default function ProjectDetailsPage({ params }: { params: any }) {
   
            {activeTab === "timeline" && (
           <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm space-y-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Project Schedule</h3>
-              <div className="flex gap-2">
-                <button className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-md text-[10px] font-bold border border-slate-100">Export</button>
-                <button className="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-[10px] font-bold shadow-sm">Add</button>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">Project Schedule</h3>
+                <p className="text-xs text-slate-500 mt-1">Dynamic timeline created from office/site project tasks.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTimelineFilter("all")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all",
+                      timelineFilter === "all" ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-500 border-slate-100"
+                    )}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimelineFilter("office")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all",
+                      timelineFilter === "office" ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-500 border-slate-100"
+                    )}
+                  >
+                    Office Work
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimelineFilter("site")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all",
+                      timelineFilter === "site" ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-500 border-slate-100"
+                    )}
+                  >
+                    Site Work
+                  </button>
+                </div>
+                <button
+                  onClick={() => setIsAddTaskModalOpen(true)}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-[10px] font-bold shadow-sm"
+                >
+                  Add Task
+                </button>
               </div>
             </div>
 
             <div className="space-y-8 relative pl-6">
               <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-100" />
-              {project.stages && project.stages.length > 0 ? (
-                project.stages.map((stage, idx) => (
-                  <div key={idx} className="relative flex gap-6 group">
+              {visibleTimelineEvents.length > 0 ? (
+                visibleTimelineEvents.map((event, idx) => (
+                  <div key={event.id} className="relative flex gap-6 group">
                     <div className={cn(
                       "absolute -left-6 w-6 h-6 rounded-md border-2 border-white flex items-center justify-center z-10 transition-all duration-300 shadow-sm",
-                      stage.status === "Completed" ? "bg-green-500" :
-                        stage.status === "In Progress" ? "bg-indigo-600" : "bg-slate-200"
+                      event.color === "indigo" ? "bg-indigo-500" : "bg-amber-500"
                     )}>
                       <div className="w-1.5 h-1.5 bg-white rounded-full" />
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Phase {idx + 1}</p>
-                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">{stage.name}</h4>
-                      <span className={cn(
-                        "text-[8px] font-bold uppercase tracking-wider",
-                        stage.status === "Completed" ? "text-green-600" :
-                          stage.status === "In Progress" ? "text-indigo-600" : "text-slate-400"
-                      )}>{stage.status}</span>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{event.subtitle}</span>
+                        <span className={cn(
+                          "text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
+                          event.status === "Completed" ? "bg-emerald-100 text-emerald-700" :
+                          event.status === "In Progress" ? "bg-indigo-100 text-indigo-700" :
+                          event.status === "Delayed" ? "bg-rose-100 text-rose-700" :
+                          "bg-slate-100 text-slate-500"
+                        )}
+                        >{event.status}</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">{event.title}</h4>
+                      <div className="flex flex-wrap gap-3 text-[10px] text-slate-500">
+                        <span>Assigned to: {event.assignee}</span>
+                        {event.startDate && <span>Start: {formatDateForDisplay(event.startDate)}</span>}
+                        {event.deadline && <span>Due: {formatDateForDisplay(event.deadline)}</span>}
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="py-10 text-center text-slate-400 italic text-xs">No stages defined for this project.</div>
+                <div className="py-10 text-center text-slate-400 italic text-xs">No timeline events available for this filter.</div>
               )}
             </div>
           </div>
