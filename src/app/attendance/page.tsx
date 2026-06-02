@@ -141,11 +141,11 @@ export default function AttendancePage() {
 
         setStaffList(combined);
       } else {
-        if (!user?._id) return;
+        if (!user?.id) return;
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
         const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
         const [history, status] = await Promise.all([
-          attendanceService.getAllAttendance({ user: user._id, startDate: startOfMonth, endDate: endOfMonth }),
+          attendanceService.getAllAttendance({ user: user.id, startDate: startOfMonth, endDate: endOfMonth }),
           attendanceService.getMyStatus()
         ]);
         setMyAttendance(Array.isArray(history) ? history : []);

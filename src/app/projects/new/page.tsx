@@ -79,10 +79,10 @@ export default function NewProjectPage() {
     { name: "Construction Administration", status: "Pending" as const },
   ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
       const budgetStr = form.budget?.trim() ? `$${form.budget.replace(/^\$/, "")}` : "$0";
-      const created = createProject({
+      const created = await createProject({
         name: form.projectName || "Untitled Project",
         client: form.clientName || "Unknown Client",
         clientId: form.clientId || undefined,
