@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Nunito, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Nunito_Sans, Inter } from "next/font/google";
 import "../styles/globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import { AuthProvider } from "@/lib/auth-context";
@@ -12,7 +12,7 @@ import { SiteUpdatesProvider } from "@/lib/site-updates-store";
 import { PaymentsProvider } from "@/lib/payments-store";
 import { Toaster } from "react-hot-toast";
 
-const nunito = Nunito({
+const nunito = Nunito_Sans({
   variable: "--font-nunito",
   subsets: ["latin"],
 });

@@ -360,8 +360,8 @@ export default function OfficeWorkPage() {
                               {task.priority || "Medium"}
                             </Badge>
                             <span className="text-[10px] text-slate-400 font-medium font-mono">ID: {task.id.slice(-6)}</span>
-                            {task.startDate && <span className="text-[10px] text-slate-400 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
-                            {task.endDate && <span className="text-[10px] text-slate-400 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
+                            {task.startDate && <span className="text-[10px] text-slate-600 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
+                            {task.endDate && <span className="text-[10px] text-slate-600 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
                           </div>
                         </div>
                       </TableCell>

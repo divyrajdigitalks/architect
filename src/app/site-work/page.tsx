@@ -360,9 +360,9 @@ export default function SiteWorkPage() {
                           <div>
                             <p className="text-sm font-bold text-slate-900">{task.title}</p>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[10px] text-slate-400 font-medium font-mono">Added: {formatDateForDisplay(task.createdAt)}</span>
-                              {task.startDate && <span className="text-[10px] text-slate-400 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
-                              {task.endDate && <span className="text-[10px] text-slate-400 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
+                              <span className="text-[10px] text-slate-600 font-medium font-mono">Added: {formatDateForDisplay(task.createdAt)}</span>
+                              {task.startDate && <span className="text-[10px] text-slate-600 font-medium font-mono">Start {formatDateForDisplay(task.startDate)}</span>}
+                              {task.endDate && <span className="text-[10px] text-slate-600 font-medium font-mono">End {formatDateForDisplay(task.endDate)}</span>}
                             </div>
                           </div>
                         </div>
