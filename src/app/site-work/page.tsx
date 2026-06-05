@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Hammer, Camera, ClipboardList, MapPin, CheckCircle2, Plus, Search, Filter, ArrowRight, HardHat, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { cn, formatDateForDisplay } from "@/lib/utils";
+import { cn, formatDateForDisplay, toTitleCase } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
@@ -368,7 +368,7 @@ export default function SiteWorkPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
+                        <p className="text-xs font-bold text-slate-700">{toTitleCase((task.project as any)?.name || task.project)}</p>
                       </TableCell>
                       <TableCell className="px-6 py-4">
                         <div className="space-y-2 max-w-[150px]">

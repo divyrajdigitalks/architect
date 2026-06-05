@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOfficeTasks, OfficeTaskCategory } from "@/lib/office-tasks-store";
 import { useProjects } from "@/lib/projects-store";
 import { staffService, StaffMember } from "@/services/staff.service";
-import { cn, formatDateForDisplay } from "@/lib/utils";
+import { cn, formatDateForDisplay, toTitleCase } from "@/lib/utils";
 import { TaskImageUpload } from "@/components/projects/TaskImageUpload";
 import { Select } from "@/components/ui/Select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -366,7 +366,7 @@ export default function OfficeWorkPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <p className="text-xs font-bold text-slate-700">{(task.project as any)?.name || task.project}</p>
+                        <p className="text-xs font-bold text-slate-700">{toTitleCase((task.project as any)?.name || task.project)}</p>
                       </TableCell>
                       <TableCell className="px-6 py-4">
                         <div className="space-y-2 max-w-[150px]">
@@ -387,13 +387,17 @@ export default function OfficeWorkPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <div className="flex -space-x-2">
+                        <div className="flex -space-x-1.5">
                           {task.assignedTo && task.assignedTo.length > 0 ? (
-                            task.assignedTo.map((user, i) => (
-                              <div key={i} className="w-12 h-12 rounded-xl bg-indigo-100 border-2 border-white flex items-center justify-center text-xs font-bold text-indigo-600 font-mono shadow-sm" title={user.name}>
-                                {(user.name || user)}
-                              </div>
-                            ))
+                            task.assignedTo.map((user: any, i: number) => {
+                              const nameStr = typeof user === "object" ? (user.name || "") : (user || "");
+                              const initials = nameStr.split(" ").map((n: string) => n[0]).join("").toUpperCase();
+                              return (
+                                <div key={i} className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-[10px] font-black text-indigo-600 font-mono shadow-sm" title={nameStr}>
+                                  {initials || "U"}
+                                </div>
+                              );
+                            })
                           ) : (
                             <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Unassigned</span>
                           )}
